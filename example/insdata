@@ -1,0 +1,30 @@
+#!/bin/bash
+# +----------------------------------------------------------------------------+
+# | R128 ROM filesystem                                                        |
+# | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+# | insdata                                                                    |
+# | Insert data into image                                                     |
+# +----------------------------------------------------------------------------+
+
+# directory of files to be inserted into the image
+DIRDATA="./content"
+
+# floppy image
+FDFILE=r128exfd.img
+
+# EPROM image
+RMFILE=r128exrm.img
+
+SCSIZE=128
+FILES=($DIRDATA/*)
+echo "Insert data into image:"
+for f in "${FILES[@]}"; do
+  [ -f "$f" ] || continue
+  echo " - File: $f"
+  read -p "   Start sector: " SCSTRT
+  OFFSET=$((SCSTRT * SCSIZE))
+  echo "   Writing at offset: $OFFSET bytes"
+  dd if="$f" of="$FDFILE" bs=1 seek="$OFFSET" conv=notrunc status=none
+  dd if="$f" of="$RMFILE" bs=1 seek="$OFFSET" conv=notrunc status=none
+done
+echo "Done."

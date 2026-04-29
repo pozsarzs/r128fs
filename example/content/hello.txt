@@ -1,0 +1,2 @@
+Hello from R128!
+This is a demo file on a sector-based storage.

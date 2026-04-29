@@ -1,0 +1,57 @@
+#!/bin/bash
+# +----------------------------------------------------------------------------+
+# | R128 ROM filesystem                                                        |
+# | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+# | mkimages                                                                   |
+# | Create example images                                                      |
+# +----------------------------------------------------------------------------+
+
+ERR1="ERROR: There is no input file:"
+ERR2="ERROR: The target is smaller than the source."
+
+# binary input file
+BNFILE=r128ex.bin
+
+# floppy image
+FDFILE=r128exfd.img
+FDSIDE=2
+FDTRAC=80
+FDSETR=18
+FDSESI=512
+FDSIZE=$(($FDSIDE * $FDTRAC * $FDSETR * FDSESI))
+
+# EPROM image
+RMFILE=r128exrm.img
+RMKIB=32
+RMSIZE=$(($RMKIB * 1024))
+
+if [ ! -e "$BNFILE" ];
+then
+  echo "$ERR1 $BNFILE"
+  exit
+fi
+
+echo "Create example images:"
+echo "- Make an empty floppy image ($FDSIZE Byte)"
+dd status=none if=/dev/zero of=$FDFILE bs=$FDSESI count=$(($FDSIDE * $FDTRAC * $FDSETR))
+
+echo "- Make an empty EPROM image ($RMSIZE Byte)"
+dd status=none if=/dev/zero of=$RMFILE bs=1024 count=$RMKIB
+
+echo "- Copy binary file into the floppy image"
+if [ $(stat -c%s "$BNFILE") -le $FDSIZE ];
+then
+  dd status=none if="$BNFILE" of="$FDFILE" bs=1 conv=notrunc
+else
+  echo "$ERR2"
+fi
+
+echo "- Copy binary file into the EPROM image"
+if [ $(stat -c%s "$BNFILE") -le $RMSIZE ];
+then
+  dd status=none if="$BNFILE" of="$RMFILE" bs=1 conv=notrunc
+else
+  echo "$ERR2"
+fi
+
+echo "Done."

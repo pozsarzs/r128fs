@@ -1,0 +1,4 @@
+#!/bin/bash
+
+as -o r128ex.o r128ex.s 
+objcopy -O binary r128ex.o r128ex.bin
