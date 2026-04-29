@@ -7,7 +7,7 @@
 
     .org 0x0000
 
-    # HEADER
+    # HEADER (SECTOR #0/ENTRY #0 - 16 B)
     .byte 'R','1'
     .byte 0x01, 0x00
     .ascii "EX10"
@@ -16,25 +16,25 @@
     .word 1
     .byte 0xD7
 
-    # FILE ENTRY 1
+    # FILE ENTRY (SECTOR #0/ENTRY #1 - 16 B)
     .ascii "HELLO   TXT"
     .word 1
     .word 66
     .byte 0x17
 
-    # FILE ENTRY 2
+    # FILE ENTRY (SECTOR #0/ENTRY #2 - 16 B)
     .ascii "HELLO   PAS"
     .word 2
     .word 153
     .byte 0x53
 
-    # FILE ENTRY 3
+    # FILE ENTRY (SECTOR #0/ENTRY #3 - 16 B)
     .ascii "CPMHELLOCOM"
     .word 4
     .word 8320
     .byte 0xD7
 
-    # FILE ENTRY 4
+    # FILE ENTRY (SECTOR #0/ENTRY #4 - 16 B)
     .ascii "HELLO   PAS"
     .word 70
     .word 11524
