@@ -110,9 +110,14 @@ size depends on the amount and size of the stored content.
         :
 ```
 
-### Location calculations
-
 ## 3. Example filesystem
+
+(..)
+
+### Hexdump of the example filesystem
+
+![R128 sector layout](picture/r128ex.png)
+
 
 (..)
 
