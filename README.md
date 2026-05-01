@@ -121,34 +121,40 @@ directory.
 Each platform provides a script and corresponding assembly source to generate
 the file entry binary:
 
-* `./dos_x86/build.bat` – builds the file entry binary on DOS
-* `./dos_x86/r128ex.asm` – DOS assembly source (NASM)
-* `./linux_x86/build` – builds the file entry binary on Linux
-* `./linux_x86/r128ex.s` – Linux assembly source (GAS)
-* `./cpm_8080-z80/build.sub` – builds the file entry binary on CP/M
-* `./cpm_8080-z80/r128ex.z80` – CP/M (8080/Z80) assembly source (Z80ASM and ASM)
+- `./dos_x86/build.bat` – builds the file entry binary on DOS
+- `./dos_x86/r128ex.asm` – DOS assembly source (NASM)
+- `./linux_x86/build` – builds the file entry binary on Linux
+- `./linux_x86/r128ex.s` – Linux assembly source (GAS)
+- `./cpm_8080-z80/build.sub` – builds the file entry binary on CP/M
+- `./cpm_8080-z80/r128ex.z80` – CP/M (8080/Z80) assembly source (Z80ASM and ASM)
 
 **Example content**  
 
 Sample files used to populate the filesystem image:
 
-* `./content/hello.txt`
-* `./content/hello.pas`
-* `./content/cpmhello.com`
-* `./content/doshello.com`
+- `./content/hello.txt`
+- `./content/hello.pas`
+- `./content/cpmhello.com`
+- `./content/doshello.com`
 
 **Utility scripts**
 
-* `./insdata` – inserts files from the `content` directory into the image
-* `./mkimages` – creates empty images and embeds the file entry binary
+- `./insdata` – inserts files from the `content` directory into the image
+- `./mkimages` – creates empty images and embeds the file entry binary
 
 **Generated outputs**
 
-* `./r128ex.bin` – compiled file entry structure in binary form
-* `./r128exrm.img.gz` – resulting EPROM image
-* `./r128exfd.img.gz` – resulting 1.44 MB floppy disk image
+- `./r128ex.bin` – compiled file entry structure in binary form
+- `./r128exrm.img.gz` – resulting EPROM image
+- `./r128exfd.img.gz` – resulting 1.44 MB floppy disk image
 
 ![R128 sector layout](picture/r128ex.png)
+
+Notes:
+- _green line and text_: sector separator and sectorname
+- _pink line_: header and file entries separator in entry area
+- _pink letter_: H: header entry, F: file entries, D: file data.
+- _cyan_: partial separator in entries.
 
 ## 4. Libraries
 
