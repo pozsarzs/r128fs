@@ -112,14 +112,43 @@ size depends on the amount and size of the stored content.
 
 ## 3. Example filesystem
 
-(..)
+This directory demonstrates how to build and populate a minimal filesystem image
+across multiple platforms. The following files are located in the 'example'
+directory.
 
-### Hexdump of the example filesystem
+**Build tools (per platform)**  
+
+Each platform provides a script and corresponding assembly source to generate
+the file entry binary:
+
+* `./dos_x86/build.bat` – builds the file entry binary on DOS
+* `./dos_x86/r128ex.asm` – DOS assembly source (NASM)
+* `./linux_x86/build` – builds the file entry binary on Linux
+* `./linux_x86/r128ex.s` – Linux assembly source (GAS)
+* `./cpm_8080-z80/build.sub` – builds the file entry binary on CP/M
+* `./cpm_8080-z80/r128ex.z80` – CP/M (8080/Z80) assembly source (Z80ASM and ASM)
+
+**Example content**  
+
+Sample files used to populate the filesystem image:
+
+* `./content/hello.txt`
+* `./content/hello.pas`
+* `./content/cpmhello.com`
+* `./content/doshello.com`
+
+**Utility scripts**
+
+* `./insdata` – inserts files from the `content` directory into the image
+* `./mkimages` – creates empty images and embeds the file entry binary
+
+**Generated outputs**
+
+* `./r128ex.bin` – compiled file entry structure in binary form
+* `./r128exrm.img.gz` – resulting EPROM image
+* `./r128exfd.img.gz` – resulting 1.44 MB floppy disk image
 
 ![R128 sector layout](picture/r128ex.png)
-
-
-(..)
 
 ## 4. Libraries
 
