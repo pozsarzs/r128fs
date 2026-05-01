@@ -191,19 +191,19 @@ device-specific block drivers.
 The `utility` directory contains the following programs for accessing the R128
 file system on CP/M or DOS.
 
-RCOPY mem=addr|drv=drive|img=file source_file [target_file]
+`RCOPY mem=addr|drv=drive|img=file source_file [target_file]`  
 Copies a file from the R128 filesystem to the host filesystem. If target_file is
 not specified, the original filename is used.
 
-RDIR mem=addr|drv=drive|img=file [filename]
+`RDIR mem=addr|drv=drive|img=file [filename]`  
 Lists files in the R128 filesystem. If filename is specified, only matching
 entries are shown.
 
-RSTAT mem=addr|drv=drive|img=file [filename]
+`RSTAT mem=addr|drv=drive|img=file [filename]`  
 Displays filesystem information and validates structure. If filename is
 specified, shows detailed information for that file.
 
-RTYPE mem=addr|drv=drive|img=file filename
+`RTYPE mem=addr|drv=drive|img=file filename`  
 Outputs the contents of a file from the R128 filesystem to the console.
 
 ## 6. Licence
