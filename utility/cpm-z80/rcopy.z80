@@ -1,0 +1,31 @@
+; +----------------------------------------------------------------------------+
+; | R128 ROM filesystem                                                        |
+; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+; | rcopy.z80                                                                  |
+; | rcopy utility, Z80, CP/M-80, v0.1                                          |
+; +----------------------------------------------------------------------------+
+; This is a free software: you can redistribute it and/or modify it under the
+; terms of the MIT License.
+;
+; This program is distributed in the hope that it will be useful, but WITHOUT
+; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+; FOR A PARTICULAR PURPOSE.
+
+	ORG	100h
+EXTRN	R128
+EXTRN	RDRV
+EXTRN	RIMG
+EXTRN	RMEM
+
+; -------- CONSTANTS --------
+BDOS	EQU	005h			; BDOS system call
+
+; -------- CODE AREA --------
+START:
+
+; (..)
+
+; -------- DATA AREA --------
+MSG01:	DB   	'', 0Dh, 0Ah, '$'
+	END
+

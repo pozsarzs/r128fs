@@ -113,7 +113,7 @@ size depends on the amount and size of the stored content.
 ## 3. Example filesystem
 
 This directory demonstrates how to build and populate a minimal filesystem image
-across multiple platforms. The following files are located in the 'example'
+across multiple platforms. The following files are located in the `example`
 directory.
 
 **Build tools (per platform)**  
@@ -121,48 +121,90 @@ directory.
 Each platform provides a script and corresponding assembly source to generate
 the file entry binary:
 
-- `./dos_x86/build.bat` – builds the file entry binary on DOS
-- `./dos_x86/r128ex.asm` – DOS assembly source (NASM)
-- `./linux_x86/build` – builds the file entry binary on Linux
-- `./linux_x86/r128ex.s` – Linux assembly source (GAS)
-- `./cpm_8080-z80/build.sub` – builds the file entry binary on CP/M
-- `./cpm_8080-z80/r128ex.z80` – CP/M (8080/Z80) assembly source (Z80ASM and ASM)
+- `dos/build.bat` – builds the file entry binary on DOS
+- `dos/r128ex.asm` – DOS assembly source
+- `linux/build` – builds the file entry binary on Linux
+- `linux/r128ex.s` – Linux assembly source
+- `cpm/build.sub` – builds the file entry binary on CP/M
+- `cpm/r128ex.z80` – CP/M assembly source
 
 **Example content**  
 
 Sample files used to populate the filesystem image:
 
-- `./content/hello.txt`
-- `./content/hello.pas`
-- `./content/cpmhello.com`
-- `./content/doshello.com`
+- `content/hello.txt`
+- `content/hello.pas`
+- `content/cpmhello.com`
+- `content/doshello.com`
 
 **Utility scripts**
 
-- `./insdata` – inserts files from the `content` directory into the image
-- `./mkimages` – creates empty images and embeds the file entry binary
+- `insdata` – inserts files from the `content` directory into the image (Bash)
+- `mkimages` – creates empty images and embeds the file entry binary (Bash)
 
 **Generated outputs**
 
-- `./r128ex.bin` – compiled file entry structure in binary form
-- `./r128exrm.img.gz` – resulting EPROM image
-- `./r128exfd.img.gz` – resulting 1.44 MB floppy disk image
+- `r128ex.bin` – compiled file entry structure in binary form
+- `r128exrm.img.gz` – resulting EPROM image
+- `r128exfd.img.gz` – resulting 1.44 MB floppy disk image
 
 ![R128 sector layout](picture/r128ex.png)
 
-Notes:
+**Notes:** 
+
 - _green line and text_: sector separator and sectorname
 - _pink line_: header and file entries separator in entry area
 - _pink letter_: H: header entry, F: file entries, D: file data.
 - _cyan_: partial separator in entries.
 
+## 4. Supported platforms and toolchains
+
+The following operating systems and toolchains are supported for building and
+using the R128 filesystem utilities:
+
+- CP/M (8080) – ASM
+- CP/M (Z80) – Z80ASM
+- DOS (x86) – NASM
+- Linux (x86) – GAS
+
 ## 4. Libraries
 
-(..)
+The `library` directory contains the core filesystem implementation and the
+device-specific block drivers.
 
-## 5. Example utilities
+**CP/M**  
 
-(..)
+- `./cpm*/r128lib.*` – the R128 filesystem core library
+- `./cpm*/rdrvlib.*` – disc-based block device driver
+- `./cpm*/rimglib.*` – image file–based block device driver
+- `./cpm*/rmemlib.*` – memory–based block device driver
+
+**DOS**  
+
+- `./dos/r128lib.*` – the R128 filesystem core library
+- `./dos/rdrvlib.*` – disc-based block device driver
+- `./dos/rimglib.*` – image file–based block device driver
+- `./dos/rmemlib.*` – memory–based block device driver
+
+## 5. Utilities
+
+The `utility` directory contains the following programs for accessing the R128
+file system on CP/M or DOS.
+
+RCOPY mem=addr|drv=drive|img=file source_file [target_file]
+Copies a file from the R128 filesystem to the host filesystem. If target_file is
+not specified, the original filename is used.
+
+RDIR mem=addr|drv=drive|img=file [filename]
+Lists files in the R128 filesystem. If filename is specified, only matching
+entries are shown.
+
+RSTAT mem=addr|drv=drive|img=file [filename]
+Displays filesystem information and validates structure. If filename is
+specified, shows detailed information for that file.
+
+RTYPE mem=addr|drv=drive|img=file filename
+Outputs the contents of a file from the R128 filesystem to the console.
 
 ## 6. Licence
 
