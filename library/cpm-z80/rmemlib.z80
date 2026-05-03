@@ -86,7 +86,7 @@ STRDSH:	SLA	E		; shift low byte MSB -> CF
 	JR	C, STRDE1	; if CF = 1 then goto STRDE1
 	DEC	B		; decrement counter
 	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
-	ADD	HL, DE		; sector address in HL
+	ADD	HL, DE		; sector address in HL (= HL + DE)
 	JR	C, STRDE2	; if CF = 1 then goto STRDE2
 
 	LD	BC, SECT	; counter

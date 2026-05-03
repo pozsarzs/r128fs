@@ -1,0 +1,126 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | rmemlib.asm                                                                |
+                ; | Routine collection, 8080, CP/M-80, v0.1                                    |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+                PUBLIC RMEM
+                
+                ; -------- CONSTANTS --------
+ 0002 =         RNUM	EQU	02h			; Number of routines
+ 0080 =         SECT	EQU	0080h			; Logical sector size
+                
+                ; -------- CODE AREA ---------------
+                ; Input:     A = function code
+                ;            BC, DE, HL = input data
+                ; Output:    CF = 0, A = output data
+                ;            CF = 1, A = error code
+                ;
+                ; Error codes:
+                ;   01h: bad function
+                ;   02h: shift overflow
+                ;   03h: address overflow
+                ;
+                ; Preserves: BC, DE
+                ; Clobbers:  AF, HL
+                
+                ; ---- ENTRY POINT AND JUMP TABLE ----
+U0000 C5        RMEM:	PUSH	BC		; save input BC for caller and selected routine
+U0001 C5        	PUSH	DE		; save input DE for caller and selected routine
+U0002 C5        	PUSH	HL		; save input HL for selected routine
+                
+ 0003 FE02      	CPI	RNUM		; compare A (function code) with max valid index
+ 0005 D21800    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+                
+ 0008 111400    	LXI	D, MNJTAB	; DE = address of jump table entry
+                
+ 000B 87        	ADD	A		; A = A * 2 (word index into jump table)
+ 000C 6F        	MOV	L, A
+ 000D 60        	MOV	H, 0		; HL = zero-extended offset
+ 000E 19        	DAD	D		; HL = address of table + offset
+                
+ 000F 5E        	MOV	E, M		; load low byte of handler address (HL = address)
+ 0010 23        	INX	H		; increment HL
+ 0011 56        	MOV	D, M		; load high byte (HL = address)
+ 0012 EB        	XCHG			; DE <-> HL, HL = handler address
+ 0013 E9        	PCHL			; indirect jump to selected routine
+                
+ 0014 1F00      MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
+ 0016 2700      	DW	RMSTRD		; 1: read a logical sector and write to buffer
+                
+U0018 C1        MNBADF:	POP	HL		; restore input HL
+U0019 C1        	POP	DE		; restore input DE for caller
+U001A C1        	POP	BC		; restore input BC for caller
+ 001B 3E01      	MVI	A, 01h		; A = 1
+ 001D 37        	STC			; CF = 1
+ 001E C9        	RET
+                
+                ; ---- INITIALIZE LIBRARY --------------------
+                ; Input:  HL = buffer start address (0000-FFFFh)
+                ; Output: CF = 0
+ 001F 225D00    RMINIT:	SHLD	BUADDR		; store buffer starting address
+ 0022 AF        INITDN: XRA	A		; A = 0, CF = 0
+U0023 C1        	POP	HL		; restore input HL
+U0024 C1        	POP	DE		; restore input DE for caller
+U0025 C1        	POP	BC		; restore input BC for caller
+ 0026 C9        	RET
+                
+                ; ---- READ A LOGICAL SECTOR ----------------------------------
+                ; Input:  DE = the number of the sector to be read (0000-FFFFh)
+                ;         HL = ROM start address (0000-FFFFh)
+                ; Output: CF = 0, A = 0
+                ;         CF = 1, A = error code
+U0027 C1        RMSTRD:	POP	HL		; restore input HL for this routine
+U0028 C1        	POP	DE		; restore input DE for this routine
+U0029 C5        	PUSH	DE		; save input DE for caller
+ 002A 0607      	MVI	B, 7		; B = counter value
+                
+ 002C 7B        STRDSH:	MOV	A, E		; shift DE via A
+ 002D 87        	ADD	A
+ 002E 5F        	MOV	E, A
+ 002F 7A        	MOV	A, D
+ 0030 17        	RAL
+ 0031 57        	MOV	D, A
+                
+ 0032 DA5100    	JC	STRDE1		; if CF = 1 then goto STRDE1
+S               	DEC	B		; decrement counter
+ 0035 C22C00    	JNZ	STRDSH		; if B > 0 then goto STRDSH
+ 0038 19        	DAD	D		; sector address in HL (= HL + DE)
+ 0039 DA5700    	JC	STRDE2		; if CF = 1 then goto STRDE2
+                
+ 003C 018000    	LXI	B, SECT		; BC = byte counter (128 bytes)
+ 003F 2A5D00    	LHLD	BUADDR		; HL = buffer start address (destination)
+ 0042 EB        	XCHG			; HL <-> DE
+ 0043 7E        STRDLP: MOV	A, M		; A = (HL) read byte from source
+ 0044 12        	STAX	D		; (DE) = A write byte to destination
+ 0045 23        	INX	H		; HL++
+ 0046 13        	INX	D		; DE++
+ 0047 0B        	DCX	B		; BC--
+ 0048 78        	MOV	A, B		; check if BC == 0
+ 0049 B1        	ORA	C
+ 004A C24300    	JNZ	STRDLP		; loop until BC = 0
+ 004D AF        	XRA	A		; A = 0, CF = 0
+ 004E C35A00    	JMP	STRDDN		; goto STRDDN
+                
+ 0051 3E02      STRDE1:	MVI	A, 02h		; A = 2
+ 0053 37        	STC			; CF = 1
+ 0054 C35A00    	JMP	STRDDN		; goto STRDDN
+                
+ 0057 3E03      STRDE2:	MVI	A, 03h		; A = 3
+ 0059 37        	STC			; CF = 1
+                	
+U005A C1        STRDDN:	POP	DE		; restore input DE for caller
+U005B C1        	POP	BC		; restore input BC for caller
+ 005C C9        	RET
+                
+                ; -------- DATA AREA --------
+ 005D 0000      BUADDR:	DW	0		; buffer start address
+ 005F           	END
+

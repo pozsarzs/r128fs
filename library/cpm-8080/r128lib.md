@@ -8,7 +8,7 @@
 |licence     |MIT                                             |
 |architecture|8080                                            |
 |OS          |CP/M-80                                         |
-|compiler    |Digital Research CP/M Assembler v2.0 (1978)     |
+|compiler    |Digital Research CP/M RMAC Assembler v1.1 (1980)|
 |author      |[Pozsar Zsolt](mailto:pozsarzs@gmail.com) (2026)|
 |web         |[Pozsi's homepage](https://www.pozsarzs.hu)     |
 |            |[on Github](https://github.com/pozsarzs/r128fs) |

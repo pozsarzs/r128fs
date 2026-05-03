@@ -1,0 +1,125 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+RMEMLIB Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | rmemlib.z80                                                                |
+    5                   ; | Routine collection, Z80, CP/M-80, v0.1                                     |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14                   PUBLIC RMEM
+   15                   
+   16                   ; -------- CONSTANTS --------
+   17         0002      RNUM	EQU	02h			; Number of routines
+   18         0080      SECT	EQU	0080h			; Logical sector size
+   19                   
+   20                   ; -------- CODE AREA --------
+   21                   ; Input:     A = function code
+   22                   ;            BC, DE, HL = input data
+   23                   ; Output:    CF = 0, A = output data
+   24                   ;            CF = 1, A = error code
+   25                   ;
+   26                   ; Error codes:
+   27                   ;   01h: bad function
+   28                   ;   02h: shift overflow
+   29                   ;   03h: address overflow
+   30                   ;
+   31                   ; Preserves: BC, DE
+   32                   ; Clobbers:  AF, HL
+   33                   
+   34                   ; ---- ENTRY POINT AND JUMP TABLE ----
+   35 0000' C5          RMEM:	PUSH	BC		; save input BC for caller and selected routine
+   36 0001' D5          	PUSH	DE		; save input DE for caller and selected routine
+   37 0002' E5          	PUSH	HL		; save input HL for selected routine
+   38                   
+   39 0003' FE 02       	CP	RNUM		; compare A (function code) with max valid index
+   40 0005' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   41                   
+   42 0007' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   43 0008' 6F          	LD	L, A
+   44 0009' 26 00       	LD	H, 0		; HL = zero-extended offset
+   45 000B' 11 0014'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   46 000E' 19          	ADD	HL, DE		; HL = address of table + offset
+   47                   
+   48 000F' 5E          	LD	E, (HL)		; load low byte of handler address
+   49 0010' 23          	INC	HL
+   50 0011' 56          	LD	D, (HL)		; load high byte
+   51 0012' EB          	EX	DE, HL		; HL = handler address
+   52 0013' E9          	JP	(HL)		; indirect jump to selected routine
+   53                   
+   54 0014' 001F'       MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
+   55 0016' 0027'       	DW	RMSTRD		; 1: read a logical sector and write to buffer
+   56                   
+   57 0018' E1          MNBADF:	POP	HL		; restore input HL
+   58 0019' D1          	POP	DE		; restore input DE for caller
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+RMEMLIB Z80
+
+   59 001A' C1          	POP	BC		; restore input BC for caller
+   60 001B' 3E 01       	LD	A, 01h		; A = 1
+   61 001D' 37          	SCF			; CF = 1
+   62 001E' C9          	RET
+   63                   
+   64                   ; ---- INITIALIZE LIBRARY --------------------
+   65                   ; Input:  HL = buffer start address (0000-FFFFh)
+   66                   ; Output: CF = 0
+   67 001F' 22 004F'    RMINIT:	LD	(BUADDR), HL	; store buffer starting address
+   68 0022' AF          INITDN: XOR	A		; A = 0, CF = 0
+   69 0023' E1          	POP	HL		; restore input HL
+   70 0024' D1          	POP	DE		; restore input DE for caller
+   71 0025' C1          	POP	BC		; restore input BC for caller
+   72 0026' C9          	RET
+   73                   
+   74                   ; ---- READ A LOGICAL SECTOR ----------------------------------
+   75                   ; Input:  DE = the number of the sector to be read (0000-FFFFh)
+   76                   ;         HL = ROM start address (0000-FFFFh)
+   77                   ; Output: CF = 0, A = 0
+   78                   ;         CF = 1, A = error code
+   79 0027' E1          RMSTRD:	POP	HL		; restore input HL for this routine
+   80 0028' D1          	POP	DE		; restore input DE for this routine
+   81 0029' D5          	PUSH	DE		; save input DE for caller
+   82 002A' 06 07       	LD	B, 7		; counter value
+   83                   
+   84 002C' CB 23       STRDSH:	SLA	E		; shift low byte MSB -> CF
+   85 002E' CB 12       	RL	D		; shift high byte and CF -> LSB
+   86 0030' 38 12       	JR	C, STRDE1	; if CF = 1 then goto STRDE1
+   87 0032' 05          	DEC	B		; decrement counter
+   88 0033' 20 F7       	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
+   89 0035' 19          	ADD	HL, DE		; sector address in HL (= HL + DE)
+   90 0036' 38 11       	JR	C, STRDE2	; if CF = 1 then goto STRDE2
+   91                   
+   92 0038' 01 0080     	LD	BC, SECT	; counter
+   93 003B' ED 5B 004F' 	LD	DE, (BUADDR)	; buffer start address
+   94 003F' ED B0       	LDIR			; 128 x (HL -> DE)
+   95                   
+   96 0041' AF          	XOR	A		; A = 0, CF = 0
+   97 0042' 18 08       	JR	STRDDN		; goto STRDDN
+   98                   
+   99 0044' 3E 02       STRDE1:	LD	A, 02h		; A = 2
+  100 0046' 37          	SCF			; CF = 1
+  101 0047' 18 03       	JR	STRDDN		; goto STRDDN
+  102                   
+  103 0049' 3E 03       STRDE2:	LD	A, 03h		; A = 3
+  104 004B' 37          	SCF			; CF = 1
+  105                   	
+  106 004C' D1          STRDDN:	POP	DE		; restore input DE for caller
+  107 004D' C1          	POP	BC		; restore input BC for caller
+  108 004E' C9          	RET
+  109                   
+  110                   ; -------- DATA AREA --------
+  111 004F' 0000        BUADDR:	DW	0		; buffer start address
+  112                   	END
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
+
+
+ 0 Error(s) Detected. 81 Program Bytes.
+ 13 Symbols Detected.
+F' 	LD	DE, (BUADDR)	; buffer start address
+   94 003F' ED B0       	L

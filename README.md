@@ -162,7 +162,7 @@ Sample files used to populate the filesystem image:
 The following operating systems and toolchains are supported for building and
 using the R128 filesystem utilities:
 
-- CP/M (8080) – Digital Research CP/M Assembler
+- CP/M (8080) – Digital Research CP/M RMAC Assembler
 - CP/M (Z80) – SLR Systems Z80ASM
 - DOS (x86) – NASM
 - Linux (x86) – GNU Assembler

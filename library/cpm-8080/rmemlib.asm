@@ -17,7 +17,7 @@ PUBLIC RMEM
 RNUM	EQU	02h			; Number of routines
 SECT	EQU	0080h			; Logical sector size
 
-; -------- CODE AREA --------
+; -------- CODE AREA ---------------
 ; Input:     A = function code
 ;            BC, DE, HL = input data
 ; Output:    CF = 0, A = output data
@@ -36,20 +36,21 @@ RMEM:	PUSH	BC		; save input BC for caller and selected routine
 	PUSH	DE		; save input DE for caller and selected routine
 	PUSH	HL		; save input HL for selected routine
 
-	CP	RNUM		; compare A (function code) with max valid index
+	CPI	RNUM		; compare A (function code) with max valid index
 	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+
+	LXI	D, MNJTAB	; DE = address of jump table entry
 
 	ADD	A		; A = A * 2 (word index into jump table)
 	MOV	L, A
 	MOV	H, 0		; HL = zero-extended offset
-	LD	DE, MNJTAB	; DE = address of jump table entry
-	ADD	HL, DE		; HL = address of table + offset
+	DAD	D		; HL = address of table + offset
 
-	LD	E, (HL)		; load low byte of handler address
-	INC	HL
-	LD	D, (HL)		; load high byte
-	EX	DE, HL		; HL = handler address
-	JP	(HL)		; indirect jump to selected routine
+	MOV	E, M		; load low byte of handler address (HL = address)
+	INX	H		; increment HL
+	MOV	D, M		; load high byte (HL = address)
+	XCHG			; DE <-> HL, HL = handler address
+	PCHL			; indirect jump to selected routine
 
 MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
 	DW	RMSTRD		; 1: read a logical sector and write to buffer
@@ -65,7 +66,7 @@ MNBADF:	POP	HL		; restore input HL
 ; Input:  HL = buffer start address (0000-FFFFh)
 ; Output: CF = 0
 RMINIT:	SHLD	BUADDR		; store buffer starting address
-INITDN: XOR	A		; A = 0, CF = 0
+INITDN: XRA	A		; A = 0, CF = 0
 	POP	HL		; restore input HL
 	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
@@ -79,21 +80,33 @@ INITDN: XOR	A		; A = 0, CF = 0
 RMSTRD:	POP	HL		; restore input HL for this routine
 	POP	DE		; restore input DE for this routine
 	PUSH	DE		; save input DE for caller
-	MVI	B, 7		; counter value
+	MVI	B, 7		; B = counter value
 
-STRDSH:	SLA E			; shift low byte MSB -> CF
-	RL D			; shift high byte and CF -> LSB
-	JR	C, STRDE1	; if CF = 1 then goto STRDE1
+STRDSH:	MOV	A, E		; shift DE via A
+	ADD	A
+	MOV	E, A
+	MOV	A, D
+	RAL
+	MOV	D, A
+
+	JC	STRDE1		; if CF = 1 then goto STRDE1
 	DEC	B		; decrement counter
-	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
-	ADD	HL, DE		; sector address in HL
-	JR	C, STRDE2	; if CF = 1 then goto STRDE2
+	JNZ	STRDSH		; if B > 0 then goto STRDSH
+	DAD	D		; sector address in HL (= HL + DE)
+	JC	STRDE2		; if CF = 1 then goto STRDE2
 
-	LD	BC, SECT	; counter
-	LD	DE, (BUADDR)	; buffer start address
-	LDIR			; 128 x (HL -> DE)
-
-	XOR	A		; A = 0, CF = 0
+	LXI	B, SECT		; BC = byte counter (128 bytes)
+	LHLD	BUADDR		; HL = buffer start address (destination)
+	XCHG			; HL <-> DE
+STRDLP: MOV	A, M		; A = (HL) read byte from source
+	STAX	D		; (DE) = A write byte to destination
+	INX	H		; HL++
+	INX	D		; DE++
+	DCX	B		; BC--
+	MOV	A, B		; check if BC == 0
+	ORA	C
+	JNZ	STRDLP		; loop until BC = 0
+	XRA	A		; A = 0, CF = 0
 	JMP	STRDDN		; goto STRDDN
 
 STRDE1:	MVI	A, 02h		; A = 2

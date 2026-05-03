@@ -1,4 +1,4 @@
-asm r128lib
-asm rdsclib
-asm rimglib
-asm rmemlib
+rmac r128lib
+rmac rdsclib
+rmac rimglib
+rmac rmemlib
