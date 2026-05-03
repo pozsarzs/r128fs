@@ -26,7 +26,7 @@
   1st entry at: sector 0, offset 10h, length 16 bytes.
   - **FLNAME**: File name in 8.3 format, length 11 bytes.
   - **FL1SEC**: First sector of the file data, length 2 bytes.
-  - **FLSIZE**: File size sector number, length 2 bytes.
+  - **FLSIZE**: File size in sector count, length 2 bytes.
   - **FLENCS**: Checksum of this file entry, MOD 256 type, length 1 byte.
 - **data area**: Starts at sector defined by **HD1DSE**. Contains file data
   stored contiguously. Length is determined implicitly from total medium size.
