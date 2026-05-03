@@ -13,15 +13,100 @@
 
 PUBLIC RMEM
 
+; -------- CONSTANTS --------
+RNUM	EQU	02h			; Number of routines
+SECT	EQU	0080h			; Logical sector size
+
 ; -------- CODE AREA --------
+; Input:     A = function code
+;            BC, DE, HL = input data
+; Output:    CF = 0, A = output data
+;            CF = 1, A = error code
+;
+; Error codes:
+;   01h: bad function
+;   02h: shift overflow
+;   03h: address overflow
+;
+; Preserves: BC, DE
+; Clobbers:  AF, HL
 
-; (..)
+; ---- ENTRY POINT AND JUMP TABLE ----
+RMEM:	PUSH	BC		; save input BC for caller and selected routine
+	PUSH	DE		; save input DE for caller and selected routine
+	PUSH	HL		; save input HL for selected routine
 
-RMEM:
+	CP	RNUM		; compare A (function code) with max valid index
+	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
 
-; (..)
+	ADD	A		; A = A * 2 (word index into jump table)
+	MOV	L, A
+	MOV	H, 0		; HL = zero-extended offset
+	LD	DE, MNJTAB	; DE = address of jump table entry
+	ADD	HL, DE		; HL = address of table + offset
 
-; --- DATA AREA -----------------------------
-ADDR:	DB	0		; I/O address
+	LD	E, (HL)		; load low byte of handler address
+	INC	HL
+	LD	D, (HL)		; load high byte
+	EX	DE, HL		; HL = handler address
+	JP	(HL)		; indirect jump to selected routine
+
+MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
+	DW	RMSTRD		; 1: read a logical sector and write to buffer
+
+MNBADF:	POP	HL		; restore input HL
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	MVI	A, 01h		; A = 1
+	STC			; CF = 1
+	RET
+
+; ---- INITIALIZE LIBRARY --------------------
+; Input:  HL = buffer start address (0000-FFFFh)
+; Output: CF = 0
+RMINIT:	SHLD	BUADDR		; store buffer starting address
+INITDN: XOR	A		; A = 0, CF = 0
+	POP	HL		; restore input HL
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
+
+; ---- READ A LOGICAL SECTOR ----------------------------------
+; Input:  DE = the number of the sector to be read (0000-FFFFh)
+;         HL = ROM start address (0000-FFFFh)
+; Output: CF = 0, A = 0
+;         CF = 1, A = error code
+RMSTRD:	POP	HL		; restore input HL for this routine
+	POP	DE		; restore input DE for this routine
+	PUSH	DE		; save input DE for caller
+	MVI	B, 7		; counter value
+
+STRDSH:	SLA E			; shift low byte MSB -> CF
+	RL D			; shift high byte and CF -> LSB
+	JR	C, STRDE1	; if CF = 1 then goto STRDE1
+	DEC	B		; decrement counter
+	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
+	ADD	HL, DE		; sector address in HL
+	JR	C, STRDE2	; if CF = 1 then goto STRDE2
+
+	LD	BC, SECT	; counter
+	LD	DE, (BUADDR)	; buffer start address
+	LDIR			; 128 x (HL -> DE)
+
+	XOR	A		; A = 0, CF = 0
+	JMP	STRDDN		; goto STRDDN
+
+STRDE1:	MVI	A, 02h		; A = 2
+	STC			; CF = 1
+	JMP	STRDDN		; goto STRDDN
+
+STRDE2:	MVI	A, 03h		; A = 3
+	STC			; CF = 1
+	
+STRDDN:	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
+
+; -------- DATA AREA --------
+BUADDR:	DW	0		; buffer start address
 	END
-

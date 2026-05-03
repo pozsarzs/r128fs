@@ -1,0 +1,4 @@
+asm r128lib
+asm rdsclib
+asm rimglib
+asm rmemlib

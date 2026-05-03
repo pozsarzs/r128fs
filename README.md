@@ -26,7 +26,7 @@
   1st entry at: sector 0, offset 10h, length 16 bytes.
   - **FLNAME**: File name in 8.3 format, length 11 bytes.
   - **FL1SEC**: First sector of the file data, length 2 bytes.
-  - **FLSIZE**: File size in bytes, length 2 bytes.
+  - **FLSIZE**: File size sector number, length 2 bytes.
   - **FLENCS**: Checksum of this file entry, MOD 256 type, length 1 byte.
 - **data area**: Starts at sector defined by **HD1DSE**. Contains file data
   stored contiguously. Length is determined implicitly from total medium size.
@@ -44,9 +44,9 @@ size depends on the amount and size of the stored content.
 ### Theoretical storage limits
 
 - _Minimum media size_:
-  - empty filesystem: 128 bytes,
-  - with data: 256 bytes.
-- _Maximum media size_: 8388608 bytes.
+  - empty filesystem: 128 bytes (1 sector),
+  - with data: 256 bytes (2 sector).
+- _Maximum media size_: 8388608 bytes (65536 sector).
 - _Maximum number of minimally sized files (128 B) that can be stored_: 58253 pcs.
 - _Maximum file size_ (single file occupying the entire disk): 8388480 bytes.
 
@@ -162,10 +162,10 @@ Sample files used to populate the filesystem image:
 The following operating systems and toolchains are supported for building and
 using the R128 filesystem utilities:
 
-- CP/M (8080) – ASM
-- CP/M (Z80) – Z80ASM
+- CP/M (8080) – Digital Research CP/M Assembler
+- CP/M (Z80) – SLR Systems Z80ASM
 - DOS (x86) – NASM
-- Linux (x86) – GAS
+- Linux (x86) – GNU Assembler
 
 ## 4. Libraries
 
