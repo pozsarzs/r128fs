@@ -1,0 +1,163 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+RIMGLIB Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | rimglib.z80                                                                |
+    5                   ; | Reading a logical sector from disc image, Z80, CP/M-80, v0.1               |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14                   PUBLIC RIMG
+   15                   
+   16                   ; -------- CONSTANTS --------
+   17         0005      BDOS	EQU	05h			; BDOS system call
+   18         0002      RNUM	EQU	02h			; Number of routines
+   19                   
+   20                   ; -------- CODE AREA --------
+   21                   ; Input:     A = function code
+   22                   ;            BC, DE, HL = input data
+   23                   ; Output:    CF = 0, A = output data
+   24                   ;            CF = 1, A = error code
+   25                   ;
+   26                   ; Error codes:
+   27                   ;   01h: bad function
+   28                   ;   02h: file open error
+   29                   ;   03h: file read error
+   30                   ;
+   31                   ; Preserves: BC, DE
+   32                   ; Clobbers:  AF, HL
+   33                   
+   34                   ; ---- ENTRY POINT AND JUMP TABLE ----
+   35 0000' C5          RIMG:	PUSH	BC		; save input BC for caller and selected routine
+   36 0001' D5          	PUSH	DE		; save input DE for caller and selected routine
+   37 0002' E5          	PUSH	HL		; save input HL for selected routine
+   38                   
+   39 0003' FE 02       	CP	RNUM		; compare A (function code) with max valid index
+   40 0005' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   41                   
+   42 0007' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   43 0008' 6F          	LD	L, A
+   44 0009' 26 00       	LD	H, 0		; HL = zero-extended offset
+   45 000B' 11 0014'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   46 000E' 19          	ADD	HL, DE		; HL = address of table + offset
+   47                   
+   48 000F' 5E          	LD	E, (HL)		; load low byte of handler address
+   49 0010' 23          	INC	HL
+   50 0011' 56          	LD	D, (HL)		; load high byte
+   51 0012' EB          	EX	DE, HL		; HL = handler address
+   52 0013' E9          	JP	(HL)		; indirect jump to selected routine
+   53                   
+   54 0014' 001F'       MNJTAB:	DW	RIINIT		; 0: set buffer address and sector size
+   55 0016' 0027'       	DW	RISTRD		; 1: read a logical sector and write to buffer
+   56                   
+   57 0018' E1          MNBADF:	POP	HL		; restore input HL
+   58 0019' D1          	POP	DE		; restore input DE for caller
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+RIMGLIB Z80
+
+   59 001A' C1          	POP	BC		; restore input BC for caller
+   60 001B' 3E 01       	LD	A, 01h		; A = 1
+   61 001D' 37          	SCF			; CF = 1
+   62 001E' C9          	RET
+   63                   
+   64                   ; ---- INITIALIZE LIBRARY --------------------
+   65                   ; Input:  HL = buffer start address (0000-FFFFh)
+   66                   ; Output: CF = 0
+   67 001F' 22 008E'    RIINIT:	LD	(BUADDR), HL	; store buffer starting address
+   68 0022' AF          INITDN: XOR	A		; A = 0, CF = 0
+   69 0023' E1          	POP	HL		; restore input HL
+   70 0024' D1          	POP	DE		; restore input DE for caller
+   71 0025' C1          	POP	BC		; restore input BC for caller
+   72 0026' C9          	RET
+   73                   
+   74                   ; ---- READ A LOGICAL SECTOR ----------------------------------
+   75                   ; Input:  DE = sector number (0000-FFFFh)
+   76                   ;         HL = FCB start address (0000-FFFFh)
+   77                   ; Output: CF = 0, A = 0
+   78                   ;         CF = 1, A = error code
+   79 0027' 0E 1A       RISTRD:	LD	C, 1Ah		; set DMA address
+   80 0029' ED 5B 008E' 	LD	DE, (BUADDR)	; DE = DMA address
+   81 002D' CD 0005     	CALL	BDOS		; call BDOS
+   82                   
+   83 0030' E1          	POP	HL		; restore input HL for this routine
+   84 0031' D1          	POP	DE		; restore input DE for this routine
+   85 0032' D5          	PUSH	DE		; save input DE for caller
+   86 0033' EB          	EX	DE, HL		; DE = FCB address, HL = sector number
+   87 0034' 44          	LD	B, H		; BC = sector number
+   88 0035' 4D          	LD	C, L
+   89 0036' ED 53 0090' 	LD	(RIFCB), DE	; store FCB address
+   90                   
+   91 003A' 21 0021     	LD	HL, 33		; HL = offset
+   92 003D' 19          	ADD	HL, DE		; HL = FCB address + 33
+   93 003E' 79          	LD	A, C		; A = low byte of sector number
+   94 003F' 77          	LD      (HL), A		; store in FCB
+   95 0040' 23          	INC	HL		; HL = FCB address + 34
+   96 0041' 78          	LD      A, B		; A = high byte of sector number
+   97 0042' 77          	LD      (HL), A		; store in FCB
+   98 0043' 23          	INC	HL		; HL = FCB address + 35
+   99 0044' AF          	XOR     A		; A = 0
+  100 0045' 77          	LD      (HL), A		; store in FCB
+  101                   
+  102 0046' 0E 0F       	LD	C, 0Fh		; open file
+  103 0048' ED 5B 0090' 	LD	DE, (RIFCB)	; DE = FCB address
+  104 004C' CD 0005     	CALL	BDOS		; call BDOS
+  105                   
+  106 004F' B7          	OR	A		; set flags
+  107 0050' 20 15       	JR	NZ, STRDE1	; file open error
+  108                   
+  109 0052' 0E 21       	LD	C, 21h		; read random
+  110 0054' ED 5B 0090' 	LD	DE, (RIFCB)	; DE = FCB address
+  111 0058' CD 0005     	CALL	BDOS		; call BDOS
+  112                   
+  113 005B' B7          	OR	A		; set flags
+  114 005C' 20 11       	JR	NZ, STRDE2	; file read error
+  115                   
+  116 005E' CD 007B'    	CALL	STRDCF		; close file
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
+RIMGLIB Z80
+
+  117 0061' CD 0085'    	CALL	STRDDM		; set default DMA address
+  118                   
+  119 0064' AF          	XOR	A
+  120 0065' 18 11       	JR	STRDDN
+  121                   	
+  122 0067' CD 0085'    STRDE1:	CALL	STRDDM		; set default DMA address
+  123 006A' 3E 02       	LD	A, 02h		; file open error
+  124 006C' 37          	SCF
+  125 006D' 18 09       	JR	STRDDN
+  126                   
+  127 006F' CD 007B'    STRDE2:	CALL	STRDCF		; close file
+  128 0072' CD 0085'    	CALL	STRDDM		; set default DMA address
+  129 0075' 3E 03       	LD	A, 03h		; file read error
+  130 0077' 37          	SCF
+  131                   
+  132 0078' D1          STRDDN:	POP	DE		; restore input DE for caller
+  133 0079' C1          	POP	BC		; restore input BC for caller
+  134 007A' C9          	RET
+  135                   
+  136                   ; ---- CLOSE FILE ---------------------------------------------
+  137 007B' 0E 10       STRDCF:	LD	C, 10h		; close file
+  138 007D' ED 5B 0090' 	LD	DE, (RIFCB)	; DE = FCB address
+  139 0081' CD 0005     	CALL	BDOS		; call BDOS
+  140 0084' C9          	RET
+  141                   
+  142                   ; ---- SET DEFAULT DMA ADDRESS --------------------------------
+  143 0085' 0E 1A       STRDDM: LD	C, 1Ah		; set DMA address
+  144 0087' 11 0080     	LD	DE, 0080h	; DE = default DMA address
+  145 008A' CD 0005     	CALL	BDOS		; call BDOS
+  146 008D' C9          	RET
+  147                   
+  148                   ; -------- DATA AREA --------
+  149 008E' 0000        BUADDR:	DW	0		; buffer start address
+  150 0090' 0000        RIFCB:	DW	0
+  151                   	END
+ 0 Error(s) Detected. 146 Program Bytes.
+ 15 Symbols Detected.
+pu
