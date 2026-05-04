@@ -24,13 +24,13 @@ and memory.
 |rdsclib|00h|   |        |       |bufaddr |RDINIT  |        |         |
 |rdsclib|01h|   |        |sectnum|discid  |RDSTRD  |        |         |
 |rimglib|00h|   |        |       |bufaddr |RIINIT  |        |         |
-|rimglib|01h|   |        |sectnum|filename|RISTRD  |        |         |
+|rimglib|01h|   |        |sectnum|FCB     |RISTRD  |        |         |
 |rmemlib|00h|   |        |       |bufaddr |RMINIT  |        |         |
 |rmemlib|01h|   |        |sectnum|romaddr |RMSTRD  |        |         |
 
 **Notes:**  
   - _bufaddr.:_ start address of the buffer area [0000..FFFFh]
   - _discid:_ disc identity number [00-FFh]
-  - _filename:_ pointer to a buffer containing the filename [0000..FFFFh]
+  - _FCB:_ pointer to 36 bits file control block [0000..FFFFh]
   - _romaddr:_ start address of ROM with R128 filesystem [0000..FFFFh]
   - _sectnum:_ the number of the sector to be read [0000..FFFFh]

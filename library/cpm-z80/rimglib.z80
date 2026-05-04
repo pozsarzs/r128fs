@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rimglib.z80                                                                |
-; | Routine collection, Z80, CP/M-80, v0.1                                     |
+; | Reading a logical sector from disc image, Z80, CP/M-80, v0.1               |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,15 +13,139 @@
 
 PUBLIC RIMG
 
+; -------- CONSTANTS --------
+BDOS	EQU	05h			; BDOS system call
+RNUM	EQU	02h			; Number of routines
+
 ; -------- CODE AREA --------
+; Input:     A = function code
+;            BC, DE, HL = input data
+; Output:    CF = 0, A = output data
+;            CF = 1, A = error code
+;
+; Error codes:
+;   01h: bad function
+;   02h: file open error
+;   03h: file read error
+;
+; Preserves: BC, DE
+; Clobbers:  AF, HL
 
-; (..)
+; ---- ENTRY POINT AND JUMP TABLE ----
+RIMG:	PUSH	BC		; save input BC for caller and selected routine
+	PUSH	DE		; save input DE for caller and selected routine
+	PUSH	HL		; save input HL for selected routine
 
-RIMG:
+	CP	RNUM		; compare A (function code) with max valid index
+	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
 
-; (..)
+	ADD	A, A		; A = A * 2 (word index into jump table)
+	LD	L, A
+	LD	H, 0		; HL = zero-extended offset
+	LD	DE, MNJTAB	; DE = address of jump table entry
+	ADD	HL, DE		; HL = address of table + offset
 
-; --- DATA AREA -----------------------------
-ADDR:	DB	0		; I/O address
+	LD	E, (HL)		; load low byte of handler address
+	INC	HL
+	LD	D, (HL)		; load high byte
+	EX	DE, HL		; HL = handler address
+	JP	(HL)		; indirect jump to selected routine
+
+MNJTAB:	DW	RIINIT		; 0: set buffer address and sector size
+	DW	RISTRD		; 1: read a logical sector and write to buffer
+
+MNBADF:	POP	HL		; restore input HL
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	LD	A, 01h		; A = 1
+	SCF			; CF = 1
+	RET
+
+; ---- INITIALIZE LIBRARY --------------------
+; Input:  HL = buffer start address (0000-FFFFh)
+; Output: CF = 0
+RIINIT:	LD	(BUADDR), HL	; store buffer starting address
+INITDN: XOR	A		; A = 0, CF = 0
+	POP	HL		; restore input HL
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
+
+; ---- READ A LOGICAL SECTOR ----------------------------------
+; Input:  DE = sector number (0000-FFFFh)
+;         HL = FCB start address (0000-FFFFh)
+; Output: CF = 0, A = 0
+;         CF = 1, A = error code
+RISTRD:	LD	C, 1Ah		; set DMA address
+	LD	DE, (BUADDR)	; DE = DMA address
+	CALL	BDOS		; call BDOS
+
+	POP	HL		; restore input HL for this routine
+	POP	DE		; restore input DE for this routine
+	PUSH	DE		; save input DE for caller
+	EX	DE, HL		; DE = FCB address, HL = sector number
+	LD	B, H		; BC = sector number
+	LD	C, L
+	LD	(RIFCB), DE	; store FCB address
+
+	LD	HL, 33		; HL = offset
+	ADD	HL, DE		; HL = FCB address + 33
+	LD	A, C		; A = low byte of sector number
+	LD      (HL), A		; store in FCB
+	INC	HL		; HL = FCB address + 34
+	LD      A, B		; A = high byte of sector number
+	LD      (HL), A		; store in FCB
+	INC	HL		; HL = FCB address + 35
+	XOR     A		; A = 0
+	LD      (HL), A		; store in FCB
+
+	LD	C, 0Fh		; open file
+	LD	DE, (RIFCB)	; DE = FCB address
+	CALL	BDOS		; call BDOS
+
+	OR	A		; set flags
+	JR	NZ, STRDE1	; file open error
+
+	LD	C, 21h		; read random
+	LD	DE, (RIFCB)	; DE = FCB address
+	CALL	BDOS		; call BDOS
+
+	OR	A		; set flags
+	JR	NZ, STRDE2	; file read error
+
+	CALL	STRDCF		; close file
+	CALL	STRDDM		; set default DMA address
+
+	XOR	A
+	JR	STRDDN
+	
+STRDE1:	CALL	STRDDM		; set default DMA address
+	LD	A, 02h		; file open error
+	SCF
+	JR	STRDDN
+
+STRDE2:	CALL	STRDCF		; close file
+	CALL	STRDDM		; set default DMA address
+	LD	A, 03h		; file read error
+	SCF
+
+STRDDN:	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
+
+; ---- CLOSE FILE ---------------------------------------------
+STRDCF:	LD	C, 10h		; close file
+	LD	DE, (RIFCB)	; DE = FCB address
+	CALL	BDOS		; call BDOS
+	RET
+
+; ---- SET DEFAULT DMA ADDRESS --------------------------------
+STRDDM: LD	C, 1Ah		; set DMA address
+	LD	DE, 0080h	; DE = default DMA address
+	CALL	BDOS		; call BDOS
+	RET
+
+; -------- DATA AREA --------
+BUADDR:	DW	0		; buffer start address
+RIFCB:	DW	0
 	END
-

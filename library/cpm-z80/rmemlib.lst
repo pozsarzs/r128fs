@@ -5,7 +5,7 @@ RMEMLIB Z80
     2                   ; | R128 ROM filesystem                                                        |
     3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
     4                   ; | rmemlib.z80                                                                |
-    5                   ; | Routine collection, Z80, CP/M-80, v0.1                                     |
+    5                   ; | Reading a logical sector from memory, Z80, CP/M-80, v0.1                   |
     6                   ; +----------------------------------------------------------------------------+
     7                   ; This is a free software: you can redistribute it and/or modify it under the
     8                   ; terms of the MIT License.
