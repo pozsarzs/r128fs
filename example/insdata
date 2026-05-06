@@ -1,10 +1,4 @@
 #!/bin/bash
-# +----------------------------------------------------------------------------+
-# | R128 ROM filesystem                                                        |
-# | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-# | insdata                                                                    |
-# | Insert data into image                                                     |
-# +----------------------------------------------------------------------------+
 
 # directory of files to be inserted into the image
 DIRDATA="./content"

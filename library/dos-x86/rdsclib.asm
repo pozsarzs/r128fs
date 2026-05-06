@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rdir.asm                                                                   |
-; | rdir utility, x86, DOS, v0.1                                               |
+; | rdsclib.asm                                                                |
+; | Reading a logical sector from disc, 8088, DOS, v0.1                        |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,21 +11,17 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-	ORG	100h
-EXTRN	R128
-EXTRN	RDRV
-EXTRN	RIMG
-EXTRN	RMEM
+PUBLIC RDSC
 
 ; -------- CODE AREA --------
-SECTION .TEXT
-START:
 
 ; (..)
 
-; -------- DATA AREA --------
-SECTION .DATA
+RDSC:
 
-MSG01:	DB   	'', 0Dh, 0Ah, '$'
+; (..)
+
+; --- DATA AREA -----------------------------
+ADDR:	DB	0		; I/O address
 	END
-
+

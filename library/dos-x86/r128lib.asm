@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | r128lib.asm                                                                |
-; | Routine collection, x86, DOS, v0.1                                         |
+; | Filesystem access routines, 8088, DOS, v0.1                                |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,7 +11,10 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-PUBLIC R128
+PUBLIC	R128
+EXTRN	RDSC
+EXTRN	RIMG
+EXTRN	RMEM
 
 ; -------- CODE AREA --------
 

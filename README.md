@@ -141,12 +141,13 @@ Sample files used to populate the filesystem image:
 
 - `insdata` – inserts files from the `content` directory into the image (Bash)
 - `mkimages` – creates empty images and embeds the file entry binary (Bash)
+- `dump` - parameterized, filtered hexdump  (Bash)
 
 **Generated outputs**
 
 - `r128ex.bin` – compiled file entry structure in binary form
-- `r128exrm.img.gz` – resulting EPROM image
-- `r128exfd.img.gz` – resulting 1.44 MB floppy disk image
+- `r128exrm.img(.gz)` – resulting EPROM image
+- `r128exfd.img(.gz)` – resulting 1.44 MB floppy disk image
 
 ![R128 sector layout](picture/r128ex.png)
 
@@ -157,56 +158,48 @@ Sample files used to populate the filesystem image:
 - _pink letter_: H: header entry, F: file entries, D: file data.
 - _cyan_: partial separator in entries.
 
-## 4. Supported platforms and toolchains
+The libraries' own README.md provides information about the compiler and linker
+that can be used for compilation.
 
-The following operating systems and toolchains are supported for building and
-using the R128 filesystem utilities:
-
-- CP/M (8080) – Digital Research CP/M RMAC Assembler
-- CP/M (Z80) – SLR Systems Z80ASM
-- DOS (x86) – NASM
-- Linux (x86) – GNU Assembler
-
-## 4. Libraries
+## 4. Libraries and utilities
 
 The `library` directory contains the core filesystem implementation and the
-device-specific block drivers.
+device-specific block drivers. The `utility` directory contains utilities for
+accessing the R128 file system.
 
-**CP/M**  
+**CP/M (8080 and Z80)**  
 
-- `./cpm*/r128lib.*` – the R128 filesystem core library
-- `./cpm*/rdrvlib.*` – disc-based block device driver
-- `./cpm*/rimglib.*` – image file–based block device driver
-- `./cpm*/rmemlib.*` – memory–based block device driver
+![R128 sector layout](picture/r128-cpm.png)
 
-**DOS**  
+- `library/cpm*/r128lib.*` – the R128 filesystem core library
+- `library/cpm*/rdsclib.*` – disc-based block device driver
+- `library/cpm*/rimglib.*` – image file–based block device driver
+- `library/cpm*/rmemlib.*` – memory–based block device driver
+- `library/cpm*/remxlib.*` – block device driver for External Memory Box (PEMX)
 
-- `./dos/r128lib.*` – the R128 filesystem core library
-- `./dos/rdrvlib.*` – disc-based block device driver
-- `./dos/rimglib.*` – image file–based block device driver
-- `./dos/rmemlib.*` – memory–based block device driver
+- `utility/cpm*/rcopy.*` – copies a file from the R128 to the host filesystem
+- `utility/cpm*/rdir.*`  – lists files in the R128 filesystem
+- `utility/cpm*/rtype.*` – outputs the contents of a file from the R128
+- `utility/cpm*/rstat.*` – displays filesystem information
 
-## 5. Utilities
+**DOS (8088)**  
 
-The `utility` directory contains the following programs for accessing the R128
-file system on CP/M or DOS.
+![R128 sector layout](picture/r128-dos.png)
 
-`RCOPY mem=addr|drv=drive|img=file source_file [target_file]`  
-Copies a file from the R128 filesystem to the host filesystem. If target_file is
-not specified, the original filename is used.
+- `library/dos/r128lib.*` – the R128 filesystem core library
+- `library/dos/rdsclib.*` – disc-based block device driver
+- `library/dos/rimglib.*` – image file–based block device driver
+- `library/dos/rmemlib.*` – memory–based block device driver
 
-`RDIR mem=addr|drv=drive|img=file [filename]`  
-Lists files in the R128 filesystem. If filename is specified, only matching
-entries are shown.
+- `utility/dos/rcopy.*` – copies a file from the R128 to the host filesystem
+- `utility/dos/rdir.*`  – lists files in the R128 filesystem
+- `utility/dos/rtype.*` – outputs the contents of a file from the R128
+- `utility/dos/rstat.*` – displays filesystem information
 
-`RSTAT mem=addr|drv=drive|img=file [filename]`  
-Displays filesystem information and validates structure. If filename is
-specified, shows detailed information for that file.
+The libraries' own README.md provides information about the compiler and linker
+that can be used for compilation.
 
-`RTYPE mem=addr|drv=drive|img=file filename`  
-Outputs the contents of a file from the R128 filesystem to the console.
-
-## 6. Licence
+## 5. Licence
 
 This is a free software: you can redistribute it and/or modify it under the
 terms of the MIT License.

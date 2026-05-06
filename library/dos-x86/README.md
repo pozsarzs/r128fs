@@ -1,0 +1,63 @@
+# R128
+
+## Routine collection
+
+|Key         |Value                                           |
+|------------|------------------------------------------------|
+|version     |v0.1                                            |
+|licence     |MIT                                             |
+|architecture|8088                                            |
+|OS          |DOS                                             |
+|compiler    |Microsoft Macro Assembler v?.?? (19??)          |
+|author      |[Pozsar Zsolt](mailto:pozsarzs@gmail.com) (2026)|
+|web         |[Pozsi's homepage](https://www.pozsarzs.hu)     |
+|            |[on Github](https://github.com/pozsarzs/r128fs) |
+
+This is a collection of routines for managing R128 file systems on disk, image,
+and memory.
+
+### Available functions
+
+|name   |A  |BX     |CX     |DX      |function|ret. AX|ret. BX |
+|-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
+|r128lib|00h|bufaddr|       |discid  |R128IN  |errcode|bufaddr |
+|r128lib|01h|       |       |maskaddr|R128FF  |errcode|entryptr|
+|r128lib|02h|       |       |        |R128FN  |errcode|entryptr|
+|r128lib|03h|       |       |nameaddr|R128OP  |errcode|        |
+|r128lib|04h|bufaddr|       |count   |R128RD  |errcode|bytesrd |
+|r128lib|05h|       |       |pos     |R128SK  |errcode|        |
+|r128lib|06h|       |       |        |R128CL  |errcode|        |
+|r128lib|07h|       |       |        |R128NF  |errcode|infoptr |
+|       |   |       |       |        |        |       |        |
+|rdsclib|00h|bufaddr|secttrk|discid  |RDINIT  |0      |bufaddr |
+|rdsclib|01h|       |       |sectnum |RDSTRD  |errcode|bufaddr |
+|       |   |       |       |        |        |       |        |
+|rimglib|00h|bufaddr|       |fcbaddr |RIINIT  |errcode|bufaddr |
+|rimglib|01h|       |       |sectnum |RISTRD  |errcode|bufaddr |
+|rimglib|02h|       |       |        |RISTCL  |errcode|        |
+|       |   |       |       |        |        |       |        |
+|rmemlib|00h|bufaddr|       |romaddr |RMINIT  |0      |bufaddr |
+|rmemlib|01h|       |       |sectnum |RMSTRD  |errcode|bufaddr |
+
+**Notes:**  
+  - _bufaddr:_ start address of the buffer area
+  - _bytesrd:_ number of bytes actually read into the buffer
+  - _count:_ number of bytes to read from the file
+  - _discid:_  disc identity number
+  - _entryptr:_ pointer to the current 16-byte file entry structure
+  - _errcode:_
+    - AX = 00h: no error         (CF = 0)
+    - AX = 01h: bad function     (CF = 1)
+    - AX = 02h: shift overflow   (CF = 1)
+    - AX = 03h: address overflow (CF = 1)
+    - AX = 04h: file open error  (CF = 1)
+    - AX = 05h: file read error  (CF = 1)
+    - AX = 06h: file close error (CF = 1)
+  - _fcbaddr:_ pointer to 36 bytes file control block
+  - _infoptr:_ pointer to a structure containing filesystem header information
+  - _maskaddr:_ pointer to a filename mask in 8.3 format
+  - _nameaddr:_ pointer to a filename in 8.3 format
+  - _pos:_ file position (byte offset from the beginning of the file)
+  - _romaddr:_ start address of ROM with R128 filesystem
+  - _sectnum:_ the number of the sector to be read
+  - _secttrk:_ sector/track

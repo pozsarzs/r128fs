@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rstat.z80                                                                  |
-; | rstat utility, Z80, CP/M-80, v0.1                                          |
+; | rcopy.asm                                                                  |
+; | rcopy utility, 8088, DOS, v0.1                                             |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -16,17 +16,16 @@ EXTRN	R128
 EXTRN	RDSC
 EXTRN	RIMG
 EXTRN	RMEM
-EXTRN	REMX
-
-; -------- CONSTANTS --------
-BDOS	EQU	005h			; BDOS system call
 
 ; -------- CODE AREA --------
+SECTION .TEXT
 START:
 
 ; (..)
 
 ; -------- DATA AREA --------
+SECTION .DATA
+
 MSG01:	DB   	'', 0Dh, 0Ah, '$'
 	END
 

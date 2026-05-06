@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rimglib.asm                                                                |
-; | Routine collection, x86, DOS, v0.1                                         |
+; | Reading a logical sector from image, 8088, DOS, v0.1                       |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.

@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rcopy.asm                                                                  |
-; | rcopy utility, x86, DOS, v0.1                                              |
+; | rstat.asm                                                                  |
+; | rstat utility, 8088, DOS, v0.1                                             |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,7 +13,7 @@
 
 	ORG	100h
 EXTRN	R128
-EXTRN	RDRV
+EXTRN	RDSC
 EXTRN	RIMG
 EXTRN	RMEM
 

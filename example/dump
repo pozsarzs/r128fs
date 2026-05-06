@@ -1,2 +1,3 @@
 #!/bin/bash
+
 hexdump -Cv r128exfd.img  | sed s/'|'// | sed s/'|'// | sed s/0000// | more

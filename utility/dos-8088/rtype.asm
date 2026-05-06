@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rdrvlib.asm                                                                |
-; | Routine collection, x86, DOS, v0.1                                         |
+; | rtype.asm                                                                  |
+; | rtype utility, 8088, DOS, v0.1                                             |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,17 +11,21 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-PUBLIC RDRV
+	ORG	100h
+EXTRN	R128
+EXTRN	RDSC
+EXTRN	RIMG
+EXTRN	RMEM
 
 ; -------- CODE AREA --------
+SECTION .TEXT
+START:
 
 ; (..)
 
-RDRV:
+; -------- DATA AREA --------
+SECTION .DATA
 
-; (..)
-
-; --- DATA AREA -----------------------------
-ADDR:	DB	0		; I/O address
+MSG01:	DB   	'', 0Dh, 0Ah, '$'
 	END
-
+

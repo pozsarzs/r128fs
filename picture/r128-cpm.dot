@@ -1,0 +1,49 @@
+digraph R128_PEMX_CPM {
+  pad=0.3;
+  splines=ortho;
+  edge [arrowsize=0.5];
+  node [shape=box];
+  nodesep=0.4;
+  ranksep=0.4;
+
+  APP1 [label="RCopy program\n rcopy.com", width=1.8, rank=1];
+  APP2 [label="RDir program\n rdir.com", width=1.8, rank=1];
+  APP3 [label="RType program\n rtype.com", width=1.8, rank=1];
+  APP4 [label="RStat program\n rstat.com", width=1.8, rank=1];
+  {rank=same; APP1; APP2; APP3; APP4};
+    
+  R1LIB[label="Filesystem handler\n r128lib.rel",  width=7, rank=2];
+  RPLIB [label="PEMX handler\n remxlib.rel", width=2, rank=3];
+  RMLIB [label="Memory handler\n rmemlib.rel", width=2, rank=3];
+  RILIB [label="Image file handler\n rimglib.rel", width=2, rank=3];
+  RDLIB [label="Disc handler\n rdsclib.rel", width=2, rank=3];
+  {rank=same; RMLIB; RILIB; RDLIB; RPLIB};
+
+  BDOS [label="BDOS functions\n (file I/O)", rank=4];
+  BIOS [label="BIOS functions\n (track/sector I/O)", rank=5];
+  DSIF [label="Disc interface", rank=6];
+  MEM [label="RAM/ROM", rank=6];
+  PIO [label="Z80PIO", rank=6];
+  {rank=same; DSIF; MEM; PIO};
+
+  DISC [label="Drive and disc", rank=7];
+  PEMX [label="PEMX unit\n EPROM bank", rank=7];
+  {rank=same; DISC; PEMX};
+
+  APP1 -> R1LIB [dir=both];
+  APP2 -> R1LIB [dir=both];
+  APP3 -> R1LIB [dir=both];
+  APP4 -> R1LIB [dir=both];
+  R1LIB -> RMLIB [dir=both];
+  RMLIB -> MEM [dir=both];
+  R1LIB -> RILIB [dir=both];
+  RILIB -> BDOS [dir=both];
+  BDOS  -> BIOS [dir=both];
+  BIOS  -> DSIF [dir=both];
+  DSIF  -> DISC [dir=both];
+  R1LIB -> RDLIB [dir=both];
+  RDLIB -> BIOS [dir=both];
+  R1LIB -> RPLIB [dir=both];
+  RPLIB -> PIO [dir=both];
+  PIO   -> PEMX [dir=both];
+}

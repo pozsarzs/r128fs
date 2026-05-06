@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rmemlib.asm                                                                |
-; | Routine collection, x86, DOS, v0.1                                         |
+; | Reading a logical sector from memory, 8088, DOS, v0.1                      |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.

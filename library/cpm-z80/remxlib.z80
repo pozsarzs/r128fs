@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rstat.z80                                                                  |
-; | rstat utility, Z80, CP/M-80, v0.1                                          |
+; | remxlib.z80                                                                |
+; | Reading a logical sector PEMX device, Z80, CP/M, v0.1                      |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,22 +11,17 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-	ORG	100h
-EXTRN	R128
-EXTRN	RDSC
-EXTRN	RIMG
-EXTRN	RMEM
-EXTRN	REMX
-
-; -------- CONSTANTS --------
-BDOS	EQU	005h			; BDOS system call
+PUBLIC REMX
 
 ; -------- CODE AREA --------
-START:
 
 ; (..)
 
-; -------- DATA AREA --------
-MSG01:	DB   	'', 0Dh, 0Ah, '$'
-	END
+REMX:
 
+; (..)
+
+; --- DATA AREA -----------------------------
+ADDR:	DB	0		; I/O address
+	END
+
