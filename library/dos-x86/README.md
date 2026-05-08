@@ -39,25 +39,26 @@ and memory.
 |rmemlib|00h|bufaddr|       |romaddr |RMINIT  |0      |bufaddr |
 |rmemlib|01h|       |       |sectnum |RMSTRD  |errcode|bufaddr |
 
-**Notes:**  
-  - _bufaddr:_ start address of the buffer area
-  - _bytesrd:_ number of bytes actually read into the buffer
-  - _count:_ number of bytes to read from the file
-  - _discid:_  disc identity number
-  - _entryptr:_ pointer to the current 16-byte file entry structure
-  - _errcode:_
-    - AX = 00h: no error         (CF = 0)
-    - AX = 01h: bad function     (CF = 1)
-    - AX = 02h: shift overflow   (CF = 1)
-    - AX = 03h: address overflow (CF = 1)
-    - AX = 04h: file open error  (CF = 1)
-    - AX = 05h: file read error  (CF = 1)
-    - AX = 06h: file close error (CF = 1)
-  - _fcbaddr:_ pointer to 36 bytes file control block
-  - _infoptr:_ pointer to a structure containing filesystem header information
-  - _maskaddr:_ pointer to a filename mask in 8.3 format
-  - _nameaddr:_ pointer to a filename in 8.3 format
-  - _pos:_ file position (byte offset from the beginning of the file)
-  - _romaddr:_ start address of ROM with R128 filesystem
-  - _sectnum:_ the number of the sector to be read
-  - _secttrk:_ sector/track
+**Notes:**
+
+- _bufaddr:_ start address of the buffer area
+- _bytesrd:_ number of bytes actually read into the buffer
+- _count:_ number of bytes to read from the file
+- _discid:_  disc identity number
+- _entryptr:_ pointer to the current 16-byte file entry structure
+- _errcode:_
+  - AX = 00h: no error         (CF = 0)
+  - AX = 01h: bad function     (CF = 1)
+  - AX = 02h: shift overflow   (CF = 1)
+  - AX = 03h: address overflow (CF = 1)
+  - AX = 04h: file open error  (CF = 1)
+  - AX = 05h: file read error  (CF = 1)
+  - AX = 06h: file close error (CF = 1)
+- _fcbaddr:_ pointer to 36 bytes file control block
+- _infoptr:_ pointer to a structure containing filesystem header information
+- _maskaddr:_ pointer to a filename mask in 8.3 format
+- _nameaddr:_ pointer to a filename in 8.3 format
+- _pos:_ file position (byte offset from the beginning of the file)
+- _romaddr:_ start address of ROM with R128 filesystem
+- _sectnum:_ the number of the sector to be read
+- _secttrk:_ sector/track

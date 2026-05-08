@@ -1,0 +1,35 @@
+// My VSCode settings
+
+{
+  "terminal.integrated.gpuAcceleration": "off",
+  "editor.detectIndentation": false,
+  "editor.tabSize": 8,
+  "editor.rulers": [80],
+
+  "[fortran]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 4,
+    "editor.rulers": [72, 80]
+  },
+
+  "[json]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  },
+
+  "[pascal]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2
+  },
+
+  "[plaintext]": {
+    "editor.insertSpaces": false,
+    "editor.tabSize": 8
+  },
+
+  "[z80-asm]": {
+    "editor.insertSpaces": false,
+    "editor.tabSize": 8,
+    "editor.rulers": [8, 16, 32, 80]
+  }
+}

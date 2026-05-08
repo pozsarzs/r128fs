@@ -11,30 +11,34 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-PUBLIC RMEM
+PUBLIC	RMEM
 
 ; -------- CONSTANTS --------
-RNUM	EQU	02h			; Number of routines
-SECT	EQU	0080h			; Logical sector size
+RNUM	EQU	02h		; number of routines
+SECT	EQU	0080h		; logical sector size
 
 ; -------- CODE AREA --------
-; Input:     A = function code
-;            BC, DE, HL = input data
-; Output:    CF = 0, A = output data
-;            CF = 1, A = error code
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
 ;
 ; Error codes:
-;   01h: bad function
-;   02h: shift overflow
-;   03h: address overflow
+;   00h. no error		CF = 0
+;   01h: bad function		CF = 1
+;   02h: shift overflow		CF = 1
+;   03h: address overflow	CF = 1
 ;
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
 ; ---- ENTRY POINT AND JUMP TABLE ----
-RMEM:	PUSH	BC		; save input BC for caller and selected routine
-	PUSH	DE		; save input DE for caller and selected routine
-	PUSH	HL		; save input HL for selected routine
+RMEM:	PUSH	BC		; save input BC for caller
+	PUSH	DE		; save input DE for caller
+
+	LD	(INP_HL), HL	; save input HL for selected routine 
+	LD	(INP_DE), DE	; save input DE for selected routine
 
 	CP	RNUM		; compare A (function code) with max valid index
 	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
@@ -51,34 +55,41 @@ RMEM:	PUSH	BC		; save input BC for caller and selected routine
 	EX	DE, HL		; HL = handler address
 	JP	(HL)		; indirect jump to selected routine
 
-MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
+MNJTAB:	DW	RMINIT		; 0: initialize module
 	DW	RMSTRD		; 1: read a logical sector and write to buffer
 
-MNBADF:	POP	HL		; restore input HL
-	POP	DE		; restore input DE for caller
+MNBADF:	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
-	LD	A, 01h		; A = 1
-	SCF			; CF = 1
+	LD	A, 01h		; A = 1 (error: bad function)
+	LD	HL, 0000h	; HL = 0
+	SCF			; CF = 1 (return with error)
 	RET
 
-; ---- INITIALIZE LIBRARY --------------------
-; Input:  HL = buffer start address (0000-FFFFh)
-; Output: CF = 0
-RMINIT:	LD	(BUADDR), HL	; store buffer starting address
+; ---- INITIALIZE MODULE -----------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+
+RMINIT:	LD	HL, (INP_HL)	; get input HL data	
+	LD	(BUFADD), HL	; store buffer starting address
+	LD	DE, (INP_DE)	; get input DE data	
+	LD	(ROMADD), DE	; store ROM starting address
+
 INITDN: XOR	A		; A = 0, CF = 0
-	POP	HL		; restore input HL
+	LD	HL, (BUFADD)	; HL = buffer address
 	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET
 
-; ---- READ A LOGICAL SECTOR ----------------------------------
-; Input:  DE = the number of the sector to be read (0000-FFFFh)
-;         HL = ROM start address (0000-FFFFh)
-; Output: CF = 0, A = 0
-;         CF = 1, A = error code
-RMSTRD:	POP	HL		; restore input HL for this routine
-	POP	DE		; restore input DE for this routine
-	PUSH	DE		; save input DE for caller
+; ---- READ A LOGICAL SECTOR -------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
+
+RMSTRD: LD	DE, (INP_DE)	; get input DE data	
+	LD	HL, (ROMADD)	; load ROM start address
 	LD	B, 7		; counter value
 
 STRDSH:	SLA	E		; shift low byte MSB -> CF
@@ -90,7 +101,7 @@ STRDSH:	SLA	E		; shift low byte MSB -> CF
 	JR	C, STRDE2	; if CF = 1 then goto STRDE2
 
 	LD	BC, SECT	; counter
-	LD	DE, (BUADDR)	; buffer start address
+	LD	DE, (BUFADD)	; buffer start address
 	LDIR			; 128 x (HL -> DE)
 
 	XOR	A		; A = 0, CF = 0
@@ -103,10 +114,14 @@ STRDE1:	LD	A, 02h		; A = 2
 STRDE2:	LD	A, 03h		; A = 3
 	SCF			; CF = 1
 	
-STRDDN:	POP	DE		; restore input DE for caller
+STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET
 
 ; -------- DATA AREA --------
-BUADDR:	DW	0		; buffer start address
+INP_DE:	DW	0		; input data in DE
+INP_HL:	DW	0		; input data in HL
+BUFADD:	DW	0		; buffer start address
+ROMADD:	DW	0		; ROM start address
 	END

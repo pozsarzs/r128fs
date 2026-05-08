@@ -1,7 +1,9 @@
 # R128
+
 **128 byte sector-based ROM filesystem**  
 
 ## Used terms
+
 - **medium** : The physical storage device that holds the filesystem (e.g.
   EPROM, floppy, ROM image, memory area).
 - **sector**: The logical block unit of the filesystem; fixed size 128 bytes.
@@ -54,7 +56,7 @@ size depends on the amount and size of the stored content.
 
 **Entry area**  
 
-```
+```text
 0000h ─┬─ sector #0
        ├─ +00h HDMAWO  entry #0: header
        ├─ +02h HDVERS
@@ -76,9 +78,9 @@ size depends on the amount and size of the stored content.
        :
 ```
 
-**If sector #1 is in the entry area** 
+**If sector #1 is in the entry area**  
 
-```
+```text
         :
 0080h ──┼── sector #1
         ├─ +00h FLNAME  entry #8: file entry
@@ -98,9 +100,9 @@ size depends on the amount and size of the stored content.
         :
 ```
 
-**If sector #1 is in the data area** 
+**If sector #1 is in the data area**  
 
-```
+```text
         :
 0080h ──┼── sector #1
         ├─ The 0th byte of the file.
@@ -137,13 +139,13 @@ Sample files used to populate the filesystem image:
 - `content/cpmhello.com`
 - `content/doshello.com`
 
-**Utility scripts**
+**Utility scripts**  
 
 - `insdata` – inserts files from the `content` directory into the image (Bash)
 - `mkimages` – creates empty images and embeds the file entry binary (Bash)
 - `dump` - parameterized, filtered hexdump  (Bash)
 
-**Generated outputs**
+**Generated outputs**  
 
 - `r128ex.bin` – compiled file entry structure in binary form
 - `r128exrm.img(.gz)` – resulting EPROM image
@@ -151,7 +153,7 @@ Sample files used to populate the filesystem image:
 
 ![R128 sector layout](picture/r128ex.png)
 
-**Notes:** 
+**Notes:**  
 
 - _green line and text_: sector separator and sectorname
 - _pink line_: header and file entries separator in entry area
