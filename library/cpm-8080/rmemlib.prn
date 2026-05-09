@@ -55,7 +55,7 @@
  0018 23        	INX	H
  0019 56        	MOV	D, M		; load high byte
  001A EB        	XCHG			; HL = handler address
- 001B E9        	PCHL	    	; indirect jump to selected routine
+ 001B E9        	PCHL			; indirect jump to selected routine
                 
  001C 2900      MNJTAB:	DW	RMINIT		; 0: initialize module
  001E 3C00      	DW	RMSTRD		; 1: read a logical sector and write to buffer
@@ -104,10 +104,6 @@
  004A 57        	MOV	D, A		; D = A
  004B DA6D00    	JC	STRDE1		; if CF = 1 then goto STRDE1
                 
-                ;	SLA	E		; shift low byte MSB -> CF
-                ;	RL	D		; shift high byte and CF -> LSB
-                ;	JC	STRDE1		; if CF = 1 then goto STRDE1
-                
  004E 05        	DCR	B		; decrement counter
  004F C24500    	JNZ	STRDSH		; if b > 0 then goto STRDSH
                 
@@ -127,10 +123,6 @@
  0064 78        	MOV	A, B		; A = B
  0065 B1        	ORA	C		; A = A OR C
  0066 C25F00    	JNZ	STRDCP		; if BC <> 0 goto STRDCP
-                
-                ;	LD	BC, SECT	; counter
-                ;	LD	DE, (BUFADD)	; buffer start address
-                ;	LDIR			; 128 x (HL -> DE)
                 
  0069 AF        	XRA	A		; A = 0, CF = 0
  006A C37600    	JMP	STRDDN		; goto STRDDN

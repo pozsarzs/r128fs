@@ -55,7 +55,7 @@ RMEM:	PUSH	B		; save input BC for caller
 	INX	H
 	MOV	D, M		; load high byte
 	XCHG			; HL = handler address
-	PCHL	    	; indirect jump to selected routine
+	PCHL			; indirect jump to selected routine
 
 MNJTAB:	DW	RMINIT		; 0: initialize module
 	DW	RMSTRD		; 1: read a logical sector and write to buffer
@@ -104,10 +104,6 @@ STRDSH:	MOV	A, E		; A = E
 	MOV	D, A		; D = A
 	JC	STRDE1		; if CF = 1 then goto STRDE1
 
-;	SLA	E		; shift low byte MSB -> CF
-;	RL	D		; shift high byte and CF -> LSB
-;	JC	STRDE1		; if CF = 1 then goto STRDE1
-
 	DCR	B		; decrement counter
 	JNZ	STRDSH		; if b > 0 then goto STRDSH
 
@@ -127,10 +123,6 @@ STRDCP:	MOV	A, M		; A = (HL)
 	MOV	A, B		; A = B
 	ORA	C		; A = A OR C
 	JNZ	STRDCP		; if BC <> 0 goto STRDCP
-
-;	LD	BC, SECT	; counter
-;	LD	DE, (BUFADD)	; buffer start address
-;	LDIR			; 128 x (HL -> DE)
 
 	XRA	A		; A = 0, CF = 0
 	JMP	STRDDN		; goto STRDDN
@@ -153,4 +145,3 @@ INPRHL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
 ROMADD:	DW	0		; ROM start address
 	END
-
