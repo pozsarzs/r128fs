@@ -9,6 +9,7 @@
 |architecture|Z80                                             |
 |OS          |CP/M-80                                         |
 |compiler    |SLR Systems Z80ASM v1.32 (1986)                 |
+|linker      |Microsoft Link-80 v3.44 (1981)                  |
 |author      |[Pozsar Zsolt](mailto:pozsarzs@gmail.com) (2026)|
 |web         |[Pozsi's homepage](https://www.pozsarzs.hu)     |
 |            |[on Github](https://github.com/pozsarzs/r128fs) |

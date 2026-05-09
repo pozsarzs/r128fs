@@ -11,116 +11,146 @@
                 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
                 ; FOR A PARTICULAR PURPOSE.
                 
-                PUBLIC RMEM
+                PUBLIC	RMEM
                 
                 ; -------- CONSTANTS --------
- 0002 =         RNUM	EQU	02h			; Number of routines
- 0080 =         SECT	EQU	0080h			; Logical sector size
+ 0002 =         RNUM	EQU	02h		; number of routines
+ 0080 =         SECT	EQU	0080h		; logical sector size
                 
-                ; -------- CODE AREA ---------------
-                ; Input:     A = function code
-                ;            BC, DE, HL = input data
-                ; Output:    CF = 0, A = output data
-                ;            CF = 1, A = error code
+                ; -------- CODE AREA --------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+                ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
                 ;
                 ; Error codes:
-                ;   01h: bad function
-                ;   02h: shift overflow
-                ;   03h: address overflow
+                ;   00h. no error		CF = 0
+                ;   01h: bad function		CF = 1
+                ;   02h: shift overflow		CF = 1
+                ;   03h: address overflow	CF = 1
                 ;
                 ; Preserves: BC, DE
                 ; Clobbers:  AF, HL
                 
                 ; ---- ENTRY POINT AND JUMP TABLE ----
-U0000 C5        RMEM:	PUSH	BC		; save input BC for caller and selected routine
-U0001 C5        	PUSH	DE		; save input DE for caller and selected routine
-U0002 C5        	PUSH	HL		; save input HL for selected routine
+ 0000 C5        RMEM:	PUSH	B		; save input BC for caller
+ 0001 D5        	PUSH	D		; save input DE for caller
                 
- 0003 FE02      	CPI	RNUM		; compare A (function code) with max valid index
- 0005 D21800    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+ 0002 227E00    	SHLD	INPRHL		; save input HL for selected routine 
+ 0005 62        	MOV	H, D
+ 0006 6B        	MOV	L, E
+ 0007 227C00    	SHLD	INPRDE		; save input DE for selected routine
                 
- 0008 111400    	LXI	D, MNJTAB	; DE = address of jump table entry
+ 000A FE02      	CPI	RNUM		; compare A (function code) with max valid index
+ 000C D22000    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
                 
- 000B 87        	ADD	A		; A = A * 2 (word index into jump table)
- 000C 6F        	MOV	L, A
- 000D 60        	MOV	H, 0		; HL = zero-extended offset
- 000E 19        	DAD	D		; HL = address of table + offset
+ 000F 87        	ADD	A		; A = A * 2 (word index into jump table)
+ 0010 6F        	MOV	L, A
+ 0011 2600      	MVI	H, 0		; HL = zero-extended offset
+ 0013 111C00    	LXI	D, MNJTAB	; DE = address of jump table entry
+ 0016 19        	DAD	D		; HL = address of table + offset
                 
- 000F 5E        	MOV	E, M		; load low byte of handler address (HL = address)
- 0010 23        	INX	H		; increment HL
- 0011 56        	MOV	D, M		; load high byte (HL = address)
- 0012 EB        	XCHG			; DE <-> HL, HL = handler address
- 0013 E9        	PCHL			; indirect jump to selected routine
+ 0017 5E        	MOV	E, M		; load low byte of handler address
+ 0018 23        	INX	H
+ 0019 56        	MOV	D, M		; load high byte
+ 001A EB        	XCHG			; HL = handler address
+ 001B E9        	PCHL	    	; indirect jump to selected routine
                 
- 0014 1F00      MNJTAB:	DW	RMINIT		; 0: set buffer address and sector size
- 0016 2700      	DW	RMSTRD		; 1: read a logical sector and write to buffer
+ 001C 2900      MNJTAB:	DW	RMINIT		; 0: initialize module
+ 001E 3C00      	DW	RMSTRD		; 1: read a logical sector and write to buffer
+                
+ 0020 D1        MNBADF:	POP	D		; restore input DE for caller
+ 0021 C1        	POP	B		; restore input BC for caller
+ 0022 3E01      	MVI	A, 01h		; A = 1 (error: bad function)
+ 0024 210000    	LXI	H, 0000h	; HL = 0
+ 0027 37        	STC			; CF = 1 (return with error)
+ 0028 C9        	RET
+                
+                ; ---- INITIALIZE MODULE -----------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+                
+ 0029 2A7E00    RMINIT:	LHLD	INPRHL		; get input HL data
+ 002C 228000    	SHLD	BUFADD		; store buffer starting address
+ 002F 2A7C00    	LHLD	INPRDE		; get input DE data
+                
+ 0032 228200    	SHLD	ROMADD		; store ROM starting address
+                
+ 0035 AF        INITDN: XRA	A		; A = 0, CF = 0
+ 0036 2A8000    	LHLD	BUFADD		; HL = buffer address
+ 0039 D1        	POP	D		; restore input DE for caller
+ 003A C1        	POP	B		; restore input BC for caller
+ 003B C9        	RET
+                
+                ; ---- READ A LOGICAL SECTOR -------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
+                
+ 003C 2A7C00    RMSTRD: LHLD	INPRDE		; get input DE data
+ 003F EB        	XCHG			; HL <-> DE
+ 0040 2A8200    	LHLD	ROMADD		; load ROM start address
+ 0043 0607      	MVI	B, 7		; counter value
+                
+ 0045 7B        STRDSH:	MOV	A, E		; A = E
+ 0046 87        	ADD	A		; A = A + A (MSB -> CF, LSB = 0)
+ 0047 5F        	MOV	E, A		; E = AE
+ 0048 7A        	MOV	A, D		; A = A
+ 0049 8F        	ADC	A		; A = A + A + CF (MSB -> CF, LSB = previous CF)
+ 004A 57        	MOV	D, A		; D = A
+ 004B DA6D00    	JC	STRDE1		; if CF = 1 then goto STRDE1
+                
+                ;	SLA	E		; shift low byte MSB -> CF
+                ;	RL	D		; shift high byte and CF -> LSB
+                ;	JC	STRDE1		; if CF = 1 then goto STRDE1
+                
+ 004E 05        	DCR	B		; decrement counter
+ 004F C24500    	JNZ	STRDSH		; if b > 0 then goto STRDSH
                 
-U0018 C1        MNBADF:	POP	HL		; restore input HL
-U0019 C1        	POP	DE		; restore input DE for caller
-U001A C1        	POP	BC		; restore input BC for caller
- 001B 3E01      	MVI	A, 01h		; A = 1
- 001D 37        	STC			; CF = 1
- 001E C9        	RET
+ 0052 19        	DAD	D		; sector address in HL (= HL + DE)
+ 0053 DA7300    	JC	STRDE2		; if CF = 1 then goto STRDE2
                 
-                ; ---- INITIALIZE LIBRARY --------------------
-                ; Input:  HL = buffer start address (0000-FFFFh)
-                ; Output: CF = 0
- 001F 225D00    RMINIT:	SHLD	BUADDR		; store buffer starting address
- 0022 AF        INITDN: XRA	A		; A = 0, CF = 0
-U0023 C1        	POP	HL		; restore input HL
-U0024 C1        	POP	DE		; restore input DE for caller
-U0025 C1        	POP	BC		; restore input BC for caller
- 0026 C9        	RET
+ 0056 018000    	LXI	B, SECT		; set counter
+ 0059 E5        	PUSH	H		; store sector address
+ 005A 2A8000        	LHLD	BUFADD		; HL =  buffer address
+ 005D EB        	XCHG			; DE <-> HL
+ 005E E1        	POP	H		; restore HL address
+ 005F 7E        STRDCP:	MOV	A, M		; A = (HL)
+ 0060 12        	STAX	D		; (DE) = A
+ 0061 23        	INX	H		; increment sorce pointer
+ 0062 13        	INX	D		; increment target pointer
+ 0063 0B        	DCX	B		; decrement counter
+ 0064 78        	MOV	A, B		; A = B
+ 0065 B1        	ORA	C		; A = A OR C
+ 0066 C25F00    	JNZ	STRDCP		; if BC <> 0 goto STRDCP
                 
-                ; ---- READ A LOGICAL SECTOR ----------------------------------
-                ; Input:  DE = the number of the sector to be read (0000-FFFFh)
-                ;         HL = ROM start address (0000-FFFFh)
-                ; Output: CF = 0, A = 0
-                ;         CF = 1, A = error code
-U0027 C1        RMSTRD:	POP	HL		; restore input HL for this routine
-U0028 C1        	POP	DE		; restore input DE for this routine
-U0029 C5        	PUSH	DE		; save input DE for caller
- 002A 0607      	MVI	B, 7		; B = counter value
+                ;	LD	BC, SECT	; counter
+                ;	LD	DE, (BUFADD)	; buffer start address
+                ;	LDIR			; 128 x (HL -> DE)
                 
- 002C 7B        STRDSH:	MOV	A, E		; shift DE via A
- 002D 87        	ADD	A
- 002E 5F        	MOV	E, A
- 002F 7A        	MOV	A, D
- 0030 17        	RAL
- 0031 57        	MOV	D, A
+ 0069 AF        	XRA	A		; A = 0, CF = 0
+ 006A C37600    	JMP	STRDDN		; goto STRDDN
                 
- 0032 DA5100    	JC	STRDE1		; if CF = 1 then goto STRDE1
-S               	DEC	B		; decrement counter
- 0035 C22C00    	JNZ	STRDSH		; if B > 0 then goto STRDSH
- 0038 19        	DAD	D		; sector address in HL (= HL + DE)
- 0039 DA5700    	JC	STRDE2		; if CF = 1 then goto STRDE2
+ 006D 3E02      STRDE1:	MVI	A, 02h		; A = 2
+ 006F 37        	STC			; CF = 1
+ 0070 C37600    	JMP	STRDDN		; goto STRDDN
                 
- 003C 018000    	LXI	B, SECT		; BC = byte counter (128 bytes)
- 003F 2A5D00    	LHLD	BUADDR		; HL = buffer start address (destination)
- 0042 EB        	XCHG			; HL <-> DE
- 0043 7E        STRDLP: MOV	A, M		; A = (HL) read byte from source
- 0044 12        	STAX	D		; (DE) = A write byte to destination
- 0045 23        	INX	H		; HL++
- 0046 13        	INX	D		; DE++
- 0047 0B        	DCX	B		; BC--
- 0048 78        	MOV	A, B		; check if BC == 0
- 0049 B1        	ORA	C
- 004A C24300    	JNZ	STRDLP		; loop until BC = 0
- 004D AF        	XRA	A		; A = 0, CF = 0
- 004E C35A00    	JMP	STRDDN		; goto STRDDN
-                
- 0051 3E02      STRDE1:	MVI	A, 02h		; A = 2
- 0053 37        	STC			; CF = 1
- 0054 C35A00    	JMP	STRDDN		; goto STRDDN
-                
- 0057 3E03      STRDE2:	MVI	A, 03h		; A = 3
- 0059 37        	STC			; CF = 1
+ 0073 3E03      STRDE2:	MVI	A, 03h		; A = 3
+ 0075 37        	STC			; CF = 1
                 	
-U005A C1        STRDDN:	POP	DE		; restore input DE for caller
-U005B C1        	POP	BC		; restore input BC for caller
- 005C C9        	RET
+ 0076 2A8000    STRDDN:	LHLD	BUFADD		; HL = buffer address
+ 0079 D1        	POP	D		; restore input DE for caller
+ 007A C1        	POP	B		; restore input BC for caller
+ 007B C9        	RET
                 
                 ; -------- DATA AREA --------
- 005D 0000      BUADDR:	DW	0		; buffer start address
- 005F           	END
-
+ 007C 0000      INPRDE:	DW	0		; input data in DE
+ 007E 0000      INPRHL:	DW	0		; input data in HL
+ 0080 0000      BUFADD:	DW	0		; buffer start address
+ 0082 0000      ROMADD:	DW	0		; ROM start address
+ 0084           	END
+

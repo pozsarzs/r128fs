@@ -1,0 +1,58 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | rmemchk.asm                                                                |
+                ; | Reading a logical sector from memory, 8080, CP/M-80, v0.1                  |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+ 0100           	ORG	100h
+                	EXTRN	RMEM
+                
+                ; -------- CONSTANTS --------
+ 0005 =         BDOS	EQU	0005h
+ 0009 =         PRINT	EQU	09h
+                
+                ; -------- CODE AREA --------
+                ; initialize
+ 0100 3E00      START:	MVI	A, 00h		; RMINIT
+ 0102 113301    	LXI	D, ROMIMG
+ 0105 215D01    	LXI	H, BUFFER
+ 0108 CD0000    	CALL	RMEM
+ 010B DA2401    	JC	INITER
+                
+                ; read sector 0
+ 010E 3E01      	MVI	A, 01h		; RMSTRD
+ 0110 110000    	LXI	D, 0000h
+ 0113 CD0000    	CALL	RMEM
+ 0116 DA2A01    	JC	READER
+                
+                ; print buffer
+ 0119 115D01    	LXI	D, BUFFER
+ 011C 0E09      	MVI	C, PRINT
+ 011E CD0500    	CALL	BDOS
+ 0121 C33201    	JMP	EXIT
+                
+                ; handling error
+ 0124 114501    INITER:	LXI	D, MSGINI	; init error
+ 0127 C32D01    	JMP	PRNER
+                
+ 012A 115101    READER:	LXI	D, MSGRED	; read error
+                
+ 012D 0E09      PRNER:	MVI	C, PRINT	; print error message
+ 012F CD0500    	CALL	BDOS
+                
+ 0132 C9        EXIT:	RET
+                
+                ; -------- DATA AREA --------
+ 0133 524D454D4CROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
+ 0145 494E495420MSGINI:	DB	'INIT ERROR$', 0
+ 0151 5245414420MSGRED:	DB	'READ ERROR$', 0
+ 015D           BUFFER:	DS	128
+ 01DD           	END	START
+

@@ -3,3 +3,12 @@ z80asm remxlib/mf
 z80asm rimglib/mf
 z80asm rmemlib/mf
 z80asm r128lib/mf
+z80asm rdscchk/mf
+z80asm remxchk/mf
+z80asm rimgchk/mf
+z80asm rmemchk/mf
+l80 rdscchk,rdsclib,rdscchk/n/e
+l80 remxchk,remxlib,remxchk/n/e
+l80 rimgchk,rimglib,rimgchk/n/e
+l80 rmemchk,rmemlib,rmemchk/n/e
+l80 r128chk,r128lib,r128chk/n/e

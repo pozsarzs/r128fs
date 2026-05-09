@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rmemchk.z80                                                                |
-; | Reading a logical sector from memory, Z80, CP/M-80, v0.1                   |
+; | rmemchk.asm                                                                |
+; | Reading a logical sector from memory, 8080, CP/M-80, v0.1                  |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -12,14 +12,13 @@
 ; FOR A PARTICULAR PURPOSE.
 
 	ORG	100h
-	EXTERN	RMEM
+	EXTRN	RMEM
 
 ; -------- CONSTANTS --------
 BDOS	EQU	0005h
 PRINT	EQU	09h
 
 ; -------- CODE AREA --------
-
 ; initialize
 START:	MVI	A, 00h		; RMINIT
 	LXI	D, ROMIMG
@@ -35,7 +34,7 @@ START:	MVI	A, 00h		; RMINIT
 
 ; print buffer
 	LXI	D, BUFFER
-	MOV	C, PRINT
+	MVI	C, PRINT
 	CALL	BDOS
 	JMP	EXIT
 
@@ -45,7 +44,7 @@ INITER:	LXI	D, MSGINI	; init error
 
 READER:	LXI	D, MSGRED	; read error
 
-PRNER:	MOV	C, PRINT	; print error message
+PRNER:	MVI	C, PRINT	; print error message
 	CALL	BDOS
 
 EXIT:	RET
@@ -55,3 +54,5 @@ ROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
 MSGINI:	DB	'INIT ERROR$', 0
 MSGRED:	DB	'READ ERROR$', 0
 BUFFER:	DS	128
+	END	START
+
