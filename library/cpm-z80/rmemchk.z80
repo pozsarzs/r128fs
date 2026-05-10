@@ -15,13 +15,13 @@
 	EXTRN	RMEM
 
 ; -------- CONSTANTS --------
-BDOS	EQU	0005h
-PRINT	EQU	09h
+BDOS	EQU	0005h		; BDOS entry
+PRINT	EQU	09h		; BDOS print function
 
 ; -------- CODE AREA --------
-
-; initialize
-START:	LD	A, 00h		; RMINIT
+START:
+; initialization
+	LD	A, 00h		; RMINIT
 	LD	DE, ROMIMG
 	LD	HL, BUFFER
 	CALL	RMEM

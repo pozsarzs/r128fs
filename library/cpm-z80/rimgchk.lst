@@ -1,0 +1,85 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+RIMGCHK Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | rimgchk.z80                                                                |
+    5                   ; | Reading a logical sector from image, Z80, CP/M-80, v0.1                    |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14         0100      	ORG	100h
+   15                   	EXTRN	RIMG
+   16                   
+   17                   ; -------- CONSTANTS --------
+   18         0005      BDOS	EQU	0005h		; BDOS entry
+   19         0002      CONOUT	EQU	02h		; BDOS console output
+   20         0000      RIINIT	EQU	00h		; rimglib functions
+   21         0001      RISTRD	EQU	01h
+   22         0002      RIDONE	EQU	02h
+   23                   
+   24                   ; -------- CODE AREA --------
+   25 0100              START:
+   26                   ; initialization and open
+   27 0100  3E 00       	LD	A, RIINIT
+   28 0102  06 00       	LD	B, 0
+   29 0104  11 014E     	LD	DE, FCB
+   30 0107  21 0173     	LD	HL, BUFFER
+   31 010A  CD 0000#    	CALL	RIMG
+   32 010D  38 27       	JR	C, ERROR
+   33                   
+   34                   ; read record
+   35 010F  3E 01       	LD	A, RISTRD
+   36 0111  ED 5B 0140  	LD	DE, (RECNUM)
+   37 0115  CD 0000#    	CALL	RIMG
+   38 0118  38 1C       	JR	C, ERROR
+   39                   
+   40                   ; dump buffer to console
+   41 011A  21 0173     	LD	HL, BUFFER
+   42 011D  06 80       	LD	B, 128
+   43 011F  5E          PRLOOP:	LD	E, (HL)
+   44 0120  0E 02       	LD	C, CONOUT
+   45 0122  C5          	PUSH	BC
+   46 0123  D5          	PUSH	DE
+   47 0124  E5          	PUSH	HL
+   48 0125  CD 0005     	CALL	BDOS
+   49 0128  E1          	POP	HL
+   50 0129  D1          	POP	DE
+   51 012A  C1          	POP	BC
+   52 012B  23          	INC	HL
+   53 012C  10 F1       	DJNZ	PRLOOP
+   54                   
+   55                   ; close and cleanup
+   56 012E  3E 02       DONE:	LD	A, RIDONE
+   57 0130  06 00       	LD	B, 0
+   58 0132  CD 0000#    	CALL	RIMG
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+RIMGCHK Z80
+
+   59 0135  C9          	RET
+   60                   
+   61                   ; handling error
+   62 0136  21 0142     ERROR:	LD	HL, ERRMSG
+   63 0139  0E 09       	LD	C, 09h
+   64 013B  EB          	EX	DE, HL
+   65 013C  CD 0005     	CALL	BDOS
+   66 013F  C9          	RET
+   67                   
+   68                   ; -------- DATA AREA --------
+   69 0140  0001        RECNUM:	DW	0001h		; logical 128-byte record number
+   70 0142  52 65 61 64 ERRMSG:	DB	'Read error!$'
+   71 014E  00          FCB:	DB	0		; drive
+   72 014F  52 31 32 38 	DB	'R128EXRMIMG'	; 8.3 filename
+   73 015A  00 00 00 00 	DS	25, 0
+   74 0173  00 00 00 00 BUFFER:	DS	128, 0
+   75                   	END
+ 0 Error(s) Detected.
+ 243 Absolute Bytes. 14 Symbols Detected.
+  
+   55                   ; close 

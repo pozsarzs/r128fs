@@ -1,4 +1,4 @@
-; +----------------------------------------------------------------------------+
+7; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rimglib.z80                                                                |
@@ -41,7 +41,10 @@ RIMG:	PUSH	BC		; save input BC for caller
 
 	LD	(INP_HL), HL	; save input HL for selected routine 
 	LD	(INP_DE), DE	; save input DE for selected routine
-	LD	(INP_B), B	; save input B for selected routine
+	LD	C, A
+	LD	A, B
+	LD	(INP_B), A	; save input B for selected routine
+	LD	A, C
 
 	CP	RNUM		; compare A (function code) with max valid index
 	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
@@ -77,12 +80,13 @@ MNBADF:	POP	DE		; restore input DE for caller
 
 RIINIT: LD	A, (INP_B)	; get input B data	
 	OR	A
-	JR	Z, INITOP	; if A = 0 then goto INITOP
+	JR	NZ, INITOP	; if A = 1 then goto INITOP
 
 	LD	DE, (INP_DE)	; get input DE data	
 	LD	(FCBADD), DE	; store FCB starting address
 	LD	HL, (INP_HL)	; get input HL data	
 	LD	(BUFADD), HL	; store buffer starting address
+
 	LD	C, 1Ah		; set DMA address
 	LD	DE, (BUFADD)	; DE = DMA address
 	CALL	BDOS		; call BDOS
@@ -125,7 +129,7 @@ RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
 	XOR     A		; A = 0
 	LD      (HL), A		; store in FCB
 
-	LD	C, 33h		; read random
+	LD	C, 21h		; read random
 	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 
@@ -151,7 +155,7 @@ STRDER:	LD	A, 05h		; A = 5, error code
 
 RIDONE: LD	A, (INP_B)	; get input B data	
 	OR	A
-	JR	Z, DONECL	; if A = 0 then goto INITCL
+	JR	NZ, DONECL	; if A = 1 then goto INITCL
 
 	LD	C, 1Ah		; set DMA address
 	LD	DE, 0080h	; DE = default DMA address
@@ -180,3 +184,4 @@ INP_HL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
 FCBADD:	DW	0		; FCB start address
 	END
+
