@@ -55,4 +55,3 @@ ROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
 MSGINI:	DB	'INIT ERROR$', 0
 MSGRED:	DB	'READ ERROR$', 0
 BUFFER:	DS	128
-

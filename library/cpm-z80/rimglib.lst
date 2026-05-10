@@ -1,7 +1,7 @@
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
 RIMGLIB Z80
 
-    1                   7; +----------------------------------------------------------------------------+
+    1                   ; +----------------------------------------------------------------------------+
     2                   ; | R128 ROM filesystem                                                        |
     3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
     4                   ; | rimglib.z80                                                                |
@@ -59,7 +59,8 @@ RIMGLIB Z80
    56 001A' 19          	ADD	HL, DE		; HL = address of table + offset
    57                   
    58 001B' 5E          	LD	E, (HL)		; load low byte of handler address
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RIMGLIB Z80
 
    59 001C' 23          	INC	HL
@@ -120,7 +121,8 @@ RIMGLIB Z80
   114                   ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
   115                   
   116 0064' ED 5B 00BE' RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
+
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
 RIMGLIB Z80
 
   117 0068' 2A 00B8'    	LD	HL, (INP_DE)	; HL = sector number
@@ -181,7 +183,8 @@ RIMGLIB Z80
   172 00AF' D1          	POP	DE		; restore input DE for caller
   173 00B0' C1          	POP	BC		; restore input BC for caller
   174 00B1' C9          	RET
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   4
+
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   4
 RIMGLIB Z80
 
   175                   
@@ -198,6 +201,7 @@ RIMGLIB Z80
   186                   	END
  0 Error(s) Detected. 192 Program Bytes.
  21 Symbols Detected.
-	XOR	A		; A = 0, CF = 0
+
+	XOR	A		; A = 0, CF = 0
   170                   
   171 00AC' 2A 00BC'    DONEDN: LD	HL, (BUFADD)	; HL = bu
