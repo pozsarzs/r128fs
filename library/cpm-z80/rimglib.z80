@@ -80,10 +80,9 @@ RIINIT: LD	A, (INP_B)	; get input B data
 	JR	Z, INITOP	; if A = 0 then goto INITOP
 
 	LD	DE, (INP_DE)	; get input DE data	
-	LD	(FCBADD), DE	; store ROM starting address
+	LD	(FCBADD), DE	; store FCB starting address
 	LD	HL, (INP_HL)	; get input HL data	
 	LD	(BUFADD), HL	; store buffer starting address
-	EX	DE, HL		; DE = BUFADD, HL = FCBADD
 	LD	C, 1Ah		; set DMA address
 	LD	DE, (BUFADD)	; DE = DMA address
 	CALL	BDOS		; call BDOS
@@ -110,24 +109,10 @@ INITER:	LD	A, 04h		; A = 4, error code
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
 
-RISTRD:	
-
-	LD	DE, (FCBADD)
-
-	POP	HL		; restore input HL for this routine
-	POP	DE		; restore input DE for this routine
-	PUSH	DE		; save input DE for caller
-	EX	DE, HL		; DE = FCB address, HL = sector number
+RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
+	LD	HL, (INP_DE)	; HL = sector number
 	LD	B, H		; BC = sector number
 	LD	C, L
-	LD	(RIFCB), DE	; store FCB address
-
-
- 	LD	DE, (INP_DE)	; get input DE data	
-	LD	HL, (ROMADD)	; load ROM start address
-
-
-
 
 	LD	HL, 33		; HL = offset
 	ADD	HL, DE		; HL = FCB address + 33
@@ -140,37 +125,23 @@ RISTRD:
 	XOR     A		; A = 0
 	LD      (HL), A		; store in FCB
 
-	OR	A		; set flags
-	JR	NZ, STRDE1	; file open error
-
-	LD	C, 21h		; read random
-	LD	DE, (RIFCB)	; DE = FCB address
+	LD	C, 33h		; read random
+	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 
 	OR	A		; set flags
-	JR	NZ, STRDE2	; file read error
+	JR	NZ, STRDER	; file read error
 
-	CALL	STRDCF		; close file
-	CALL	STRDDM		; set default DMA address
+	XOR	A		; A = 0, CF = 0
 
-	XOR	A
-	JR	STRDDN
-	
-STRDE1:	CALL	STRDDM		; set default DMA address
-	LD	A, 02h		; file open error
-	SCF
-	JR	STRDDN
-
-STRDE2:	CALL	STRDCF		; close file
-	CALL	STRDDM		; set default DMA address
-	LD	A, 03h		; file read error
-	SCF
-
-STRDDN:	POP	DE		; restore input DE for caller
+STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET
 
-
+STRDER:	LD	A, 05h		; A = 5, error code
+	SCF			; CF = 1
+	JR	STRDDN
 
 ; ---- CLEANUP MODULE --------------------------------------------------
 
@@ -198,7 +169,7 @@ DONEDN: LD	HL, (BUFADD)	; HL = buffer address
 	POP	BC		; restore input BC for caller
 	RET
 
-DONETER:	LD	A, 06h		; A = 6, error code
+DONEER:	LD	A, 06h		; A = 6, error code
 	SCF			; CF = 1
 	JR	DONEDN		; go INITDN
 
@@ -207,5 +178,5 @@ INP_B:	DB	0		; input data in B
 INP_DE:	DW	0		; input data in DE
 INP_HL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
-FCBADD:	DW	0		; pointer to FCB
+FCBADD:	DW	0		; FCB start address
 	END
