@@ -8,7 +8,8 @@
 |licence     |MIT                                             |
 |architecture|8088                                            |
 |OS          |DOS                                             |
-|compiler    |Microsoft Macro Assembler v?.?? (19??)          |
+|compiler    |Microsoft Macro Assembler v3.0 (1984)           |
+|linker      |Microsoft 8086 Object Linker v3.0 (1985)        |
 |author      |[Pozsar Zsolt](mailto:pozsarzs@gmail.com) (2026)|
 |web         |[Pozsi's homepage](https://www.pozsarzs.hu)     |
 |            |[on Github](https://github.com/pozsarzs/r128fs) |
@@ -32,33 +33,42 @@ and memory.
 |rdsclib|00h|bufaddr|secttrk|discid  |RDINIT  |0      |bufaddr |
 |rdsclib|01h|       |       |sectnum |RDSTRD  |errcode|bufaddr |
 |       |   |       |       |        |        |       |        |
-|rimglib|00h|bufaddr|       |fcbaddr |RIINIT  |errcode|bufaddr |
+|rimglib|00h|bufaddr|onlyfop|fcbaddr |RIINIT  |errcode|bufaddr |
 |rimglib|01h|       |       |sectnum |RISTRD  |errcode|bufaddr |
-|rimglib|02h|       |       |        |RISTCL  |errcode|        |
+|rimglib|02h|       |onlyfcl|        |RIDONE  |errcode|        |
 |       |   |       |       |        |        |       |        |
 |rmemlib|00h|bufaddr|       |romaddr |RMINIT  |0      |bufaddr |
 |rmemlib|01h|       |       |sectnum |RMSTRD  |errcode|bufaddr |
 
 **Notes:**
 
+- _banknum:_ bank number of PEMX device
 - _bufaddr:_ start address of the buffer area
 - _bytesrd:_ number of bytes actually read into the buffer
 - _count:_ number of bytes to read from the file
 - _discid:_  disc identity number
 - _entryptr:_ pointer to the current 16-byte file entry structure
 - _errcode:_
-  - AX = 00h: no error         (CF = 0)
-  - AX = 01h: bad function     (CF = 1)
-  - AX = 02h: shift overflow   (CF = 1)
-  - AX = 03h: address overflow (CF = 1)
-  - AX = 04h: file open error  (CF = 1)
-  - AX = 05h: file read error  (CF = 1)
-  - AX = 06h: file close error (CF = 1)
+  - A = 00h: no error         (CF = 0)
+  - A = 01h: bad function     (CF = 1)
+  - A = 02h: shift overflow   (CF = 1)
+  - A = 03h: address overflow (CF = 1)
+  - A = 04h: file open error  (CF = 1)
+  - A = 05h: file read error  (CF = 1)
+  - A = 06h: file close error (CF = 1)
 - _fcbaddr:_ pointer to 36 bytes file control block
 - _infoptr:_ pointer to a structure containing filesystem header information
 - _maskaddr:_ pointer to a filename mask in 8.3 format
 - _nameaddr:_ pointer to a filename in 8.3 format
+- _onlyfop:_
+  - B = 00h: initialize and open image file
+  - B > 00h: file open only
+- _onlyfcl:_
+  - B = 00h: close image file and clean up
+  - B > 00h: file close only
+- _pioaddr:_ i/o address of Z80PIO circuit
 - _pos:_ file position (byte offset from the beginning of the file)
 - _romaddr:_ start address of ROM with R128 filesystem
 - _sectnum:_ the number of the sector to be read
 - _secttrk:_ sector/track
+

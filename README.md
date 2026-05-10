@@ -171,7 +171,7 @@ accessing the R128 file system.
 
 **CP/M (8080 and Z80)**  
 
-![R128 sector layout](picture/r128-cpm.png)
+![R128 Data Flow Diagram on CP/M](picture/r128-cpm.png)
 
 - `library/cpm*/r128lib.*` – the R128 filesystem core library
 - `library/cpm*/rdsclib.*` – disc-based block device driver
@@ -186,7 +186,7 @@ accessing the R128 file system.
 
 **DOS (8088)**  
 
-![R128 sector layout](picture/r128-dos.png)
+![R128 Data Flow Diagram on DOS](picture/r128-dos.png)
 
 - `library/dos/r128lib.*` – the R128 filesystem core library
 - `library/dos/rdsclib.*` – disc-based block device driver

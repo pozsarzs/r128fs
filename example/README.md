@@ -5,9 +5,9 @@
 |file           |description                                 |
 |---------------|--------------------------------------------|
 |_content_      |files related to image content              |
-|_linux_        |entry area source for GNU Assembler on Linux|
-|_dos_          |entry area source for NASM on DOS           |
-|_cpm_          |entry area source for ASM and Z80ASM on CP/M|
+|_linux_        |entry area source for Linux                 |
+|_dos_          |entry area source for DOS                   |
+|_cpm_          |entry area source for CP/M                  |
 |dump           |parameterized, filtered hexdump (Bash)      |
 |insdata        |inserts content into data area (Bash)       |
 |mkimages       |makes images and inserts entry area (Bash)  |
@@ -17,7 +17,7 @@
 
 ## Assemblers for build
 
-- CP/M (8080) - Digital Research CP/M Assembler
-- CP/M (Z80) – SLR Systems Z80ASM
-- DOS (8088) – NASM
+- CP/M (8080) - Digital Research CP/M Relocatable Assembler
+- CP/M (Z80) – SLR Systems Z80 Relocatable Assembler
+- DOS (8088) – Netwide Assembler
 - Linux (x86) – GNU Assembler

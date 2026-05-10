@@ -36,9 +36,9 @@ and memory.
 |remxlib|00h|       |      |pioaddr |bufaddr|RMINIT  |0      |bufaddr |
 |remxlib|01h|banknum|      |sectnum |       |RMSTRD  |errcode|bufaddr |
 |       |   |       |      |        |       |        |       |        |
-|rimglib|00h|       |      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
 |rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
-|rimglib|02h|       |      |        |       |RISTCL  |errcode|        |
+|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
 |       |   |       |      |        |       |        |       |        |
 |rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
 |rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
@@ -63,6 +63,12 @@ and memory.
 - _infoptr:_ pointer to a structure containing filesystem header information
 - _maskaddr:_ pointer to a filename mask in 8.3 format
 - _nameaddr:_ pointer to a filename in 8.3 format
+- _onlyfop:_
+  - B = 00h: initialize and open image file
+  - B > 00h: file open only
+- _onlyfcl:_
+  - B = 00h: close image file and clean up
+  - B > 00h: file close only
 - _pioaddr:_ i/o address of Z80PIO circuit
 - _pos:_ file position (byte offset from the beginning of the file)
 - _romaddr:_ start address of ROM with R128 filesystem

@@ -21,13 +21,13 @@ digraph R128_PEMX_CPM {
 
   BDOS [label="BDOS functions\n (file I/O)", rank=4];
   BIOS [label="BIOS functions\n (track/sector I/O)", rank=5];
-  DSIF [label="Disc interface", rank=6];
-  MEM [label="RAM/ROM", rank=6];
-  PIO [label="Z80PIO", rank=6];
+  DSIF [label="Disc interface", style=rounded, rank=6];
+  MEM [label="RAM/ROM", style=rounded, rank=6];
+  PIO [label="Z80PIO", style=rounded, rank=6];
   {rank=same; DSIF; MEM; PIO};
 
-  DISC [label="Drive and disc", rank=7];
-  PEMX [label="PEMX unit\n EPROM bank", rank=7];
+  DISC [label="Drive and disc", style=rounded ,rank=7];
+  PEMX [label="PEMX unit\n EPROM bank", style=rounded, rank=7];
   {rank=same; DISC; PEMX};
 
   APP1 -> R1LIB [dir=both];

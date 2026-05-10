@@ -20,10 +20,10 @@ digraph R128_DOS {
 
   DOS [label="DOS functions\n (file I/O)", rank=4];
   BIOS [label="BIOS functions\n (track/sector I/O)", rank=5];
-  DSIF [label="Disc interface", rank=6];
-  MEM [label="RAM/ROM", rank=6];
+  DSIF [label="Disc interface", style=rounded, rank=6];
+  MEM [label="RAM/ROM", style=rounded, rank=6];
   {rank=same; DSIF; MEM};
-  DISC [label="Drive and disc", rank=7];
+  DISC [label="Drive and disc", style=rounded, rank=7];
 
   APP1 -> R1LIB [dir=both];
   APP2 -> R1LIB [dir=both];

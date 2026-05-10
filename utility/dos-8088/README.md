@@ -8,7 +8,8 @@
 |licence     |MIT                                             |
 |architecture|8088                                            |
 |OS          |DOS                                             |
-|compiler    |Microsoft Macro Assembler v?.?? (19??)          |
+|compiler    |Microsoft Macro Assembler v3.0 (1984)           |
+|linker      |Microsoft 8086 Object Linker v3.0 (1985)        |
 |author      |[Pozsar Zsolt](mailto:pozsarzs@gmail.com) (2026)|
 |web         |[Pozsi's homepage](https://www.pozsarzs.hu)     |
 |            |[on Github](https://github.com/pozsarzs/r128fs) |
