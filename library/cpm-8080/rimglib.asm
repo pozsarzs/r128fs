@@ -43,37 +43,34 @@ RNUM	EQU	03h			; Number of routines
 RIMG:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
-	LD	(INP_HL), HL	; save input HL for selected routine 
-	LD	(INP_DE), DE	; save input DE for selected routine
-	LD	C, A
-	LD	A, B
-	LD	(INP_B), A	; save input B for selected routine
-	LD	A, C
+	SHLD	INPRHL		; save input HL for selected routine 
+	MOV	H, D
+	MOV	L, E
+	SHLD	INPRDE		; save input DE for selected routine
 
-	CP	RNUM		; compare A (function code) with max valid index
-	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+	CPI	RNUM		; compare A (function code) with max valid index
+	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
 
-	ADD	A, A		; A = A * 2 (word index into jump table)
-	LD	L, A
-	LD	H, 0		; HL = zero-extended offset
-	LD	DE, MNJTAB	; DE = address of jump table entry
-	ADD	HL, DE		; HL = address of table + offset
+	ADD	A		; A = A * 2 (word index into jump table)
+	MOV	L, A
+	MVI	H, 0		; HL = zero-extended offset
+	LXI	D, MNJTAB	; DE = address of jump table entry
+	DAD	D		; HL = address of table + offset
 
-	LD	E, (HL)		; load low byte of handler address
-	INC	HL
-	LD	D, (HL)		; load high byte
-	EX	DE, HL		; HL = handler address
-	JP	(HL)		; indirect jump to selected routine
+	MOV	E, M		; load low byte of handler address
+	INX	H
+	MOV	D, M		; load high byte
+	XCHG			; HL = handler address
+	PCHL			; indirect jump to selected routine
 
-MNJTAB:	DW	RIINIT		; 0: initialize module and/or open image file
-	DW	RISTRD		; 1: read a logical sector from image and write to buffer
-	DW	RIDONE		; 2: clean up and/or close image file
+MNJTAB:	DW	RMINIT		; 0: initialize module
+	DW	RMSTRD		; 1: read a logical sector and write to buffer
 
-MNBADF:	POP	DE		; restore input DE for caller
-	POP	BC		; restore input BC for caller
-	LD	A, 01h		; A = 1 (error: bad function)
-	LD	HL, 0000h	; HL = 0
-	SCF			; CF = 1 (return with error)
+MNBADF:	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
+	MVI	A, 01h		; A = 1 (error: bad function)
+	LXI	H, 0000h	; HL = 0
+	STC			; CF = 1 (return with error)
 	RET
 
 ; ---- INITIALIZE MODULE -----------------------------------------------
@@ -82,34 +79,37 @@ MNBADF:	POP	DE		; restore input DE for caller
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
 
-RIINIT: LD	A, (INP_B)	; get input B data	
-	OR	A
-	JR	NZ, INITOP	; if A = 1 then goto INITOP
+RIINIT: LDA	INP_B		; get input B data	
+	ORA	A
+	JNZ	INITOP		; if A = 1 then goto INITOP
 
-	LD	DE, (INP_DE)	; get input DE data	
-	LD	(FCBADD), DE	; store FCB starting address
-	LD	HL, (INP_HL)	; get input HL data	
-	LD	(BUFADD), HL	; store buffer starting address
+	LHLD	INP_DE		; get input DE data	
+	SHLD	FCBADD		; store FCB starting address
+	XCHG
+	LHLD	INP_HL		; get input HL data	
+	SHLD	BUFADD		; store buffer starting address
 
-	LD	C, SETDMA	; set DMA address
-	LD	DE, (BUFADD)	; DE = DMA address
+	MVI	C, SETDMA	; set DMA address
+	LHLD	BUFADD		; HL = DMA address
+	XCHG			; DE = DMA address
 	CALL	BDOS		; call BDOS
 
-INITOP:	LD	C, OPEN		; open file
-	LD	DE, (FCBADD)	; DE = FCB address
+INITOP:	MVI	C, OPEN		; open file
+	LHLD	FCBADD		; HL = FCB address
+	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS
-	INC	A		; check result (at error: FFh -> 00h)
-	JR	Z, INITER	; at error go INITER
-	XOR	A		; A = 0, CF = 0
+	INR	A		; check result (at error: FFh -> 00h)
+	JZ	INITER		; at error go INITER
+	XRA	A		; A = 0, CF = 0
 
-INITDN: LD	HL, (BUFADD)	; HL = buffer address
-	POP	DE		; restore input DE for caller
-	POP	BC		; restore input BC for caller
+INITDN: LHLD	BUFADD		; HL = buffer address
+	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
 	RET
 
-INITER:	LD	A, 04h		; A = 4, error code
-	SCF			; CF = 1
-	JR	INITDN		; go INITDN
+INITER:	MVI	A, 04h		; A = 4, error code
+	STC			; CF = 1
+	JMP	INITDN		; go INITDN
 
 ; ---- READ A LOGICAL SECTOR -------------------------------------------
 
@@ -117,39 +117,41 @@ INITER:	LD	A, 04h		; A = 4, error code
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
 
-RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
-	LD	HL, (INP_DE)	; HL = sector number
-	LD	B, H		; BC = sector number
-	LD	C, L
+RISTRD:	LHLD	FCBADD		; HL = FCB address
+	XCHG			; DE = FCB address
+	LHLD	INP_DE		; HL = sector number
+	MOV	B, H		; BC = sector number
+	MOV	C, L
 
-	LD	HL, 33		; HL = offset
-	ADD	HL, DE		; HL = FCB address + 33
-	LD	A, C		; A = low byte of sector number
-	LD      (HL), A		; store in FCB
-	INC	HL		; HL = FCB address + 34
-	LD      A, B		; A = high byte of sector number
-	LD      (HL), A		; store in FCB
-	INC	HL		; HL = FCB address + 35
-	XOR     A		; A = 0
-	LD      (HL), A		; store in FCB
+	LXI	H, 33		; HL = offset
+	DAD	D		; HL = FCB address + 33
+	MOV	A, C		; A = low byte of sector number
+	MOV	M, A		; store in FCB
+	INX	H		; HL = FCB address + 34
+	MOV	A, B		; A = high byte of sector number
+	MOV	M, A		; store in FCB
+	INX	H		; HL = FCB address + 35
+	XRA	A		; A = 0
+	MOV	M, A		; store in FCB
 
-	LD	C, RDRND	; read random
-	LD	DE, (FCBADD)	; DE = FCB address
+	MVI	C, RDRND	; read random
+	LHLD	FCBADD		; HL = FCB address
+	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS
 
-	OR	A		; set flags
-	JR	NZ, STRDER	; file read error
+	ORA	A		; set flags
+	JNZ	STRDER	; file read error
 
-	XOR	A		; A = 0, CF = 0
+	XRA	A		; A = 0, CF = 0
 
-STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
-	POP	DE		; restore input DE for caller
-	POP	BC		; restore input BC for caller
+STRDDN:	LHLD	BUFADD		; HL = buffer address
+	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
 	RET
 
-STRDER:	LD	A, 05h		; A = 5, error code
-	SCF			; CF = 1
-	JR	STRDDN
+STRDER:	MVI	A, 05h		; A = 5, error code
+	STC			; CF = 1
+	JMP	STRDDN
 
 ; ---- CLEANUP MODULE --------------------------------------------------
 
@@ -157,29 +159,30 @@ STRDER:	LD	A, 05h		; A = 5, error code
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
 
-RIDONE: LD	A, (INP_B)	; get input B data	
-	OR	A
-	JR	NZ, DONECL	; if A = 1 then goto INITCL
+RIDONE: LDA	INP_B		; get input B data	
+	ORA	A
+	JNZ	DONECL		; if A = 1 then goto DONECL
 
-	LD	C, SETDMA	; set DMA address
-	LD	DE, 0080h	; DE = default DMA address
+	MVI	C, SETDMA	; set DMA address
+	LXI	D, 0080h	; DE = default DMA address
 	CALL	BDOS		; call BDOS
 
-DONECL:	LD	C, CLOSE	; close file
-	LD	DE, (FCBADD)	; DE = FCB address
+DONECL:	MVI	C, CLOSE	; close file
+	LHLD	FCBADD		; HL = FCB address
+	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS
-	INC	A		; check result (at error: FFh -> 00h)
-	JR	Z, DONEER	; at error go INITER
-	XOR	A		; A = 0, CF = 0
+	INR	A		; check result (at error: FFh -> 00h)
+	JZ	DONEER		; at error go DONEER
+	XRA	A		; A = 0, CF = 0
 
-DONEDN: LD	HL, (BUFADD)	; HL = buffer address
-	POP	DE		; restore input DE for caller
-	POP	BC		; restore input BC for caller
+DONEDN: LHLD	BUFADD		; HL = buffer address
+	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
 	RET
 
-DONEER:	LD	A, 06h		; A = 6, error code
-	SCF			; CF = 1
-	JR	DONEDN		; go INITDN
+DONEER:	MVI	A, 06h		; A = 6, error code
+	STC			; CF = 1
+	JMP	DONEDN		; go DONEDN
 
 ; -------- DATA AREA --------
 INP_B:	DB	0		; input data in B

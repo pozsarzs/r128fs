@@ -40,7 +40,7 @@ START:
 	JC	ERROR
 
 ; dump buffer to console
-	LXI	HL, BUFFER
+	LXI	H, BUFFER
 	MVI	B, 128
 PRLOOP:	MOV	E, M
 	MVI	C, CONOUT
@@ -63,7 +63,7 @@ DONE:	MVI	A, RIDONE
 	CALL	BDOS
 
 ; handling error
-ERROR:	LXI	HL, ERRMSG
+ERROR:	LXI	H, ERRMSG
 	MVI	C, 09h
 	XCHG
 	CALL	BDOS

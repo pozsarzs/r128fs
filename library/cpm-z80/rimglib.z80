@@ -125,13 +125,13 @@ RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
 	LD	HL, 33		; HL = offset
 	ADD	HL, DE		; HL = FCB address + 33
 	LD	A, C		; A = low byte of sector number
-	LD      (HL), A		; store in FCB
+	LD	(HL), A		; store in FCB
 	INC	HL		; HL = FCB address + 34
-	LD      A, B		; A = high byte of sector number
-	LD      (HL), A		; store in FCB
+	LD	A, B		; A = high byte of sector number
+	LD	(HL), A		; store in FCB
 	INC	HL		; HL = FCB address + 35
-	XOR     A		; A = 0
-	LD      (HL), A		; store in FCB
+	XOR	A		; A = 0
+	LD	(HL), A		; store in FCB
 
 	LD	C, RDRND	; read random
 	LD	DE, (FCBADD)	; DE = FCB address
@@ -159,7 +159,7 @@ STRDER:	LD	A, 05h		; A = 5, error code
 
 RIDONE: LD	A, (INP_B)	; get input B data	
 	OR	A
-	JR	NZ, DONECL	; if A = 1 then goto INITCL
+	JR	NZ, DONECL	; if A = 1 then goto DONECL
 
 	LD	C, SETDMA	; set DMA address
 	LD	DE, 0080h	; DE = default DMA address
@@ -169,7 +169,7 @@ DONECL:	LD	C, CLOSE	; close file
 	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 	INC	A		; check result (at error: FFh -> 00h)
-	JR	Z, DONEER	; at error go INITER
+	JR	Z, DONEER	; at error go DONEER
 	XOR	A		; A = 0, CF = 0
 
 DONEDN: LD	HL, (BUFADD)	; HL = buffer address
@@ -179,7 +179,7 @@ DONEDN: LD	HL, (BUFADD)	; HL = buffer address
 
 DONEER:	LD	A, 06h		; A = 6, error code
 	SCF			; CF = 1
-	JR	DONEDN		; go INITDN
+	JR	DONEDN		; go DONEDN
 
 ; -------- DATA AREA --------
 INP_B:	DB	0		; input data in B
