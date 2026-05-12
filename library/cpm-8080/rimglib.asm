@@ -14,146 +14,177 @@
 PUBLIC RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS system call
-RNUM	EQU	02h			; Number of routines
+BDOS	EQU	05h			; BDOS entry point
+SETDMA	EQU	1Ah			; BDOS set DMA address function
+OPEN	EQU	0Fh			; BDOS open file function
+CLOSE	EQU	10h			; BDOS close file function
+RDRND	EQU	21h			; BDOS read random function
+RNUM	EQU	03h			; Number of routines
 
 ; -------- CODE AREA --------
-; Input:     A = function code
-;            BC, DE, HL = input data
-; Output:    CF = 0, A = output data
-;            CF = 1, A = error code
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
+;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
 ;
 ; Error codes:
-;   01h: bad function
-;   02h: file open error
-;   03h: file read error
+;   00h. no error		CF = 0
+;   01h: bad function		CF = 1
+;   04h: file open error	CF = 1
+;   05h: file read error	CF = 1
+;   06h: file close error	CF = 1
 ;
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
 ; ---- ENTRY POINT AND JUMP TABLE ----
-RMEM:	PUSH	BC		; save input BC for caller and selected routine
-	PUSH	DE		; save input DE for caller and selected routine
-	PUSH	HL		; save input HL for selected routine
+RIMG:	PUSH	B		; save input BC for caller
+	PUSH	D		; save input DE for caller
 
-	CPI	RNUM		; compare A (function code) with max valid index
-	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+	LD	(INP_HL), HL	; save input HL for selected routine 
+	LD	(INP_DE), DE	; save input DE for selected routine
+	LD	C, A
+	LD	A, B
+	LD	(INP_B), A	; save input B for selected routine
+	LD	A, C
 
-	LXI	D, MNJTAB	; DE = address of jump table entry
+	CP	RNUM		; compare A (function code) with max valid index
+	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
 
-	ADD	A		; A = A * 2 (word index into jump table)
-	MOV	L, A
-	MOV	H, 0		; HL = zero-extended offset
-	DAD	D		; HL = address of table + offset
+	ADD	A, A		; A = A * 2 (word index into jump table)
+	LD	L, A
+	LD	H, 0		; HL = zero-extended offset
+	LD	DE, MNJTAB	; DE = address of jump table entry
+	ADD	HL, DE		; HL = address of table + offset
 
-	MOV	E, M		; load low byte of handler address (HL = address)
-	INX	H		; increment HL
-	MOV	D, M		; load high byte (HL = address)
-	XCHG			; DE <-> HL, HL = handler address
-	PCHL			; indirect jump to selected routine
+	LD	E, (HL)		; load low byte of handler address
+	INC	HL
+	LD	D, (HL)		; load high byte
+	EX	DE, HL		; HL = handler address
+	JP	(HL)		; indirect jump to selected routine
 
-MNJTAB:	DW	RIINIT		; 0: set buffer address and sector size
-	DW	RISTRD		; 1: read a logical sector and write to buffer
+MNJTAB:	DW	RIINIT		; 0: initialize module and/or open image file
+	DW	RISTRD		; 1: read a logical sector from image and write to buffer
+	DW	RIDONE		; 2: clean up and/or close image file
 
-MNBADF:	POP	HL		; restore input HL
+MNBADF:	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	LD	A, 01h		; A = 1 (error: bad function)
+	LD	HL, 0000h	; HL = 0
+	SCF			; CF = 1 (return with error)
+	RET
+
+; ---- INITIALIZE MODULE -----------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+
+RIINIT: LD	A, (INP_B)	; get input B data	
+	OR	A
+	JR	NZ, INITOP	; if A = 1 then goto INITOP
+
+	LD	DE, (INP_DE)	; get input DE data	
+	LD	(FCBADD), DE	; store FCB starting address
+	LD	HL, (INP_HL)	; get input HL data	
+	LD	(BUFADD), HL	; store buffer starting address
+
+	LD	C, SETDMA	; set DMA address
+	LD	DE, (BUFADD)	; DE = DMA address
+	CALL	BDOS		; call BDOS
+
+INITOP:	LD	C, OPEN		; open file
+	LD	DE, (FCBADD)	; DE = FCB address
+	CALL	BDOS		; call BDOS
+	INC	A		; check result (at error: FFh -> 00h)
+	JR	Z, INITER	; at error go INITER
+	XOR	A		; A = 0, CF = 0
+
+INITDN: LD	HL, (BUFADD)	; HL = buffer address
 	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
-	MVI	A, 01h		; A = 1
-	STC			; CF = 1
 	RET
 
-; ---- INITIALIZE LIBRARY --------------------
-; Input:  HL = buffer start address (0000-FFFFh)
-; Output: CF = 0
-RIINIT:	SHLD	BUADDR		; store buffer starting address
-INITDN: XRA	A		; A = 0, CF = 0
-	POP	HL		; restore input HL
+INITER:	LD	A, 04h		; A = 4, error code
+	SCF			; CF = 1
+	JR	INITDN		; go INITDN
+
+; ---- READ A LOGICAL SECTOR -------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
+
+RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
+	LD	HL, (INP_DE)	; HL = sector number
+	LD	B, H		; BC = sector number
+	LD	C, L
+
+	LD	HL, 33		; HL = offset
+	ADD	HL, DE		; HL = FCB address + 33
+	LD	A, C		; A = low byte of sector number
+	LD      (HL), A		; store in FCB
+	INC	HL		; HL = FCB address + 34
+	LD      A, B		; A = high byte of sector number
+	LD      (HL), A		; store in FCB
+	INC	HL		; HL = FCB address + 35
+	XOR     A		; A = 0
+	LD      (HL), A		; store in FCB
+
+	LD	C, RDRND	; read random
+	LD	DE, (FCBADD)	; DE = FCB address
+	CALL	BDOS		; call BDOS
+
+	OR	A		; set flags
+	JR	NZ, STRDER	; file read error
+
+	XOR	A		; A = 0, CF = 0
+
+STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
 	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET
 
-; ---- READ A LOGICAL SECTOR ----------------------------------
-; Input:  DE = sector number (0000-FFFFh)
-;         HL = FCB start address (0000-FFFFh)
-; Output: CF = 0, A = 0
-;         CF = 1, A = error code
-RISTRD:	MVI	C, 1Ah		; set DMA address
-	LHLD	BUADDR		; HL = DMA address
-	XCHG			; DE =  DMA address
+STRDER:	LD	A, 05h		; A = 5, error code
+	SCF			; CF = 1
+	JR	STRDDN
+
+; ---- CLEANUP MODULE --------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
+
+RIDONE: LD	A, (INP_B)	; get input B data	
+	OR	A
+	JR	NZ, DONECL	; if A = 1 then goto INITCL
+
+	LD	C, SETDMA	; set DMA address
+	LD	DE, 0080h	; DE = default DMA address
 	CALL	BDOS		; call BDOS
 
-	POP	HL		; restore input HL for this routine
-	POP	DE		; restore input DE for this routine
-	PUSH	DE		; save input DE for caller
-	XCHG			; DE = FCB address, HL = sector number
-	MOV	B, H		; BC = sector number
-	MOV	C, L
-
-	MOV	H, D		; H = D
-	MOV	L, E		; L = E
-	SHLD	RIFCB		; store FCB address
-
-	LXI	H, 33		; HL = offset
-	DAD	D		; HL = FCB address + 33
-	MOV	A, C		; A = low byte of sector number
-	MOV	M, A		; store in FCB
-	INX	H		; HL = FCB address + 34
-	MOV	A, B		; A = high byte of sector number
-	MOV	M, A		; store in FCB
-	INX	H		; HL = FCB address + 35
-	XRA	A		; A = 0
-	MOV	M, A		; store in FCB
-
-	MVI	C, 0Fh		; open file
-	LHLD	RIFCB		; HL = FCB address
-	XCHG			; DE = FCB address
+DONECL:	LD	C, CLOSE	; close file
+	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
+	INC	A		; check result (at error: FFh -> 00h)
+	JR	Z, DONEER	; at error go INITER
+	XOR	A		; A = 0, CF = 0
 
-	ORA	A		; set flags
-	JNZ	STRDE1		; file open error
-
-	MVI	C, 21h		; read random
-	LHLD	RIFCB		; HL = FCB address
-	XCHG			; DE = FCB address
-	CALL	BDOS		; call BDOS
-
-	ORA	A		; set flags
-	JNZ	STRDE2		; file read error
-
-	CALL	STRDCF		; close file
-	CALL	STRDDM		; set default DMA address
-
-	XRA	A
-	JMP	STRDDN
-	
-STRDE1:	CALL	STRDDM		; set default DMA address
-	MVI	A, 02h		; file open error
-	STC
-	JMP	STRDDN
-
-STRDE2:	CALL	STRDCF		; close file
-	CALL	STRDDM		; set default DMA address
-	MVI	A, 03h		; file read error
-	STC
-
-STRDDN:	POP	DE		; restore input DE for caller
+DONEDN: LD	HL, (BUFADD)	; HL = buffer address
+	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET
 
-; ---- CLOSE FILE ---------------------------------------------
-STRDCF:	MVI	C, 10h		; close file
-	LHLD	RIFCB		; HL = FCB address
-	XCHG			; DE = FCB address
-	CALL	BDOS		; call BDOS
-	RET
-
-; ---- SET DEFAULT DMA ADDRESS --------------------------------
-STRDDM: MVI	C, 1Ah		; set DMA address
-	LXI	D, 0080h	; DE = default DMA address
-	CALL	BDOS		; call BDOS
-	RET
+DONEER:	LD	A, 06h		; A = 6, error code
+	SCF			; CF = 1
+	JR	DONEDN		; go INITDN
 
 ; -------- DATA AREA --------
-BUADDR:	DW	0		; buffer start address
-RIFCB:	DW	0
+INP_B:	DB	0		; input data in B
+INP_DE:	DW	0		; input data in DE
+INP_HL:	DW	0		; input data in HL
+BUFADD:	DW	0		; buffer start address
+FCBADD:	DW	0		; FCB start address
 	END

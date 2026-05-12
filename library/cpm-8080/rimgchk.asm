@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rimgchk.z80                                                                |
-; | Reading a logical sector from image, Z80, CP/M-80, v0.1                    |
+; | rimgchk.asm                                                                |
+; | Reading a logical sector from image, 8080, CP/M-80, v0.1                   |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -15,64 +15,66 @@
 	EXTRN	RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS entry point
-RESET	EQU	00h			; BDOS system reset function
-CONOUT	EQU	02h			; BDOS console output function
-RIINIT	EQU	00h			; Rimglib initialize function
-RISTRD	EQU	01h			; Rimglib sector read function
-RIDONE	EQU	02h			; Rimglib done function
+BDOS	EQU	0005h		; BDOS entry point
+RESET	EQU	00h		; BDOS system reset function
+CONOUT	EQU	02h		; BDOS console output function
+RIINIT	EQU	00h		; Rimglib initialize function
+RISTRD	EQU	01h		; Rimglib sector read function
+RIDONE	EQU	02h		; Rimglib done function
 
 ; -------- CODE AREA --------
 START:
 ; initialization and open
-	LD	A, RIINIT
-	LD	B, 0
-	LD	DE, FCB
-	LD	HL, BUFFER
+	MVI	A, RIINIT
+	MVI	B, 0
+	LXI	D, FCB
+	LXI	H, BUFFER
 	CALL	RIMG
-	JR	C, ERROR
+	JC	ERROR
 
 ; read record
-	LD	A, RISTRD
-	LD	DE, (RECNUM)
+	MVI	A, RISTRD
+	LHLD	RECNUM
+	XCHG
 	CALL	RIMG
-	JR	C, ERROR
+	JC	ERROR
 
 ; dump buffer to console
-	LD	HL, BUFFER
-	LD	B, 128
-PRLOOP:	LD	E, (HL)
-	LD	C, CONOUT
-	PUSH	BC
-	PUSH	DE
-	PUSH	HL
+	LXI	HL, BUFFER
+	MVI	B, 128
+PRLOOP:	MOV	E, M
+	MVI	C, CONOUT
+	PUSH	B
+	PUSH	D
+	PUSH	H
 	CALL	BDOS
-	POP	HL
-	POP	DE
-	POP	BC
-	INC	HL
-	DJNZ	PRLOOP
+	POP	H
+	POP	D
+	POP	B
+	INX	H
+	DCR	B
+	JNZ	PRLOOP
 
 ; close and cleanup
-DONE:	LD	A, RIDONE
-	LD	B, 0
+DONE:	MVI	A, RIDONE
+	MVI	B, 0
 	CALL	RIMG
-	LD	C, RESET		; exit to BDOS
+	LD	C, RESET	; exit to BDOS
 	CALL	BDOS
 
 ; handling error
-ERROR:	LD	HL, ERRMSG
-	LD	C, 09h
-	EX	DE, HL
+ERROR:	LXI	HL, ERRMSG
+	MVI	C, 09h
+	XCHG
 	CALL	BDOS
-	LD	C, RESET		; exit to BDOS
+	LD	C, RESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
-RECNUM:	DW	0001h			; logical 128-byte record number
+RECNUM:	DW	0001h		; logical 128-byte record number
 ERRMSG:	DB	'Read error!$'
-FCB:	DB	0			; drive
-	DB	'R128EXRMIMG'		; 8.3 filename
+FCB:	DB	0		; drive
+	DB	'R128EXRMIMG'	; 8.3 filename
 	DS	25, 0
 BUFFER:	DS	128, 0
-	END
+	END	START

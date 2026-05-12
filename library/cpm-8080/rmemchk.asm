@@ -15,19 +15,22 @@
 	EXTRN	RMEM
 
 ; -------- CONSTANTS --------
-BDOS	EQU	0005h
-PRINT	EQU	09h
+BDOS	EQU	0005h		; BDOS entry point
+RESET	EQU	00h		; BDOS system reset function
+PRINT	EQU	09h		; BDOS print string function
+RMINIT	EQU	00h		; Rmemlib initialize function
+RMSTRD	EQU	01h		; Rmemlib sector read function
 
 ; -------- CODE AREA --------
 ; initialize
-START:	MVI	A, 00h		; RMINIT
+START:	MVI	A, RMINIT
 	LXI	D, ROMIMG
 	LXI	H, BUFFER
 	CALL	RMEM
 	JC	INITER
 
 ; read sector 0
-	MVI	A, 01h		; RMSTRD
+	MVI	A, RMSTRD
 	LXI	D, 0000h
 	CALL	RMEM
 	JC	READER
@@ -47,7 +50,8 @@ READER:	LXI	D, MSGRED	; read error
 PRNER:	MVI	C, PRINT	; print error message
 	CALL	BDOS
 
-EXIT:	RET
+EXIT:	LD	C, RESET	; exit to BDOS
+	CALL	BDOS
 
 ; -------- DATA AREA --------
 ROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'

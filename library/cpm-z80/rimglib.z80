@@ -14,7 +14,11 @@
 PUBLIC RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS system call
+BDOS	EQU	05h			; BDOS entry point
+SETDMA	EQU	1Ah			; BDOS set DMA address function
+OPEN	EQU	0Fh			; BDOS open file function
+CLOSE	EQU	10h			; BDOS close file function
+RDRND	EQU	21h			; BDOS read random function
 RNUM	EQU	03h			; Number of routines
 
 ; -------- CODE AREA --------
@@ -87,11 +91,11 @@ RIINIT: LD	A, (INP_B)	; get input B data
 	LD	HL, (INP_HL)	; get input HL data	
 	LD	(BUFADD), HL	; store buffer starting address
 
-	LD	C, 1Ah		; set DMA address
+	LD	C, SETDMA	; set DMA address
 	LD	DE, (BUFADD)	; DE = DMA address
 	CALL	BDOS		; call BDOS
 
-INITOP:	LD	C, 0Fh		; open file
+INITOP:	LD	C, OPEN		; open file
 	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 	INC	A		; check result (at error: FFh -> 00h)
@@ -129,7 +133,7 @@ RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
 	XOR     A		; A = 0
 	LD      (HL), A		; store in FCB
 
-	LD	C, 21h		; read random
+	LD	C, RDRND	; read random
 	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 
@@ -157,11 +161,11 @@ RIDONE: LD	A, (INP_B)	; get input B data
 	OR	A
 	JR	NZ, DONECL	; if A = 1 then goto INITCL
 
-	LD	C, 1Ah		; set DMA address
+	LD	C, SETDMA	; set DMA address
 	LD	DE, 0080h	; DE = default DMA address
 	CALL	BDOS		; call BDOS
 
-DONECL:	LD	C, 10h		; close file
+DONECL:	LD	C, CLOSE	; close file
 	LD	DE, (FCBADD)	; DE = FCB address
 	CALL	BDOS		; call BDOS
 	INC	A		; check result (at error: FFh -> 00h)
