@@ -50,7 +50,7 @@ READER:	LXI	D, MSGRED	; read error
 PRNER:	MVI	C, PRINT	; print error message
 	CALL	BDOS
 
-EXIT:	LD	C, RESET	; exit to BDOS
+EXIT:	MVI	C, RESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
@@ -59,3 +59,4 @@ MSGINI:	DB	'INIT ERROR$', 0
 MSGRED:	DB	'READ ERROR$', 0
 BUFFER:	DS	128
 	END	START
+

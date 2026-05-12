@@ -136,6 +136,7 @@ RMEMLIB Z80
   127                   	END
  0 Error(s) Detected. 115 Program Bytes.
  16 Symbols Detected.
-10 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
+              
+  110 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
   111 005F' 37          	SCF			; CF = 1
-  112 0060' 18 03       	JR	STRDDN	
+  112 0060' 18 03 

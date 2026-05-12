@@ -59,7 +59,7 @@ PRLOOP:	MOV	E, M
 DONE:	MVI	A, RIDONE
 	MVI	B, 0
 	CALL	RIMG
-	LD	C, RESET	; exit to BDOS
+	MVI	C, RESET	; exit to BDOS
 	CALL	BDOS
 
 ; handling error
@@ -67,7 +67,7 @@ ERROR:	LXI	H, ERRMSG
 	MVI	C, 09h
 	XCHG
 	CALL	BDOS
-	LD	C, RESET	; exit to BDOS
+	MVI	C, RESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------

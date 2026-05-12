@@ -17,191 +17,191 @@ RIMGLIB Z80
    14                   PUBLIC RIMG
    15                   
    16                   ; -------- CONSTANTS --------
-   17         0005      BDOS	EQU	05h			; BDOS system call
-   18         0003      RNUM	EQU	03h			; Number of routines
-   19                   
-   20                   ; -------- CODE AREA --------
-   21                   
-   22                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-   23                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-   24                   ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
-   25                   ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
-   26                   ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
-   27                   ;
-   28                   ; Error codes:
-   29                   ;   00h. no error		CF = 0
-   30                   ;   01h: bad function		CF = 1
-   31                   ;   04h: file open error	CF = 1
-   32                   ;   05h: file read error	CF = 1
-   33                   ;   06h: file close error	CF = 1
-   34                   ;
-   35                   ; Preserves: BC, DE
-   36                   ; Clobbers:  AF, HL
-   37                   
-   38                   ; ---- ENTRY POINT AND JUMP TABLE ----
-   39 0000' C5          RIMG:	PUSH	BC		; save input BC for caller
-   40 0001' D5          	PUSH	DE		; save input DE for caller
+   17         0005      BDOS	EQU	05h			; BDOS entry point
+   18         001A      SETDMA	EQU	1Ah			; BDOS set DMA address function
+   19         000F      OPEN	EQU	0Fh			; BDOS open file function
+   20         0010      CLOSE	EQU	10h			; BDOS close file function
+   21         0021      RDRND	EQU	21h			; BDOS read random function
+   22         0003      RNUM	EQU	03h			; Number of routines
+   23                   
+   24                   ; -------- CODE AREA --------
+   25                   
+   26                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   27                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   28                   ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+   29                   ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
+   30                   ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
+   31                   ;
+   32                   ; Error codes:
+   33                   ;   00h. no error		CF = 0
+   34                   ;   01h: bad function		CF = 1
+   35                   ;   04h: file open error	CF = 1
+   36                   ;   05h: file read error	CF = 1
+   37                   ;   06h: file close error	CF = 1
+   38                   ;
+   39                   ; Preserves: BC, DE
+   40                   ; Clobbers:  AF, HL
    41                   
-   42 0002' 22 00BA'    	LD	(INP_HL), HL	; save input HL for selected routine 
-   43 0005' ED 53 00B8' 	LD	(INP_DE), DE	; save input DE for selected routine
-   44 0009' 4F          	LD	C, A
-   45 000A' 78          	LD	A, B
-   46 000B' 32 00B7'    	LD	(INP_B), A	; save input B for selected routine
-   47 000E' 79          	LD	A, C
-   48                   
-   49 000F' FE 03       	CP	RNUM		; compare A (function code) with max valid index
-   50 0011' 30 13       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
-   51                   
-   52 0013' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
-   53 0014' 6F          	LD	L, A
-   54 0015' 26 00       	LD	H, 0		; HL = zero-extended offset
-   55 0017' 11 0020'    	LD	DE, MNJTAB	; DE = address of jump table entry
-   56 001A' 19          	ADD	HL, DE		; HL = address of table + offset
-   57                   
-   58 001B' 5E          	LD	E, (HL)		; load low byte of handler address
-
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+   42                   ; ---- ENTRY POINT AND JUMP TABLE ----
+   43 0000' C5          RIMG:	PUSH	BC		; save input BC for caller
+   44 0001' D5          	PUSH	DE		; save input DE for caller
+   45                   
+   46 0002' 22 00BA'    	LD	(INP_HL), HL	; save input HL for selected routine 
+   47 0005' ED 53 00B8' 	LD	(INP_DE), DE	; save input DE for selected routine
+   48 0009' 4F          	LD	C, A
+   49 000A' 78          	LD	A, B
+   50 000B' 32 00B7'    	LD	(INP_B), A	; save input B for selected routine
+   51 000E' 79          	LD	A, C
+   52                   
+   53 000F' FE 03       	CP	RNUM		; compare A (function code) with max valid index
+   54 0011' 30 13       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   55                   
+   56 0013' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   57 0014' 6F          	LD	L, A
+   58 0015' 26 00       	LD	H, 0		; HL = zero-extended offset
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RIMGLIB Z80
 
-   59 001C' 23          	INC	HL
-   60 001D' 56          	LD	D, (HL)		; load high byte
-   61 001E' EB          	EX	DE, HL		; HL = handler address
-   62 001F' E9          	JP	(HL)		; indirect jump to selected routine
-   63                   
-   64 0020' 002F'       MNJTAB:	DW	RIINIT		; 0: initialize module and/or open image file
-   65 0022' 0064'       	DW	RISTRD		; 1: read a logical sector from image and write to buffer
-   66 0024' 0091'       	DW	RIDONE		; 2: clean up and/or close image file
+   59 0017' 11 0020'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   60 001A' 19          	ADD	HL, DE		; HL = address of table + offset
+   61                   
+   62 001B' 5E          	LD	E, (HL)		; load low byte of handler address
+   63 001C' 23          	INC	HL
+   64 001D' 56          	LD	D, (HL)		; load high byte
+   65 001E' EB          	EX	DE, HL		; HL = handler address
+   66 001F' E9          	JP	(HL)		; indirect jump to selected routine
    67                   
-   68 0026' D1          MNBADF:	POP	DE		; restore input DE for caller
-   69 0027' C1          	POP	BC		; restore input BC for caller
-   70 0028' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
-   71 002A' 21 0000     	LD	HL, 0000h	; HL = 0
-   72 002D' 37          	SCF			; CF = 1 (return with error)
-   73 002E' C9          	RET
-   74                   
-   75                   ; ---- INITIALIZE MODULE -----------------------------------------------
-   76                   
-   77                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-   78                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-   79                   ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+   68 0020' 002F'       MNJTAB:	DW	RIINIT		; 0: initialize module and/or open image file
+   69 0022' 0064'       	DW	RISTRD		; 1: read a logical sector from image and write to buffer
+   70 0024' 0091'       	DW	RIDONE		; 2: clean up and/or close image file
+   71                   
+   72 0026' D1          MNBADF:	POP	DE		; restore input DE for caller
+   73 0027' C1          	POP	BC		; restore input BC for caller
+   74 0028' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
+   75 002A' 21 0000     	LD	HL, 0000h	; HL = 0
+   76 002D' 37          	SCF			; CF = 1 (return with error)
+   77 002E' C9          	RET
+   78                   
+   79                   ; ---- INITIALIZE MODULE -----------------------------------------------
    80                   
-   81 002F' 3A 00B7'    RIINIT: LD	A, (INP_B)	; get input B data	
-   82 0032' B7          	OR	A
-   83 0033' 20 17       	JR	NZ, INITOP	; if A = 1 then goto INITOP
+   81                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   82                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   83                   ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
    84                   
-   85 0035' ED 5B 00B8' 	LD	DE, (INP_DE)	; get input DE data	
-   86 0039' ED 53 00BE' 	LD	(FCBADD), DE	; store FCB starting address
-   87 003D' 2A 00BA'    	LD	HL, (INP_HL)	; get input HL data	
-   88 0040' 22 00BC'    	LD	(BUFADD), HL	; store buffer starting address
-   89                   
-   90 0043' 0E 1A       	LD	C, 1Ah		; set DMA address
-   91 0045' ED 5B 00BC' 	LD	DE, (BUFADD)	; DE = DMA address
-   92 0049' CD 0005     	CALL	BDOS		; call BDOS
+   85 002F' 3A 00B7'    RIINIT: LD	A, (INP_B)	; get input B data	
+   86 0032' B7          	OR	A
+   87 0033' 20 17       	JR	NZ, INITOP	; if A = 1 then goto INITOP
+   88                   
+   89 0035' ED 5B 00B8' 	LD	DE, (INP_DE)	; get input DE data	
+   90 0039' ED 53 00BE' 	LD	(FCBADD), DE	; store FCB starting address
+   91 003D' 2A 00BA'    	LD	HL, (INP_HL)	; get input HL data	
+   92 0040' 22 00BC'    	LD	(BUFADD), HL	; store buffer starting address
    93                   
-   94 004C' 0E 0F       INITOP:	LD	C, 0Fh		; open file
-   95 004E' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
-   96 0052' CD 0005     	CALL	BDOS		; call BDOS
-   97 0055' 3C          	INC	A		; check result (at error: FFh -> 00h)
-   98 0056' 28 07       	JR	Z, INITER	; at error go INITER
-   99 0058' AF          	XOR	A		; A = 0, CF = 0
-  100                   
-  101 0059' 2A 00BC'    INITDN: LD	HL, (BUFADD)	; HL = buffer address
-  102 005C' D1          	POP	DE		; restore input DE for caller
-  103 005D' C1          	POP	BC		; restore input BC for caller
-  104 005E' C9          	RET
-  105                   
-  106 005F' 3E 04       INITER:	LD	A, 04h		; A = 4, error code
-  107 0061' 37          	SCF			; CF = 1
-  108 0062' 18 F5       	JR	INITDN		; go INITDN
+   94 0043' 0E 1A       	LD	C, SETDMA	; set DMA address
+   95 0045' ED 5B 00BC' 	LD	DE, (BUFADD)	; DE = DMA address
+   96 0049' CD 0005     	CALL	BDOS		; call BDOS
+   97                   
+   98 004C' 0E 0F       INITOP:	LD	C, OPEN		; open file
+   99 004E' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
+  100 0052' CD 0005     	CALL	BDOS		; call BDOS
+  101 0055' 3C          	INC	A		; check result (at error: FFh -> 00h)
+  102 0056' 28 07       	JR	Z, INITER	; at error go INITER
+  103 0058' AF          	XOR	A		; A = 0, CF = 0
+  104                   
+  105 0059' 2A 00BC'    INITDN: LD	HL, (BUFADD)	; HL = buffer address
+  106 005C' D1          	POP	DE		; restore input DE for caller
+  107 005D' C1          	POP	BC		; restore input BC for caller
+  108 005E' C9          	RET
   109                   
-  110                   ; ---- READ A LOGICAL SECTOR -------------------------------------------
-  111                   
-  112                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-  113                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-  114                   ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
+  110 005F' 3E 04       INITER:	LD	A, 04h		; A = 4, error code
+  111 0061' 37          	SCF			; CF = 1
+  112 0062' 18 F5       	JR	INITDN		; go INITDN
+  113                   
+  114                   ; ---- READ A LOGICAL SECTOR -------------------------------------------
   115                   
-  116 0064' ED 5B 00BE' RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
-
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
+  116                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
 RIMGLIB Z80
 
-  117 0068' 2A 00B8'    	LD	HL, (INP_DE)	; HL = sector number
-  118 006B' 44          	LD	B, H		; BC = sector number
-  119 006C' 4D          	LD	C, L
-  120                   
-  121 006D' 21 0021     	LD	HL, 33		; HL = offset
-  122 0070' 19          	ADD	HL, DE		; HL = FCB address + 33
-  123 0071' 79          	LD	A, C		; A = low byte of sector number
-  124 0072' 77          	LD      (HL), A		; store in FCB
-  125 0073' 23          	INC	HL		; HL = FCB address + 34
-  126 0074' 78          	LD      A, B		; A = high byte of sector number
-  127 0075' 77          	LD      (HL), A		; store in FCB
-  128 0076' 23          	INC	HL		; HL = FCB address + 35
-  129 0077' AF          	XOR     A		; A = 0
-  130 0078' 77          	LD      (HL), A		; store in FCB
-  131                   
-  132 0079' 0E 21       	LD	C, 21h		; read random
-  133 007B' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
-  134 007F' CD 0005     	CALL	BDOS		; call BDOS
+  117                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  118                   ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
+  119                   
+  120 0064' ED 5B 00BE' RISTRD:	LD	DE, (FCBADD)	; DE = FCB address
+  121 0068' 2A 00B8'    	LD	HL, (INP_DE)	; HL = sector number
+  122 006B' 44          	LD	B, H		; BC = sector number
+  123 006C' 4D          	LD	C, L
+  124                   
+  125 006D' 21 0021     	LD	HL, 33		; HL = offset
+  126 0070' 19          	ADD	HL, DE		; HL = FCB address + 33
+  127 0071' 79          	LD	A, C		; A = low byte of sector number
+  128 0072' 77          	LD	(HL), A		; store in FCB
+  129 0073' 23          	INC	HL		; HL = FCB address + 34
+  130 0074' 78          	LD	A, B		; A = high byte of sector number
+  131 0075' 77          	LD	(HL), A		; store in FCB
+  132 0076' 23          	INC	HL		; HL = FCB address + 35
+  133 0077' AF          	XOR	A		; A = 0
+  134 0078' 77          	LD	(HL), A		; store in FCB
   135                   
-  136 0082' B7          	OR	A		; set flags
-  137 0083' 20 07       	JR	NZ, STRDER	; file read error
-  138                   
-  139 0085' AF          	XOR	A		; A = 0, CF = 0
-  140                   
-  141 0086' 2A 00BC'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
-  142 0089' D1          	POP	DE		; restore input DE for caller
-  143 008A' C1          	POP	BC		; restore input BC for caller
-  144 008B' C9          	RET
-  145                   
-  146 008C' 3E 05       STRDER:	LD	A, 05h		; A = 5, error code
-  147 008E' 37          	SCF			; CF = 1
-  148 008F' 18 F5       	JR	STRDDN
+  136 0079' 0E 21       	LD	C, RDRND	; read random
+  137 007B' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
+  138 007F' CD 0005     	CALL	BDOS		; call BDOS
+  139                   
+  140 0082' B7          	OR	A		; set flags
+  141 0083' 20 07       	JR	NZ, STRDER	; file read error
+  142                   
+  143 0085' AF          	XOR	A		; A = 0, CF = 0
+  144                   
+  145 0086' 2A 00BC'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+  146 0089' D1          	POP	DE		; restore input DE for caller
+  147 008A' C1          	POP	BC		; restore input BC for caller
+  148 008B' C9          	RET
   149                   
-  150                   ; ---- CLEANUP MODULE --------------------------------------------------
-  151                   
-  152                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-  153                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-  154                   ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
+  150 008C' 3E 05       STRDER:	LD	A, 05h		; A = 5, error code
+  151 008E' 37          	SCF			; CF = 1
+  152 008F' 18 F5       	JR	STRDDN
+  153                   
+  154                   ; ---- CLEANUP MODULE --------------------------------------------------
   155                   
-  156 0091' 3A 00B7'    RIDONE: LD	A, (INP_B)	; get input B data	
-  157 0094' B7          	OR	A
-  158 0095' 20 08       	JR	NZ, DONECL	; if A = 1 then goto INITCL
+  156                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  157                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  158                   ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
   159                   
-  160 0097' 0E 1A       	LD	C, 1Ah		; set DMA address
-  161 0099' 11 0080     	LD	DE, 0080h	; DE = default DMA address
-  162 009C' CD 0005     	CALL	BDOS		; call BDOS
+  160 0091' 3A 00B7'    RIDONE: LD	A, (INP_B)	; get input B data	
+  161 0094' B7          	OR	A
+  162 0095' 20 08       	JR	NZ, DONECL	; if A = 1 then goto DONECL
   163                   
-  164 009F' 0E 10       DONECL:	LD	C, 10h		; close file
-  165 00A1' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
-  166 00A5' CD 0005     	CALL	BDOS		; call BDOS
-  167 00A8' 3C          	INC	A		; check result (at error: FFh -> 00h)
-  168 00A9' 28 07       	JR	Z, DONEER	; at error go INITER
-  169 00AB' AF          	XOR	A		; A = 0, CF = 0
-  170                   
-  171 00AC' 2A 00BC'    DONEDN: LD	HL, (BUFADD)	; HL = buffer address
-  172 00AF' D1          	POP	DE		; restore input DE for caller
-  173 00B0' C1          	POP	BC		; restore input BC for caller
-  174 00B1' C9          	RET
-
-Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   4
+  164 0097' 0E 1A       	LD	C, SETDMA	; set DMA address
+  165 0099' 11 0080     	LD	DE, 0080h	; DE = default DMA address
+  166 009C' CD 0005     	CALL	BDOS		; call BDOS
+  167                   
+  168 009F' 0E 10       DONECL:	LD	C, CLOSE	; close file
+  169 00A1' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
+  170 00A5' CD 0005     	CALL	BDOS		; call BDOS
+  171 00A8' 3C          	INC	A		; check result (at error: FFh -> 00h)
+  172 00A9' 28 07       	JR	Z, DONEER	; at error go DONEER
+  173 00AB' AF          	XOR	A		; A = 0, CF = 0
+  174                   
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   4
 RIMGLIB Z80
 
-  175                   
-  176 00B2' 3E 06       DONEER:	LD	A, 06h		; A = 6, error code
-  177 00B4' 37          	SCF			; CF = 1
-  178 00B5' 18 F5       	JR	DONEDN		; go INITDN
+  175 00AC' 2A 00BC'    DONEDN: LD	HL, (BUFADD)	; HL = buffer address
+  176 00AF' D1          	POP	DE		; restore input DE for caller
+  177 00B0' C1          	POP	BC		; restore input BC for caller
+  178 00B1' C9          	RET
   179                   
-  180                   ; -------- DATA AREA --------
-  181 00B7' 00          INP_B:	DB	0		; input data in B
-  182 00B8' 0000        INP_DE:	DW	0		; input data in DE
-  183 00BA' 0000        INP_HL:	DW	0		; input data in HL
-  184 00BC' 0000        BUFADD:	DW	0		; buffer start address
-  185 00BE' 0000        FCBADD:	DW	0		; FCB start address
-  186                   	END
+  180 00B2' 3E 06       DONEER:	LD	A, 06h		; A = 6, error code
+  181 00B4' 37          	SCF			; CF = 1
+  182 00B5' 18 F5       	JR	DONEDN		; go DONEDN
+  183                   
+  184                   ; -------- DATA AREA --------
+  185 00B7' 00          INP_B:	DB	0		; input data in B
+  186 00B8' 0000        INP_DE:	DW	0		; input data in DE
+  187 00BA' 0000        INP_HL:	DW	0		; input data in HL
+  188 00BC' 0000        BUFADD:	DW	0		; buffer start address
+  189 00BE' 0000        FCBADD:	DW	0		; FCB start address
+  190                   	END
  0 Error(s) Detected. 192 Program Bytes.
- 21 Symbols Detected.
-
-	XOR	A		; A = 0, CF = 0
-  170                   
-  171 00AC' 2A 00BC'    DONEDN: LD	HL, (BUFADD)	; HL = bu
+ 25 Symbols Detected.
+	XOR	A		; A = 0, CF = 0
+  174                   
+Z80ASM SuperFast Relocating Macro Assembler     	   

@@ -1,0 +1,72 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+RMEMCHK Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | rmemchk.z80                                                                |
+    5                   ; | Reading a logical sector from memory, Z80, CP/M-80, v0.1                   |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14         0100      	ORG	100h
+   15                   	EXTRN	RMEM
+   16                   
+   17                   ; -------- CONSTANTS --------
+   18         0005      BDOS	EQU	0005h			; BDOS entry point
+   19         0000      RESET	EQU	00h			; BDOS system reset function
+   20         0009      PRINT	EQU	09h			; BDOS print string function
+   21         0000      RMINIT	EQU	00h			; Rmemlib initialize function
+   22         0001      RMSTRD	EQU	01h			; Rmemlib sector read function
+   23                   
+   24                   ; -------- CODE AREA --------
+   25 0100              START:
+   26                   ; initialization
+   27 0100  3E 00       	LD	A, RMINIT
+   28 0102  11 0133     	LD	DE, ROMIMG
+   29 0105  21 015D     	LD	HL, BUFFER
+   30 0108  CD 0000#    	CALL	RMEM
+   31 010B  38 14       	JR	C, INITER
+   32                   
+   33                   ; read sector 0
+   34 010D  3E 01       	LD	A, RMSTRD
+   35 010F  11 0000     	LD	DE, 0000h
+   36 0112  CD 0000#    	CALL	RMEM
+   37 0115  38 0F       	JR	C, READER
+   38                   
+   39                   ; print buffer
+   40 0117  11 015D     	LD	DE, BUFFER
+   41 011A  0E 09       	LD	C, PRINT
+   42 011C  CD 0005     	CALL	BDOS
+   43 011F  18 0D       	JR	EXIT
+   44                   
+   45                   ; handling error
+   46 0121  11 0145     INITER:	LD	DE, MSGINI	; init error
+   47 0124  18 03       	JR	PRNER
+   48                   
+   49 0126  11 0151     READER:	LD	DE, MSGRED	; read error
+   50                   
+   51 0129  0E 09       PRNER:	LD	C, PRINT	; print error message
+   52 012B  CD 0005     	CALL	BDOS
+   53                   
+   54 012E  0E 00       EXIT:	LD	C, RESET	; exit to BDOS
+   55 0130  CD 0005     	CALL	BDOS
+   56                   
+   57                   ; -------- DATA AREA --------
+   58 0133  52 4D 45 4D ROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+RMEMCHK Z80
+
+   59 0145  49 4E 49 54 MSGINI:	DB	'INIT ERROR$', 0
+   60 0151  52 45 41 44 MSGRED:	DB	'READ ERROR$', 0
+   61 015D    0080      BUFFER:	DS	128
+   62                   	END
+ 0 Error(s) Detected.
+ 221 Absolute Bytes. 15 Symbols Detected.
+2 011C  CD 0005     	CALL	BDOS
+   43 011F  18 0D       	JR	EX

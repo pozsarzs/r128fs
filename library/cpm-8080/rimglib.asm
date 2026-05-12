@@ -63,8 +63,8 @@ RIMG:	PUSH	B		; save input BC for caller
 	XCHG			; HL = handler address
 	PCHL			; indirect jump to selected routine
 
-MNJTAB:	DW	RMINIT		; 0: initialize module
-	DW	RMSTRD		; 1: read a logical sector and write to buffer
+MNJTAB:	DW	RIINIT		; 0: initialize module
+	DW	RISTRD		; 1: read a logical sector and write to buffer
 
 MNBADF:	POP	D		; restore input DE for caller
 	POP	B		; restore input BC for caller
@@ -79,14 +79,14 @@ MNBADF:	POP	D		; restore input DE for caller
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
 
-RIINIT: LDA	INP_B		; get input B data	
+RIINIT: LDA	INPRB		; get input B data	
 	ORA	A
 	JNZ	INITOP		; if A = 1 then goto INITOP
 
-	LHLD	INP_DE		; get input DE data	
+	LHLD	INPRDE		; get input DE data	
 	SHLD	FCBADD		; store FCB starting address
 	XCHG
-	LHLD	INP_HL		; get input HL data	
+	LHLD	INPRHL		; get input HL data	
 	SHLD	BUFADD		; store buffer starting address
 
 	MVI	C, SETDMA	; set DMA address
@@ -119,7 +119,7 @@ INITER:	MVI	A, 04h		; A = 4, error code
 
 RISTRD:	LHLD	FCBADD		; HL = FCB address
 	XCHG			; DE = FCB address
-	LHLD	INP_DE		; HL = sector number
+	LHLD	INPRDE		; HL = sector number
 	MOV	B, H		; BC = sector number
 	MOV	C, L
 
@@ -159,7 +159,7 @@ STRDER:	MVI	A, 05h		; A = 5, error code
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
 ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
 
-RIDONE: LDA	INP_B		; get input B data	
+RIDONE: LDA	INPRB		; get input B data	
 	ORA	A
 	JNZ	DONECL		; if A = 1 then goto DONECL
 
@@ -185,9 +185,9 @@ DONEER:	MVI	A, 06h		; A = 6, error code
 	JMP	DONEDN		; go DONEDN
 
 ; -------- DATA AREA --------
-INP_B:	DB	0		; input data in B
-INP_DE:	DW	0		; input data in DE
-INP_HL:	DW	0		; input data in HL
+INPRB:	DB	0		; input data in B
+INPRDE:	DW	0		; input data in DE
+INPRHL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
 FCBADD:	DW	0		; FCB start address
 	END

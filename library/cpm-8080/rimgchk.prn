@@ -1,0 +1,81 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | rimgchk.asm                                                                |
+                ; | Reading a logical sector from image, 8080, CP/M-80, v0.1                   |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+ 0100           	ORG	100h
+                	EXTRN	RIMG
+                
+                ; -------- CONSTANTS --------
+ 0005 =         BDOS	EQU	0005h		; BDOS entry point
+ 0000 =         RESET	EQU	00h		; BDOS system reset function
+ 0002 =         CONOUT	EQU	02h		; BDOS console output function
+ 0000 =         RIINIT	EQU	00h		; Rimglib initialize function
+ 0001 =         RISTRD	EQU	01h		; Rimglib sector read function
+ 0002 =         RIDONE	EQU	02h		; Rimglib done function
+                
+                ; -------- CODE AREA --------
+                START:
+                ; initialization and open
+ 0100 3E00      	MVI	A, RIINIT
+ 0102 0600      	MVI	B, 0
+ 0104 115A01    	LXI	D, FCB
+ 0107 217F01    	LXI	H, BUFFER
+ 010A CD0000    	CALL	RIMG
+ 010D DA3E01    	JC	ERROR
+                
+                ; read record
+ 0110 3E01      	MVI	A, RISTRD
+ 0112 2A4C01    	LHLD	RECNUM
+ 0115 EB        	XCHG
+ 0116 CD0000    	CALL	RIMG
+ 0119 DA3E01    	JC	ERROR
+                
+                ; dump buffer to console
+ 011C 217F01    	LXI	H, BUFFER
+ 011F 0680      	MVI	B, 128
+ 0121 5E        PRLOOP:	MOV	E, M
+ 0122 0E02      	MVI	C, CONOUT
+ 0124 C5        	PUSH	B
+ 0125 D5        	PUSH	D
+ 0126 E5        	PUSH	H
+ 0127 CD0500    	CALL	BDOS
+ 012A E1        	POP	H
+ 012B D1        	POP	D
+ 012C C1        	POP	B
+ 012D 23        	INX	H
+ 012E 05        	DCR	B
+ 012F C22101    	JNZ	PRLOOP
+                
+                ; close and cleanup
+ 0132 3E02      DONE:	MVI	A, RIDONE
+ 0134 0600      	MVI	B, 0
+ 0136 CD0000    	CALL	RIMG
+ 0139 0E00      	MVI	C, RESET	; exit to BDOS
+ 013B CD0500    	CALL	BDOS
+                
+                ; handling error
+ 013E 214E01    ERROR:	LXI	H, ERRMSG
+ 0141 0E09      	MVI	C, 09h
+ 0143 EB        	XCHG
+ 0144 CD0500    	CALL	BDOS
+ 0147 0E00      	MVI	C, RESET	; exit to BDOS
+ 0149 CD0500    	CALL	BDOS
+                
+                ; -------- DATA AREA --------
+ 014C 0100      RECNUM:	DW	0001h		; logical 128-byte record number
+ 014E 5265616420ERRMSG:	DB	'Read error!$'
+ 015A 00        FCB:	DB	0		; drive
+ 015B 5231323845	DB	'R128EXRMIMG'	; 8.3 filename
+S0166           	DS	25, 0
+S017F           BUFFER:	DS	128, 0
+ 01FF           	END	START
+
