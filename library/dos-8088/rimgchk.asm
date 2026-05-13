@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | rmemchk.asm                                                                |
-; | Reading a logical sector from memory, 8088, DOS, v0.1                      |
+; | rimgchk.asm                                                                |
+; | Reading a logical sector from image, 8088, DOS, v0.1                       |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -12,7 +12,7 @@
 ; FOR A PARTICULAR PURPOSE.
 
 	ORG	100h
-	EXTRN	RMEM
+	EXTRN	RIMG
 
 ; -------- CONSTANTS --------
 
