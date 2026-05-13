@@ -15,12 +15,12 @@
 	EXTRN	RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS entry point
-RESET	EQU	00h			; BDOS system reset function
-CONOUT	EQU	02h			; BDOS console output function
-RIINIT	EQU	00h			; Rimglib initialize function
-RISTRD	EQU	01h			; Rimglib sector read function
-RIDONE	EQU	02h			; Rimglib done function
+BDOS	EQU	05h		; BDOS entry point
+RESET	EQU	00h		; BDOS system reset function
+CONOUT	EQU	02h		; BDOS console output function
+RIINIT	EQU	00h		; Rimglib initialize function
+RISTRD	EQU	01h		; Rimglib sector read function
+RIDONE	EQU	02h		; Rimglib done function
 
 ; -------- CODE AREA --------
 START:

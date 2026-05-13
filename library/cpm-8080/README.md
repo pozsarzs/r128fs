@@ -33,8 +33,8 @@ and memory.
 |rdsclib|00h|secttrk|discid|        |bufaddr|RDINIT  |0      |bufaddr |
 |rdsclib|01h|       |      |sectnum |       |RDSTRD  |errcode|bufaddr |
 |       |   |       |      |        |       |        |       |        |
-|remxlib|00h|       |      |pioaddr |bufaddr|RMINIT  |0      |bufaddr |
-|remxlib|01h|banknum|      |sectnum |       |RMSTRD  |errcode|bufaddr |
+|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
 |       |   |       |      |        |       |        |       |        |
 |rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
 |rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |

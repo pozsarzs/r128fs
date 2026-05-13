@@ -17,15 +17,136 @@ EXTRN	REMX
 EXTRN	RIMG
 EXTRN	RMEM
 
+; -------- CONSTANTS --------
+BDOS	EQU	05h		; BDOS entry point
+RNUM	EQU	08h		; number of routines
+;(..)				; function codes
+
 ; -------- CODE AREA --------
 
-; (..)
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+;
+; Error codes:
+;   00h. no error		CF = 0
+;   01h: bad function		CF = 1
+;
+; Preserves: BC, DE
+; Clobbers:  AF, HL
 
-R128:
+; ---- ENTRY POINT AND JUMP TABLE ----
+R128:	PUSH	BC		; save input BC for caller
+	PUSH	DE		; save input DE for caller
 
-; (..)
+	LD	(INP_HL), HL	; save input HL for selected routine 
+	LD	(INP_DE), DE	; save input DE for selected routine
+	LD	C, A
+	LD	A, B
+	LD	(INP_B), A	; save input B for selected routine
+	LD	A, C
+
+	CP	RNUM		; compare A (function code) with max valid index
+	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+
+	ADD	A, A		; A = A * 2 (word index into jump table)
+	LD	L, A
+	LD	H, 0		; HL = zero-extended offset
+	LD	DE, MNJTAB	; DE = address of jump table entry
+	ADD	HL, DE		; HL = address of table + offset
+
+	LD	E, (HL)		; load low byte of handler address
+	INC	HL
+	LD	D, (HL)		; load high byte
+	EX	DE, HL		; HL = handler address
+	JP	(HL)		; indirect jump to selected routine
+
+MNJTAB:	DW	R128IN		; 0: initialize module
+	DW	R128FF		;
+	DW	R128FN		;
+	DW	R128OP		;
+	DW	R128RD		;
+	DW	R128SK		;
+	DW	R128CL		;
+	DW	R128NF		;
+
+MNBADF:	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	LD	A, 01h		; A = 1 (error: bad function)
+	LD	HL, 0000h	; HL = 0
+	SCF			; CF = 1 (return with error)
+	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+
+R128IN:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+
+R128FF:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+
+R128FN:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+
+R128OP:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+
+R128RD:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+
+R128SK:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+
+R128CL:	RET
+
+; ---- ??? -------------------------------------------------------------
+
+;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+
+R128NF:	RET
 
 ; --- DATA AREA -----------------------------
-ADDR:	DB	0		; I/O address
 	END
-

@@ -14,12 +14,12 @@
 PUBLIC RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS entry point
-SETDMA	EQU	1Ah			; BDOS set DMA address function
-OPEN	EQU	0Fh			; BDOS open file function
-CLOSE	EQU	10h			; BDOS close file function
-RDRND	EQU	21h			; BDOS read random function
-RNUM	EQU	03h			; Number of routines
+BDOS	EQU	05h		; BDOS entry point
+SETDMA	EQU	1Ah		; BDOS set DMA address function
+OPEN	EQU	0Fh		; BDOS open file function
+CLOSE	EQU	10h		; BDOS close file function
+RDRND	EQU	21h		; BDOS read random function
+RNUM	EQU	03h		; number of routines
 
 ; -------- CODE AREA --------
 

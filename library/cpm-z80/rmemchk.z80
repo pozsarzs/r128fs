@@ -15,11 +15,11 @@
 	EXTRN	RMEM
 
 ; -------- CONSTANTS --------
-BDOS	EQU	0005h			; BDOS entry point
-RESET	EQU	00h			; BDOS system reset function
-PRINT	EQU	09h			; BDOS print string function
-RMINIT	EQU	00h			; Rmemlib initialize function
-RMSTRD	EQU	01h			; Rmemlib sector read function
+BDOS	EQU	0005h		; BDOS entry point
+RESET	EQU	00h		; BDOS system reset function
+PRINT	EQU	09h		; BDOS print string function
+RMINIT	EQU	00h		; Rmemlib initialize function
+RMSTRD	EQU	01h		; Rmemlib sector read function
 
 ; -------- CODE AREA --------
 START:

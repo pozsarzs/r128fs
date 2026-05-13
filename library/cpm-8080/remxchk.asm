@@ -1,8 +1,8 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | remxlib.asm                                                                |
-; | Reading a logical sector from disc, 8080, CP/M, v0.1                       |
+; | remxchk.asm                                                                |
+; | Reading a logical sector from PEIX device, 8080, CP/M, v0.1                |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,17 +11,25 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-PUBLIC RDSC
+	ORG	100h
+	EXTRN	REMX
+
+; -------- CONSTANTS --------
+BDOS	EQU	05h		; BDOS entry point
+REINIT	EQU	00h		; Rdsclib initialize function
+RESTRD	EQU	01h		; Rdsclib sector read function
 
 ; -------- CODE AREA --------
+START:
+; initialization and open
 
-; (..)
+; read record
 
-RDSC:
+; dump buffer to console
 
-; (..)
+; handling error
 
-; --- DATA AREA -----------------------------
-ADDR:	DB	0		; I/O address
+	RET
+; -------- DATA AREA --------
+BUFFER:	DS	128, 0
 	END
-
