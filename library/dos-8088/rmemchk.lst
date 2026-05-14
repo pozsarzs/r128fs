@@ -1,0 +1,138 @@
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-1
+	 	 	 	 	 	 	 	05-14-<6    
+
+
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; | R128 ROM filesystem                        
+	 	 	 	                                |
+ 	 	 	 	; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@g
+	 	 	 	mail.com>                       |
+ 	 	 	 	; | rmemchk.asm                                
+	 	 	 	                                |
+ 	 	 	 	; | Reading a logical sector from memory, 8088,
+	 	 	 	 DOS, v0.1                      |
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; This is a free software: you can redistribute
+	 	 	 	 it and/or modify it under the
+ 	 	 	 	; terms of the MIT License.
+ 	 	 	 	;
+ 	 	 	 	; This program is distributed in the hope that 
+	 	 	 	it will be useful, but WITHOUT
+ 	 	 	 	; ANY WARRANTY; without even the implied warran
+	 	 	 	ty of MERCHANTABILITY or FITNESS
+ 	 	 	 	; FOR A PARTICULAR PURPOSE.
+ 	 	 	 	
+ 	 	 	 	; -------- CONSTANTS --------
+ = 0021	 	 	 	DOS       EQU 21H	 	; BDOS function
+	 	 	 	s
+ = 0009	 	 	 	PRINTSTR  EQU 09H	 	; write string 
+	 	 	 	to console function
+ = 004C	 	 	 	EXITPROC  EQU 4CH	 	; exit to DOS f
+	 	 	 	unction
+ = 0000	 	 	 	RMINIT    EQU 00H	 	; Rmemlib initi
+	 	 	 	alize function
+ = 0001	 	 	 	RMSTRD    EQU 01H	 	; Rmemlib secto
+	 	 	 	r read function
+ 	 	 	 	
+ 0000	 	 	 	CSEG	SEGMENT	PUBLIC 'CODE'
+ 	 	 	 	 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:C
+	 	 	 	SEG
+ 0100	 	 	 	 	ORG	100H
+ 	 	 	 	
+ 	 	 	 	EXTRN	RMEM:NEAR
+ 	 	 	 	
+ 0100  0E	 	 	START:	PUSH	CS
+ 0101  1F	 	 	 	POP	DS
+ 	 	 	 	
+ 	 	 	 	; initialization
+ 0102  B0 00	 	 	 	MOV	AL, RMINIT
+ 0104  BB 0161 R	 	 	MOV	BX, OFFSET BUFFER
+ 0107  BA 0139 R	 	 	MOV	DX, OFFSET ROMIMG
+ 010A  E8 0000 E	 	 	CALL	RMEM
+ 010D  0A C0	 	 	 	OR	AL, AL
+ 010F  75 16	 	 	 	JNZ	INITER
+ 	 	 	 	
+ 	 	 	 	; read sector 0
+ 0111  B0 01	 	 	 	MOV	AL, RMSTRD
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-2
+	 	 	 	 	 	 	 	05-14-<6    
+
+
+ 0113  BA 0000	 	 	 	MOV	DX, 0000H
+ 0116  E8 0000 E	 	 	CALL	RMEM
+ 0119  0A C0	 	 	 	OR	AL, AL
+ 011B  75 10	 	 	 	JNZ	READER
+ 	 	 	 	
+ 	 	 	 	; print buffer
+ 011D  BA 0161 R	 	 	MOV	DX, OFFSET BUFFER
+ 0120  B4 09	 	 	 	MOV	AH, PRINTSTR
+ 0122  CD 21	 	 	 	INT	DOS
+ 0124  EB 0E 90	 	 	 	JMP	EXIT
+ 	 	 	 	
+ 	 	 	 	; handling error
+ 0127  BA 014B R	 	INITER:	MOV	DX, OFFSET MSGINI ; init error
+ 012A  EB 04 90	 	 	 	JMP	PRNER
+ 	 	 	 	
+ 012D  BA 0156 R	 	READER:	MOV	DX, OFFSET MSGRED ; read error
+ 	 	 	 	
+ 0130  B4 09	 	 	PRNER:	MOV	AH, PRINTSTR	; print error m
+	 	 	 	essage
+ 0132  CD 21	 	 	 	INT	DOS
+ 	 	 	 	
+ 0134  B8 4C00	 	 	EXIT:	MOV	AX, 4C00H	; exit to DOS
+ 0137  CD 21	 	 	 	INT	DOS
+ 	 	 	 	
+ 	 	 	 	; -------- DATA AREA --------
+ 0139  52 4D 45 4D 4C 49	ROMIMG	DB	'RMEMLIB TEST OK', 13, 10, '$'
+       42 20 54 45 53 54	
+       20 4F 4B 0D 0A 24	
+ 014B  49 4E 49 54 20 45	MSGINI	DB	'INIT ERROR$'
+       52 52 4F 52 24	 	
+ 0156  52 45 41 44 20 45	MSGRED	DB	'READ ERROR$'
+       52 52 4F 52 24	 	
+ 0161     80 [	 	 	BUFFER	DB	128 DUP (?)
+                ??	 	
+                    ]	 	
+ 	 	 	 	
+ 	 	 	 	
+ 01E1	 	 	 	CSEG	ENDS
+ 	 	 	 	 	END	START
+
+ Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
+	 	 	 	-1
+	 	 	 	 	 	 	 	05-14-<6    
+
+
+Segments and Groups:
+
+	 	N a m e	 	 	Size	Align	Combine	Class
+
+CSEG . . . . . . . . . . . . . .	01E1	PARA  	PUBLIC	'CODE'
+
+Symbols:            
+
+	 	N a m e	 	 	Type	Value	Attr         
+
+BUFFER . . . . . . . . . . . . .	L BYTE 	0161	CSEG	Length =0080
+DOS. . . . . . . . . . . . . . .	Number	0021	
+EXIT . . . . . . . . . . . . . .	L NEAR 	0134	CSEG
+EXITPROC . . . . . . . . . . . .	Number	004C	
+INITER . . . . . . . . . . . . .	L NEAR 	0127	CSEG
+MSGINI . . . . . . . . . . . . .	L BYTE 	014B	CSEG
+MSGRED . . . . . . . . . . . . .	L BYTE 	0156	CSEG
+PRINTSTR . . . . . . . . . . . .	Number	0009	
+PRNER. . . . . . . . . . . . . .	L NEAR 	0130	CSEG
+READER . . . . . . . . . . . . .	L NEAR 	012D	CSEG
+RMEM . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
+RMINIT . . . . . . . . . . . . .	Number	0000	
+RMSTRD . . . . . . . . . . . . .	Number	0001	
+ROMIMG . . . . . . . . . . . . .	L BYTE 	0139	CSEG
+START. . . . . . . . . . . . . .	L NEAR 	0100	CSEG
+
+49654 Bytes free   
+
+Warning Severe
+Errors	Errors 
+0	0

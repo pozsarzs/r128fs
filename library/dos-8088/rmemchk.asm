@@ -11,22 +11,60 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-	ORG	100h
-	EXTRN	RMEM
-
 ; -------- CONSTANTS --------
+DOS       EQU 21H		; BDOS functions
+PRINTSTR  EQU 09H		; write string to console function
+EXITPROC  EQU 4CH		; exit to DOS function
+RMINIT    EQU 00H		; Rmemlib initialize function
+RMSTRD    EQU 01H		; Rmemlib sector read function
 
-; -------- CODE AREA --------
-START:
-; initialization and open
+CSEG	SEGMENT	PUBLIC 'CODE'
+	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
+	ORG	100H
 
-; read record
+EXTRN	RMEM:NEAR
 
-; dump buffer to console
+START:	PUSH	CS
+	POP	DS
+
+; initialization
+	MOV	AL, RMINIT
+	MOV	BX, OFFSET BUFFER
+	MOV	DX, OFFSET ROMIMG
+	CALL	RMEM
+	OR	AL, AL
+	JNZ	INITER
+
+; read sector 0
+	MOV	AL, RMSTRD
+	MOV	DX, 0000H
+	CALL	RMEM
+	OR	AL, AL
+	JNZ	READER
+
+; print buffer
+	MOV	DX, OFFSET BUFFER
+	MOV	AH, PRINTSTR
+	INT	DOS
+	JMP	EXIT
 
 ; handling error
+INITER:	MOV	DX, OFFSET MSGINI ; init error
+	JMP	PRNER
 
-	RET
+READER:	MOV	DX, OFFSET MSGRED ; read error
+
+PRNER:	MOV	AH, PRINTSTR	; print error message
+	INT	DOS
+
+EXIT:	MOV	AX, 4C00H	; exit to DOS
+	INT	DOS
+
 ; -------- DATA AREA --------
-BUFFER:	DS	128, 0
-	END
+ROMIMG	DB	'RMEMLIB TEST OK', 13, 10, '$'
+MSGINI	DB	'INIT ERROR$'
+MSGRED	DB	'READ ERROR$'
+BUFFER	DB	128 DUP (?)
+
+CSEG	ENDS
+	END	START

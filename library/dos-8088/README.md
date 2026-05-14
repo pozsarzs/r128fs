@@ -19,7 +19,7 @@ and memory.
 
 ### Available functions
 
-|name   |A  |BX     |CX     |DX      |function|ret. AX|ret. BX |
+|name   |AL |BX     |CL     |DX      |function|ret. AL|ret. BX |
 |-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
 |r128lib|00h|bufaddr|       |discid  |R128IN  |errcode|bufaddr |
 |r128lib|01h|       |       |maskaddr|R128FF  |errcode|entryptr|
@@ -49,23 +49,23 @@ and memory.
 - _discid:_  disc identity number
 - _entryptr:_ pointer to the current 16-byte file entry structure
 - _errcode:_
-  - A = 00h: no error         (CF = 0)
-  - A = 01h: bad function     (CF = 1)
-  - A = 02h: shift overflow   (CF = 1)
-  - A = 03h: address overflow (CF = 1)
-  - A = 04h: file open error  (CF = 1)
-  - A = 05h: file read error  (CF = 1)
-  - A = 06h: file close error (CF = 1)
+  - AL = 00h: no error         (CF = 0)
+  - AL = 01h: bad function     (CF = 1)
+  - AL = 02h: shift overflow   (CF = 1)
+  - AL = 03h: address overflow (CF = 1)
+  - AL = 04h: file open error  (CF = 1)
+  - AL = 05h: file read error  (CF = 1)
+  - AL = 06h: file close error (CF = 1)
 - _fcbaddr:_ pointer to 36 bytes file control block
 - _infoptr:_ pointer to a structure containing filesystem header information
 - _maskaddr:_ pointer to a filename mask in 8.3 format
 - _nameaddr:_ pointer to a filename in 8.3 format
 - _onlyfop:_
-  - B = 00h: initialize and open image file
-  - B > 00h: file open only
+  - CL = 00h: initialize and open image file
+  - CL > 00h: file open only
 - _onlyfcl:_
-  - B = 00h: close image file and clean up
-  - B > 00h: file close only
+  - CL = 00h: close image file and clean up
+  - CL > 00h: file close only
 - _pioaddr:_ i/o address of Z80PIO circuit
 - _pos:_ file position (byte offset from the beginning of the file)
 - _romaddr:_ start address of ROM with R128 filesystem
