@@ -21,7 +21,7 @@ and memory.
 
 |name   |AL |BX     |CL     |DX      |function|ret. AL|ret. BX |
 |-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
-|r128lib|00h|bufaddr|       |discid  |R128IN  |errcode|bufaddr |
+|r128lib|00h|bufaddr|discid |        |R128IN  |errcode|bufaddr |
 |r128lib|01h|       |       |maskaddr|R128FF  |errcode|entryptr|
 |r128lib|02h|       |       |        |R128FN  |errcode|entryptr|
 |r128lib|03h|       |       |nameaddr|R128OP  |errcode|        |
@@ -30,8 +30,8 @@ and memory.
 |r128lib|06h|       |       |        |R128CL  |errcode|        |
 |r128lib|07h|       |       |        |R128NF  |errcode|infoptr |
 |       |   |       |       |        |        |       |        |
-|rdsclib|00h|bufaddr|secttrk|discid  |RDINIT  |0      |bufaddr |
-|rdsclib|01h|       |       |sectnum |RDSTRD  |errcode|bufaddr |
+|rdsclib|00h|bufaddr|       |        |RDINIT  |0      |bufaddr |
+|rdsclib|01h|sector |discid |track   |RDSTRD  |errcode|bufaddr |
 |       |   |       |       |        |        |       |        |
 |rimglib|00h|bufaddr|onlyfop|fcbaddr |RIINIT  |errcode|bufaddr |
 |rimglib|01h|       |       |sectnum |RISTRD  |errcode|bufaddr |
@@ -56,6 +56,7 @@ and memory.
   - AL = 04h: file open error  (CF = 1)
   - AL = 05h: file read error  (CF = 1)
   - AL = 06h: file close error (CF = 1)
+  - AL = 07h: sector read error (CF = 1)
 - _fcbaddr:_ pointer to 36 bytes file control block
 - _infoptr:_ pointer to a structure containing filesystem header information
 - _maskaddr:_ pointer to a filename mask in 8.3 format
@@ -71,4 +72,5 @@ and memory.
 - _romaddr:_ start address of ROM with R128 filesystem
 - _sectnum:_ the number of the sector to be read
 - _secttrk:_ sector/track
-
+- _track:_ number of the track 
+- _sectnum:_ the number of the physical sector to be read

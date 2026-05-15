@@ -63,7 +63,7 @@ RIMG	PROC	NEAR
 	MOV	SI, AX		; SI = AX
 	JMP	WORD PTR MNJTAB[SI] ; indirect jump to selected routine
 
-MNJTAB	DW	RIINIT		; 0: initialize module
+MNJTAB	DW	RIINIT		; 0: initialise module
 	DW	RISTRD		; 1: read a logical sector and write to buffer
 	DW	RIDONE		; 2: clean up and/or close image file
 

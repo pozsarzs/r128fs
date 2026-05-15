@@ -19,14 +19,15 @@ RNUM	EQU	02h		; number of routines
 
 ; -------- CODE AREA --------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|rdsclib|00h|secttrk|discid|        |bufaddr|RDINIT  |0      |bufaddr |
-;|rdsclib|01h|       |      |sectnum |       |RDSTRD  |errcode|bufaddr |
+;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
+;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
 ;
 ; Error codes:
 ;   00h. no error		CF = 0
 ;   01h: bad function		CF = 1
+;   07h: sector read error	CF = 1
 ;
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
@@ -69,20 +70,24 @@ MNBADF:	POP	DE		; restore input DE for caller
 
 ; ---- INITIALIZE MODULE -----------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|rdsclib|00h|secttrk|discid|        |bufaddr|RDINIT  |0      |bufaddr |
+;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
 
 RDINIT:	RET
 
 ; ---- READ A LOGICAL SECTOR -------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|rdsclib|01h|       |      |sectnum |       |RDSTRD  |errcode|bufaddr |
+;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
 
 RDSTRD:	RET
 
-; --- DATA AREA -----------------------------
+; -------- DATA AREA --------
+INP_B:	DB	0		; input data in B
+INP_C:	DB	0		; input data in C
+INP_DE:	DW	0		; input data in DE
+INP_HL:	DW	0		; input data in HL
+BUFADD:	DW	0		; buffer start address
 	END
-

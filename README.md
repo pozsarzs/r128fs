@@ -178,6 +178,10 @@ accessing the R128 file system.
 - `library/cpm*/rimglib.*` – image file–based block device driver
 - `library/cpm*/rmemlib.*` – memory–based block device driver
 - `library/cpm*/remxlib.*` – block device driver for External Memory Box (PEMX)
+- `library/cpm*/rdscchk.*` – disc-based block device driver tester
+- `library/cpm*/rimgchk.*` – image file–based block device driver tester
+- `library/cpm*/rmemchk.*` – memory–based block device driver tester
+- `library/cpm*/remxchk.*` – block device driver for PEMX tester
 
 - `utility/cpm*/rcopy.*` – copies a file from the R128 to the host filesystem
 - `utility/cpm*/rdir.*`  – lists files in the R128 filesystem
@@ -192,14 +196,18 @@ accessing the R128 file system.
 - `library/dos-8088/rdsclib.*` – disc-based block device driver
 - `library/dos-8088/rimglib.*` – image file–based block device driver
 - `library/dos-8088/rmemlib.*` – memory–based block device driver
+- `library/cpm*/rdscchk.*` – disc-based block device driver tester
+- `library/cpm*/rimgchk.*` – image file–based block device driver tester
+- `library/cpm*/rmemchk.*` – memory–based block device driver tester
+- `library/cpm*/remxchk.*` – block device driver for PEMX tester
 
 - `utility/dos-8088/rcopy.*` – copies a file from the R128 to the host filesystem
 - `utility/dos-8088/rdir.*`  – lists files in the R128 filesystem
 - `utility/dos-8088/rtype.*` – outputs the contents of a file from the R128
 - `utility/dos-8088/rstat.*` – displays filesystem information
 
-The libraries' own README.md provides information about the compiler and linker
-that can be used for compilation.
+The libraries' and utilities' own _README.md_ provides information about the
+compiler and linker that can be used for compilation.
 
 ## 5. Licence
 

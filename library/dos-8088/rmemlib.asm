@@ -55,7 +55,7 @@ RMEM	PROC	NEAR
 	MOV	SI, AX		; SI = AX
 	JMP	WORD PTR MNJTAB[SI] ; indirect jump to selected routine
 
-MNJTAB	DW	RMINIT		; 0: initialize module
+MNJTAB	DW	RMINIT		; 0: initialise module
 	DW	RMSTRD		; 1: read a logical sector and write to buffer
 
 MNBADF:	POP     DI		; restore input DI for caller

@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | r128lib.z80                                                                |
-; | Filesystem access routines, Z80, CP/M, v0.1                                |
+; | Filesystem handler routines, Z80, CP/M, v0.1                               |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -19,8 +19,10 @@ EXTRN	RMEM
 
 ; -------- CONSTANTS --------
 BDOS	EQU	05h		; BDOS entry point
+RINIT	EQU	00h		; R???lib initialize function
+RSTRD	EQU	01h		; R???lib sector read function
+RDONE	EQU	02h		; R???lib done function
 RNUM	EQU	08h		; number of routines
-;(..)				; function codes
 
 ; -------- CODE AREA --------
 
@@ -38,6 +40,12 @@ RNUM	EQU	08h		; number of routines
 ; Error codes:
 ;   00h. no error		CF = 0
 ;   01h: bad function		CF = 1
+;   02h: shift overflow		CF = 1
+;   03h: address overflow	CF = 1
+;   04h: file open error	CF = 1
+;   05h: file read error	CF = 1
+;   06h: file close error	CF = 1
+;   07h: sector read error	CF = 1
 ;
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
@@ -69,13 +77,13 @@ R128:	PUSH	BC		; save input BC for caller
 	JP	(HL)		; indirect jump to selected routine
 
 MNJTAB:	DW	R128IN		; 0: initialize module
-	DW	R128FF		;
-	DW	R128FN		;
-	DW	R128OP		;
-	DW	R128RD		;
-	DW	R128SK		;
-	DW	R128CL		;
-	DW	R128NF		;
+	DW	R128FF		; 1: find first
+	DW	R128FN		; 2: find next
+	DW	R128OP		; 3: open file
+	DW	R128RD		; 4: read file
+	DW	R128SK		; 5: seek in file
+	DW	R128CL		; 6: close file
+	DW	R128NF		; 7: read media or file information
 
 MNBADF:	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
@@ -84,7 +92,7 @@ MNBADF:	POP	DE		; restore input DE for caller
 	SCF			; CF = 1 (return with error)
 	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- INITIALIZE MODULE -----------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -92,7 +100,7 @@ MNBADF:	POP	DE		; restore input DE for caller
 
 R128IN:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- FIND FIRST ------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -100,7 +108,7 @@ R128IN:	RET
 
 R128FF:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- FIND NEXT -------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -108,7 +116,7 @@ R128FF:	RET
 
 R128FN:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- OPEN FILE -------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -116,7 +124,7 @@ R128FN:	RET
 
 R128OP:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- READ FILE -------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -124,7 +132,7 @@ R128OP:	RET
 
 R128RD:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- SEEK IN FILE ----------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -132,7 +140,7 @@ R128RD:	RET
 
 R128SK:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- CLOSE FILE ------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -140,7 +148,7 @@ R128SK:	RET
 
 R128CL:	RET
 
-; ---- ??? -------------------------------------------------------------
+; ---- READ MEDIA OR FILE INFORMATION ----------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -148,5 +156,9 @@ R128CL:	RET
 
 R128NF:	RET
 
-; --- DATA AREA -----------------------------
+; -------- DATA AREA --------
+INP_B:	DB	0		; input data in B
+INP_C:	DB	0		; input data in C
+INP_DE:	DW	0		; input data in DE
+INP_HL:	DW	0		; input data in HL
 	END

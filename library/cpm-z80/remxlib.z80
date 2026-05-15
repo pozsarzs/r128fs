@@ -83,7 +83,7 @@ REINIT:	RET
 
 RESTRD:	RET
 
-; --- DATA AREA -----------------------------
+; -------- DATA AREA --------
 ADDR:	DB	0		; I/O address
 	END
 

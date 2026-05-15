@@ -19,29 +19,29 @@ and memory.
 
 ### Available functions
 
-|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
-|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
-|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
-|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
-|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
-|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
-|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
-|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
-|       |   |       |      |        |       |        |       |        |
-|rdsclib|00h|secttrk|discid|        |bufaddr|RDINIT  |0      |bufaddr |
-|rdsclib|01h|       |      |sectnum |       |RDSTRD  |errcode|bufaddr |
-|       |   |       |      |        |       |        |       |        |
-|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
-|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
-|       |   |       |      |        |       |        |       |        |
-|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
-|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
-|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
-|       |   |       |      |        |       |        |       |        |
-|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
-|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
+|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+|r128lib|00h|discid |     |        |bufaddr|R128IN  |errcode|bufaddr |
+|r128lib|01h|       |     |maskaddr|       |R128FF  |errcode|entryptr|
+|r128lib|02h|       |     |        |       |R128FN  |errcode|entryptr|
+|r128lib|03h|       |     |nameaddr|       |R128OP  |errcode|        |
+|r128lib|04h|       |     |count   |bufaddr|R128RD  |errcode|bytesrd |
+|r128lib|05h|       |     |pos     |       |R128SK  |errcode|        |
+|r128lib|06h|       |     |        |       |R128CL  |errcode|        |
+|r128lib|07h|       |     |        |       |R128NF  |errcode|infoptr |
+|       |   |       |     |        |       |        |       |        |
+|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
+|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+|       |   |       |     |        |       |        |       |        |
+|remxlib|00h|       |     |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+|remxlib|01h|banknum|     |sectnum |       |RESTRD  |errcode|bufaddr |
+|       |   |       |     |        |       |        |       |        |
+|rimglib|00h|onlyfop|     |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
+|rimglib|01h|       |     |sectnum |       |RISTRD  |errcode|bufaddr |
+|rimglib|02h|onlyfcl|     |        |       |RIDONE  |       |        |
+|       |   |       |     |        |       |        |       |        |
+|rmemlib|00h|       |     |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+|rmemlib|01h|       |     |sectnum |       |RMSTRD  |errcode|bufaddr |
 
 **Notes:**
 
@@ -52,13 +52,14 @@ and memory.
 - _discid:_  disc identity number
 - _entryptr:_ pointer to the current 16-byte file entry structure
 - _errcode:_
-  - A = 00h: no error         (CF = 0)
-  - A = 01h: bad function     (CF = 1)
-  - A = 02h: shift overflow   (CF = 1)
-  - A = 03h: address overflow (CF = 1)
-  - A = 04h: file open error  (CF = 1)
-  - A = 05h: file read error  (CF = 1)
-  - A = 06h: file close error (CF = 1)
+  - A = 00h: no error          (CF = 0)
+  - A = 01h: bad function      (CF = 1)
+  - A = 02h: shift overflow    (CF = 1)
+  - A = 03h: address overflow  (CF = 1)
+  - A = 04h: file open error   (CF = 1)
+  - A = 05h: file read error   (CF = 1)
+  - A = 06h: file close error  (CF = 1)
+  - A = 07h: sector read error (CF = 1)
 - _fcbaddr:_ pointer to 36 bytes file control block
 - _infoptr:_ pointer to a structure containing filesystem header information
 - _maskaddr:_ pointer to a filename mask in 8.3 format
@@ -73,4 +74,5 @@ and memory.
 - _pos:_ file position (byte offset from the beginning of the file)
 - _romaddr:_ start address of ROM with R128 filesystem
 - _sectnum:_ the number of the sector to be read
-- _secttrk:_ sector/track
+- _track:_ number of the track 
+- _sectnum:_ the number of the physical sector to be read

@@ -16,8 +16,8 @@
 
 ; -------- CONSTANTS --------
 BDOS	EQU	05h		; BDOS entry point
-REINIT	EQU	00h		; Rdsclib initialize function
-RESTRD	EQU	01h		; Rdsclib sector read function
+REINIT	EQU	00h		; Remxlib initialize function
+RESTRD	EQU	01h		; Remxlib sector read function
 
 ; -------- CODE AREA --------
 START:
