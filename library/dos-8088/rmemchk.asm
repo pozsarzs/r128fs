@@ -12,7 +12,7 @@
 ; FOR A PARTICULAR PURPOSE.
 
 ; -------- CONSTANTS --------
-DOS	EQU	21H		; BDOS functions
+DOS	EQU	21H		; DOS functions
 DPRINT	EQU	09H		; write string to console function
 DEXIT	EQU	4CH		; exit to DOS function
 RMINIT	EQU	00H		; Rmemlib initialize function

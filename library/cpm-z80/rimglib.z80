@@ -172,7 +172,7 @@ DONECL:	LD	C, BCLOSE	; close file
 	JR	Z, DONEER	; at error go DONEER
 	XOR	A		; A = 0, CF = 0
 
-DONEDN: LD	HL, (BUFADD)	; HL = buffer address
+DONEDN: LD	HL, 0		; HL = 0
 	POP	DE		; restore input DE for caller
 	POP	BC		; restore input BC for caller
 	RET

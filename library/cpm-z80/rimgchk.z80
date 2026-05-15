@@ -15,13 +15,13 @@
 	EXTRN	RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h			; BDOS entry point
-BRESET	EQU	00h			; BDOS system reset function
-BCONOUT	EQU	02h			; BDOS console output function
-BPRINT	EQU	09h			; BDOS print string function
-RIINIT	EQU	00h			; Rimglib initialize function
-RISTRD	EQU	01h			; Rimglib sector read function
-RIDONE	EQU	02h			; Rimglib done function
+BDOS	EQU	05h		; BDOS entry point
+BRESET	EQU	00h		; BDOS system reset function
+BCONOUT	EQU	02h		; BDOS console output function
+BPRINT	EQU	09h		; BDOS print string function
+RIINIT	EQU	00h		; Rimglib initialize function
+RISTRD	EQU	01h		; Rimglib sector read function
+RIDONE	EQU	02h		; Rimglib done function
 
 ; -------- CODE AREA --------
 START:
@@ -58,7 +58,7 @@ PRLOOP:	LD	E, (HL)
 DONE:	LD	A, RIDONE
 	LD	B, 0
 	CALL	RIMG
-	LD	C, BRESET		; exit to BDOS
+	LD	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; handling error
@@ -66,14 +66,14 @@ ERROR:	LD	HL, ERRMSG
 	LD	C, BPRINT
 	EX	DE, HL
 	CALL	BDOS
-	LD	C, BRESET		; exit to BDOS
+	LD	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
-RECNUM:	DW	0001h			; logical 128-byte record number
+RECNUM:	DW	0001h		; logical 128-byte record number
 ERRMSG:	DB	'Read error!$'
-FCB:	DB	0			; drive
-	DB	'R128EXRMIMG'		; 8.3 filename
+FCB:	DB	0		; drive
+	DB	'R128EXRMIMG'	; 8.3 filename
 	DS	25, 0
 BUFFER:	DS	128, 0
 	END

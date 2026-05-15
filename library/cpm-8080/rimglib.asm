@@ -65,6 +65,7 @@ RIMG:	PUSH	B		; save input BC for caller
 
 MNJTAB:	DW	RIINIT		; 0: initialize module
 	DW	RISTRD		; 1: read a logical sector and write to buffer
+	DW	RIDONE		; 2: clean up and/or close image file
 
 MNBADF:	POP	D		; restore input DE for caller
 	POP	B		; restore input BC for caller
@@ -140,7 +141,7 @@ RISTRD:	LHLD	FCBADD		; HL = FCB address
 	CALL	BDOS		; call BDOS
 
 	ORA	A		; set flags
-	JNZ	STRDER	; file read error
+	JNZ	STRDER		; file read error
 
 	XRA	A		; A = 0, CF = 0
 
@@ -175,7 +176,7 @@ DONECL:	MVI	C, BCLOSE	; close file
 	JZ	DONEER		; at error go DONEER
 	XRA	A		; A = 0, CF = 0
 
-DONEDN: LHLD	BUFADD		; HL = buffer address
+DONEDN: LXI	H, 0		; HL = 0
 	POP	D		; restore input DE for caller
 	POP	B		; restore input BC for caller
 	RET
