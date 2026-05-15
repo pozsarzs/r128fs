@@ -12,11 +12,11 @@
 ; FOR A PARTICULAR PURPOSE.
 
 ; -------- CONSTANTS --------
-DOS       EQU 21H		; BDOS functions
-PRINTSTR  EQU 09H		; write string to console function
-EXITPROC  EQU 4CH		; exit to DOS function
-RMINIT    EQU 00H		; Rmemlib initialize function
-RMSTRD    EQU 01H		; Rmemlib sector read function
+DOS	EQU	21H		; BDOS functions
+DPRINT	EQU	09H		; write string to console function
+DEXIT	EQU	4CH		; exit to DOS function
+RMINIT	EQU	00H		; Rmemlib initialize function
+RMSTRD	EQU	01H		; Rmemlib sector read function
 
 CSEG	SEGMENT	PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
@@ -44,8 +44,9 @@ START:	PUSH	CS
 
 ; print buffer
 	MOV	DX, OFFSET BUFFER
-	MOV	AH, PRINTSTR
+	MOV	AH, DPRINT
 	INT	DOS
+	MOV	AL, 0		; error code = 0
 	JMP	EXIT
 
 ; handling error
@@ -54,10 +55,11 @@ INITER:	MOV	DX, OFFSET MSGINI ; init error
 
 READER:	MOV	DX, OFFSET MSGRED ; read error
 
-PRNER:	MOV	AH, PRINTSTR	; print error message
+PRNER:	MOV	AH, DPRINT	; print error message
 	INT	DOS
+	MOV	AL, 1		; error code = 1
 
-EXIT:	MOV	AX, 4C00H	; exit to DOS
+EXIT:	MOV	AH, DEXIT	; exit to DOS
 	INT	DOS
 
 ; -------- DATA AREA --------

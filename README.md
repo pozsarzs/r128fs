@@ -188,15 +188,15 @@ accessing the R128 file system.
 
 ![R128 Data Flow Diagram on DOS](picture/r128-dos.png)
 
-- `library/dos/r128lib.*` – the R128 filesystem core library
-- `library/dos/rdsclib.*` – disc-based block device driver
-- `library/dos/rimglib.*` – image file–based block device driver
-- `library/dos/rmemlib.*` – memory–based block device driver
+- `library/dos-8088/r128lib.*` – the R128 filesystem core library
+- `library/dos-8088/rdsclib.*` – disc-based block device driver
+- `library/dos-8088/rimglib.*` – image file–based block device driver
+- `library/dos-8088/rmemlib.*` – memory–based block device driver
 
-- `utility/dos/rcopy.*` – copies a file from the R128 to the host filesystem
-- `utility/dos/rdir.*`  – lists files in the R128 filesystem
-- `utility/dos/rtype.*` – outputs the contents of a file from the R128
-- `utility/dos/rstat.*` – displays filesystem information
+- `utility/dos-8088/rcopy.*` – copies a file from the R128 to the host filesystem
+- `utility/dos-8088/rdir.*`  – lists files in the R128 filesystem
+- `utility/dos-8088/rtype.*` – outputs the contents of a file from the R128
+- `utility/dos-8088/rstat.*` – displays filesystem information
 
 The libraries' own README.md provides information about the compiler and linker
 that can be used for compilation.

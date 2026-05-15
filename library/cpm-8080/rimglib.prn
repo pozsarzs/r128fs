@@ -15,10 +15,10 @@
                 
                 ; -------- CONSTANTS --------
  0005 =         BDOS	EQU	05h			; BDOS entry point
- 001A =         SETDMA	EQU	1Ah			; BDOS set DMA address function
- 000F =         OPEN	EQU	0Fh			; BDOS open file function
- 0010 =         CLOSE	EQU	10h			; BDOS close file function
- 0021 =         RDRND	EQU	21h			; BDOS read random function
+ 001A =         BSETDMA	EQU	1Ah			; BDOS set DMA address function
+ 000F =         BOPEN	EQU	0Fh			; BDOS open file function
+ 0010 =         BCLOSE	EQU	10h			; BDOS close file function
+ 0021 =         BRDRND	EQU	21h			; BDOS read random function
  0003 =         RNUM	EQU	03h			; Number of routines
                 
                 ; -------- CODE AREA --------
@@ -89,12 +89,12 @@
  0037 2ABB00    	LHLD	INPRHL		; get input HL data	
  003A 22BD00    	SHLD	BUFADD		; store buffer starting address
                 
- 003D 0E1A      	MVI	C, SETDMA	; set DMA address
+ 003D 0E1A      	MVI	C, BSETDMA	; set DMA address
  003F 2ABD00    	LHLD	BUFADD		; HL = DMA address
  0042 EB        	XCHG			; DE = DMA address
  0043 CD0500    	CALL	BDOS		; call BDOS
                 
- 0046 0E0F      INITOP:	MVI	C, OPEN		; open file
+ 0046 0E0F      INITOP:	MVI	C, BOPEN	; open file
  0048 2ABF00    	LHLD	FCBADD		; HL = FCB address
  004B EB        	XCHG			; DE = FCB address
  004C CD0500    	CALL	BDOS		; call BDOS
@@ -134,7 +134,7 @@
  0073 AF        	XRA	A		; A = 0
  0074 77        	MOV	M, A		; store in FCB
                 
- 0075 0E21      	MVI	C, RDRND	; read random
+ 0075 0E21      	MVI	C, BRDRND	; read random
  0077 2ABF00    	LHLD	FCBADD		; HL = FCB address
  007A EB        	XCHG			; DE = FCB address
  007B CD0500    	CALL	BDOS		; call BDOS
@@ -163,11 +163,11 @@
  0092 B7        	ORA	A
  0093 C29E00    	JNZ	DONECL		; if A = 1 then goto DONECL
                 
- 0096 0E1A      	MVI	C, SETDMA	; set DMA address
+ 0096 0E1A      	MVI	C, BSETDMA	; set DMA address
  0098 118000    	LXI	D, 0080h	; DE = default DMA address
  009B CD0500    	CALL	BDOS		; call BDOS
                 
- 009E 0E10      DONECL:	MVI	C, CLOSE	; close file
+ 009E 0E10      DONECL:	MVI	C, BCLOSE	; close file
  00A0 2ABF00    	LHLD	FCBADD		; HL = FCB address
  00A3 EB        	XCHG			; DE = FCB address
  00A4 CD0500    	CALL	BDOS		; call BDOS

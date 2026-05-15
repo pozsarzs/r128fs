@@ -36,8 +36,7 @@ PUBLIC  RMEM
 ;   02h: shift overflow		CF = 1
 ;   03h: address overflow	CF = 1
 ;
-; Preserves: ?
-; Clobbers:  ?
+; Preserves: CX, SI, DI
 
 ; ---- ENTRY POINT AND JUMP TABLE ----
 RMEM	PROC	NEAR

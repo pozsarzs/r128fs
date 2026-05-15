@@ -15,12 +15,13 @@
 	EXTRN	RIMG
 
 ; -------- CONSTANTS --------
-BDOS	EQU	05h		; BDOS entry point
-RESET	EQU	00h		; BDOS system reset function
-CONOUT	EQU	02h		; BDOS console output function
-RIINIT	EQU	00h		; Rimglib initialize function
-RISTRD	EQU	01h		; Rimglib sector read function
-RIDONE	EQU	02h		; Rimglib done function
+BDOS	EQU	05h			; BDOS entry point
+BRESET	EQU	00h			; BDOS system reset function
+BCONOUT	EQU	02h			; BDOS console output function
+BPRINT	EQU	09h			; BDOS print string function
+RIINIT	EQU	00h			; Rimglib initialize function
+RISTRD	EQU	01h			; Rimglib sector read function
+RIDONE	EQU	02h			; Rimglib done function
 
 ; -------- CODE AREA --------
 START:
@@ -42,7 +43,7 @@ START:
 	LD	HL, BUFFER
 	LD	B, 128
 PRLOOP:	LD	E, (HL)
-	LD	C, CONOUT
+	LD	C, BCONOUT
 	PUSH	BC
 	PUSH	DE
 	PUSH	HL
@@ -57,15 +58,15 @@ PRLOOP:	LD	E, (HL)
 DONE:	LD	A, RIDONE
 	LD	B, 0
 	CALL	RIMG
-	LD	C, RESET		; exit to BDOS
+	LD	C, BRESET		; exit to BDOS
 	CALL	BDOS
 
 ; handling error
 ERROR:	LD	HL, ERRMSG
-	LD	C, 09h
+	LD	C, BPRINT
 	EX	DE, HL
 	CALL	BDOS
-	LD	C, RESET		; exit to BDOS
+	LD	C, BRESET		; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------

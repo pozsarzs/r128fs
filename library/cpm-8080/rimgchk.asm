@@ -16,8 +16,9 @@
 
 ; -------- CONSTANTS --------
 BDOS	EQU	0005h		; BDOS entry point
-RESET	EQU	00h		; BDOS system reset function
-CONOUT	EQU	02h		; BDOS console output function
+BRESET	EQU	00h		; BDOS system reset function
+BCONOUT	EQU	02h		; BDOS console output function
+BPRINT	EQU	09h		; BDOS print string function
 RIINIT	EQU	00h		; Rimglib initialize function
 RISTRD	EQU	01h		; Rimglib sector read function
 RIDONE	EQU	02h		; Rimglib done function
@@ -43,7 +44,7 @@ START:
 	LXI	H, BUFFER
 	MVI	B, 128
 PRLOOP:	MOV	E, M
-	MVI	C, CONOUT
+	MVI	C, BCONOUT
 	PUSH	B
 	PUSH	D
 	PUSH	H
@@ -59,15 +60,15 @@ PRLOOP:	MOV	E, M
 DONE:	MVI	A, RIDONE
 	MVI	B, 0
 	CALL	RIMG
-	MVI	C, RESET	; exit to BDOS
+	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; handling error
 ERROR:	LXI	H, ERRMSG
-	MVI	C, 09h
+	MVI	C, BPRINT
 	XCHG
 	CALL	BDOS
-	MVI	C, RESET	; exit to BDOS
+	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------

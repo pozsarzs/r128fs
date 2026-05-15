@@ -15,10 +15,10 @@ PUBLIC RIMG
 
 ; -------- CONSTANTS --------
 BDOS	EQU	05h			; BDOS entry point
-SETDMA	EQU	1Ah			; BDOS set DMA address function
-OPEN	EQU	0Fh			; BDOS open file function
-CLOSE	EQU	10h			; BDOS close file function
-RDRND	EQU	21h			; BDOS read random function
+BSETDMA	EQU	1Ah			; BDOS set DMA address function
+BOPEN	EQU	0Fh			; BDOS open file function
+BCLOSE	EQU	10h			; BDOS close file function
+BRDRND	EQU	21h			; BDOS read random function
 RNUM	EQU	03h			; Number of routines
 
 ; -------- CODE AREA --------
@@ -89,12 +89,12 @@ RIINIT: LDA	INPRB		; get input B data
 	LHLD	INPRHL		; get input HL data	
 	SHLD	BUFADD		; store buffer starting address
 
-	MVI	C, SETDMA	; set DMA address
+	MVI	C, BSETDMA	; set DMA address
 	LHLD	BUFADD		; HL = DMA address
 	XCHG			; DE = DMA address
 	CALL	BDOS		; call BDOS
 
-INITOP:	MVI	C, OPEN		; open file
+INITOP:	MVI	C, BOPEN	; open file
 	LHLD	FCBADD		; HL = FCB address
 	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS
@@ -134,7 +134,7 @@ RISTRD:	LHLD	FCBADD		; HL = FCB address
 	XRA	A		; A = 0
 	MOV	M, A		; store in FCB
 
-	MVI	C, RDRND	; read random
+	MVI	C, BRDRND	; read random
 	LHLD	FCBADD		; HL = FCB address
 	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS
@@ -163,11 +163,11 @@ RIDONE: LDA	INPRB		; get input B data
 	ORA	A
 	JNZ	DONECL		; if A = 1 then goto DONECL
 
-	MVI	C, SETDMA	; set DMA address
+	MVI	C, BSETDMA	; set DMA address
 	LXI	D, 0080h	; DE = default DMA address
 	CALL	BDOS		; call BDOS
 
-DONECL:	MVI	C, CLOSE	; close file
+DONECL:	MVI	C, BCLOSE	; close file
 	LHLD	FCBADD		; HL = FCB address
 	XCHG			; DE = FCB address
 	CALL	BDOS		; call BDOS

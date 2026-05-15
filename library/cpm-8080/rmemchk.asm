@@ -16,8 +16,8 @@
 
 ; -------- CONSTANTS --------
 BDOS	EQU	0005h		; BDOS entry point
-RESET	EQU	00h		; BDOS system reset function
-PRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; BDOS system reset function
+BPRINT	EQU	09h		; BDOS print string function
 RMINIT	EQU	00h		; Rmemlib initialize function
 RMSTRD	EQU	01h		; Rmemlib sector read function
 
@@ -37,7 +37,7 @@ START:	MVI	A, RMINIT
 
 ; print buffer
 	LXI	D, BUFFER
-	MVI	C, PRINT
+	MVI	C, BPRINT
 	CALL	BDOS
 	JMP	EXIT
 
@@ -47,10 +47,10 @@ INITER:	LXI	D, MSGINI	; init error
 
 READER:	LXI	D, MSGRED	; read error
 
-PRNER:	MVI	C, PRINT	; print error message
+PRNER:	MVI	C, BPRINT	; print error message
 	CALL	BDOS
 
-EXIT:	MVI	C, RESET	; exit to BDOS
+EXIT:	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------

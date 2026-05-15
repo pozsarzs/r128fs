@@ -6,7 +6,7 @@ goto END
 :START
 shift
 :LOOP
-if "%1"=="" goto END
+if "%1"=="" goto NEXT
 
 masm %1lib.asm %1lib.obj %1lib.lst;
 if errorlevel 1 goto END
@@ -20,5 +20,8 @@ del %1chk.exe
 
 shift
 goto LOOP
+
+:NEXT
+masm r128lib.asm r128lib.obj r128lib.lst;
 
 :END

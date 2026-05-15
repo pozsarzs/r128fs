@@ -19,8 +19,8 @@ RMEMCHK Z80
    16                   
    17                   ; -------- CONSTANTS --------
    18         0005      BDOS	EQU	0005h			; BDOS entry point
-   19         0000      RESET	EQU	00h			; BDOS system reset function
-   20         0009      PRINT	EQU	09h			; BDOS print string function
+   19         0000      BRESET	EQU	00h			; BDOS system reset function
+   20         0009      BPRINT	EQU	09h			; BDOS print string function
    21         0000      RMINIT	EQU	00h			; Rmemlib initialize function
    22         0001      RMSTRD	EQU	01h			; Rmemlib sector read function
    23                   
@@ -41,7 +41,7 @@ RMEMCHK Z80
    38                   
    39                   ; print buffer
    40 0117  11 015D     	LD	DE, BUFFER
-   41 011A  0E 09       	LD	C, PRINT
+   41 011A  0E 09       	LD	C, BPRINT
    42 011C  CD 0005     	CALL	BDOS
    43 011F  18 0D       	JR	EXIT
    44                   
@@ -51,10 +51,10 @@ RMEMCHK Z80
    48                   
    49 0126  11 0151     READER:	LD	DE, MSGRED	; read error
    50                   
-   51 0129  0E 09       PRNER:	LD	C, PRINT	; print error message
+   51 0129  0E 09       PRNER:	LD	C, BPRINT	; print error message
    52 012B  CD 0005     	CALL	BDOS
    53                   
-   54 012E  0E 00       EXIT:	LD	C, RESET	; exit to BDOS
+   54 012E  0E 00       EXIT:	LD	C, BRESET	; exit to BDOS
    55 0130  CD 0005     	CALL	BDOS
    56                   
    57                   ; -------- DATA AREA --------

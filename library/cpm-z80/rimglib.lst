@@ -18,10 +18,10 @@ RIMGLIB Z80
    15                   
    16                   ; -------- CONSTANTS --------
    17         0005      BDOS	EQU	05h			; BDOS entry point
-   18         001A      SETDMA	EQU	1Ah			; BDOS set DMA address function
-   19         000F      OPEN	EQU	0Fh			; BDOS open file function
-   20         0010      CLOSE	EQU	10h			; BDOS close file function
-   21         0021      RDRND	EQU	21h			; BDOS read random function
+   18         001A      BSETDMA	EQU	1Ah			; BDOS set DMA address function
+   19         000F      BOPEN	EQU	0Fh			; BDOS open file function
+   20         0010      BCLOSE	EQU	10h			; BDOS close file function
+   21         0021      BRDRND	EQU	21h			; BDOS read random function
    22         0003      RNUM	EQU	03h			; Number of routines
    23                   
    24                   ; -------- CODE AREA --------
@@ -97,11 +97,11 @@ RIMGLIB Z80
    91 003D' 2A 00BA'    	LD	HL, (INP_HL)	; get input HL data	
    92 0040' 22 00BC'    	LD	(BUFADD), HL	; store buffer starting address
    93                   
-   94 0043' 0E 1A       	LD	C, SETDMA	; set DMA address
+   94 0043' 0E 1A       	LD	C, BSETDMA	; set DMA address
    95 0045' ED 5B 00BC' 	LD	DE, (BUFADD)	; DE = DMA address
    96 0049' CD 0005     	CALL	BDOS		; call BDOS
    97                   
-   98 004C' 0E 0F       INITOP:	LD	C, OPEN		; open file
+   98 004C' 0E 0F       INITOP:	LD	C, BOPEN	; open file
    99 004E' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
   100 0052' CD 0005     	CALL	BDOS		; call BDOS
   101 0055' 3C          	INC	A		; check result (at error: FFh -> 00h)
@@ -142,7 +142,7 @@ RIMGLIB Z80
   133 0077' AF          	XOR	A		; A = 0
   134 0078' 77          	LD	(HL), A		; store in FCB
   135                   
-  136 0079' 0E 21       	LD	C, RDRND	; read random
+  136 0079' 0E 21       	LD	C, BRDRND	; read random
   137 007B' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
   138 007F' CD 0005     	CALL	BDOS		; call BDOS
   139                   
@@ -170,11 +170,11 @@ RIMGLIB Z80
   161 0094' B7          	OR	A
   162 0095' 20 08       	JR	NZ, DONECL	; if A = 1 then goto DONECL
   163                   
-  164 0097' 0E 1A       	LD	C, SETDMA	; set DMA address
+  164 0097' 0E 1A       	LD	C, BSETDMA	; set DMA address
   165 0099' 11 0080     	LD	DE, 0080h	; DE = default DMA address
   166 009C' CD 0005     	CALL	BDOS		; call BDOS
   167                   
-  168 009F' 0E 10       DONECL:	LD	C, CLOSE	; close file
+  168 009F' 0E 10       DONECL:	LD	C, BCLOSE	; close file
   169 00A1' ED 5B 00BE' 	LD	DE, (FCBADD)	; DE = FCB address
   170 00A5' CD 0005     	CALL	BDOS		; call BDOS
   171 00A8' 3C          	INC	A		; check result (at error: FFh -> 00h)

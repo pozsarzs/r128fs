@@ -19,8 +19,9 @@ RIMGCHK Z80
    16                   
    17                   ; -------- CONSTANTS --------
    18         0005      BDOS	EQU	05h			; BDOS entry point
-   19         0000      RESET	EQU	00h			; BDOS system reset function
-   20         0002      CONOUT	EQU	02h			; BDOS console output function
+   19         0000      BRESET	EQU	00h			; BDOS system reset function
+   20         0002      BCONOUT	EQU	02h			; BDOS console output function
+			BPRINT	EQU	09h			; BDOS print string function
    21         0000      RIINIT	EQU	00h			; Rimglib initialize function
    22         0001      RISTRD	EQU	01h			; Rimglib sector read function
    23         0002      RIDONE	EQU	02h			; Rimglib done function
@@ -45,7 +46,7 @@ RIMGCHK Z80
    42 011A  21 017B     	LD	HL, BUFFER
    43 011D  06 80       	LD	B, 128
    44 011F  5E          PRLOOP:	LD	E, (HL)
-   45 0120  0E 02       	LD	C, CONOUT
+   45 0120  0E 02       	LD	C, BCONOUT
    46 0122  C5          	PUSH	BC
    47 0123  D5          	PUSH	DE
    48 0124  E5          	PUSH	HL
@@ -63,15 +64,15 @@ RIMGCHK Z80
 RIMGCHK Z80
 
    59 0132  CD 0000#    	CALL	RIMG
-   60 0135  0E 00       	LD	C, RESET		; exit to BDOS
+   60 0135  0E 00       	LD	C, BRESET		; exit to BDOS
    61 0137  CD 0005     	CALL	BDOS
    62                   
    63                   ; handling error
    64 013A  21 014A     ERROR:	LD	HL, ERRMSG
-   65 013D  0E 09       	LD	C, 09h
+   65 013D  0E 09       	LD	C, BPRINT
    66 013F  EB          	EX	DE, HL
    67 0140  CD 0005     	CALL	BDOS
-   68 0143  0E 00       	LD	C, RESET		; exit to BDOS
+   68 0143  0E 00       	LD	C, BRESET		; exit to BDOS
    69 0145  CD 0005     	CALL	BDOS
    70                   
    71                   ; -------- DATA AREA --------
