@@ -1,0 +1,8 @@
+z80asm rcopy/mf
+z80asm rdir/mf
+z80asm rstat/mf
+z80asm rtype/mf
+l80 rcopy,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rdir,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rstat,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rtype,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e

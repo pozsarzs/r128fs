@@ -1,0 +1,8 @@
+rmac rcopy
+rmac rdir
+rmac rstat
+rmac rtype
+l80 rcopy,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rdir,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rstat,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e
+l80 rtype,r128lib,rdsclib,remxlib,rdsclib,rmemlib,rcopy/n/e

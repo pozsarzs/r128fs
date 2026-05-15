@@ -9,7 +9,6 @@ shift
 if "%1"=="" goto NEXT
 
 del r128.lib
-
 masm %1lib.asm %1lib.obj %1lib.lst;
 if errorlevel 1 goto END
 lib r128.lib +%1lib.obj r128.lst;

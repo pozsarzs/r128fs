@@ -11,21 +11,32 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-	ORG	100h
-EXTRN	R128
-EXTRN	RDSC
-EXTRN	RIMG
-EXTRN	RMEM
+; -------- CONSTANTS --------
+DOS	EQU	21H		; DOS functions
+DPRINT	EQU	09H		; write string to console function
+DEXIT	EQU	4CH		; exit to DOS function
 
-; -------- CODE AREA --------
-SECTION .TEXT
-START:
+CSEG	SEGMENT	PUBLIC 'CODE'
+	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
+	ORG	100H
 
-; (..)
+EXTRN	R128:NEAR
+
+START:	PUSH	CS
+	POP	DS
+
+;(..)
+
+ERROR:	MOV	DX, OFFSET ERRMSG ; error message
+	MOV	AH, DPRINT	; print error message
+	INT	DOS
+	MOV	AL, 1		; error code = 1
+
+EXIT:	MOV	AH, DEXIT	; exit to DOS
+	INT	DOS
 
 ; -------- DATA AREA --------
-SECTION .DATA
+ERRMSG 	DB	'Error!$'
 
-MSG01:	DB   	'', 0Dh, 0Ah, '$'
-	END
-
+CSEG	ENDS
+	END	START
