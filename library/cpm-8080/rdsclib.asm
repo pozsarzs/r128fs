@@ -1,7 +1,7 @@
 ; +----------------------------------------------------------------------------+
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
-; | remxlib.asm                                                                |
+; | rdsclib.asm                                                                |
 ; | Reading a logical sector from disc, 8080, CP/M, v0.1                       |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
@@ -22,7 +22,7 @@ RNUM	EQU	02h		; number of routines
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
 ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
-;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
 ;
 ; Error codes:
 ;   00h. no error		CF = 0
@@ -36,10 +36,14 @@ RNUM	EQU	02h		; number of routines
 RDSC:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
+	PUSH	A		; save input AF
 	SHLD	INPRHL		; save input HL for selected routine 
 	MOV	H, D
 	MOV	L, E
 	SHLD	INPRDE		; save input DE for selected routine
+	MOV	A, B
+	STA	INPRB		; save input B for selected routine
+	POP	A		; restore input AF
 
 	CPI	RNUM		; compare A (function code) with max valid index
 	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
@@ -72,20 +76,86 @@ MNBADF:	POP	D		; restore input DE for caller
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
 ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
 
-RDINIT:	RET
+RDINIT:	LHLD	INPRHL		; get input HL data	
+	SHLD	BUFADD		; store buffer starting address
+
+	LHLD	0001h		; HL = BIOS Warm Boot (WBOOT) pointer
+	LXI	D, -3		; DE = -3 (0000-0002h: JP nnnn)
+	DAD	D		; HL = HL - 3
+	SHLD	BFJTAB		; (BFJTAB) = HL, BIOS jump table base address
+
+INITDN: XRA	A		; A = 0, CF = 0
+	LHLD	BUFADD		; HL = buffer address
+	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
+	RET
 
 ; ---- READ A LOGICAL SECTOR -------------------------------------------
 
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
-;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
 
-RDSTRD:	RET
+RDSTRD:	LDA	INPRB		; get input B data
+	MOV	C, A
+	CALL	BSLDSK		; select disc
+
+	LHLD	INPRDE		; get input DE data
+	MOV	B, H
+	MOV	C, L
+	CALL	BSTRCK		; select track
+
+	LHLD	INPRHL		; get input HL data
+	MOV	B, H
+	MOV	C, L
+	CALL	BSSECT		; select sector
+
+	LHLD	BUFADD
+	MOV	B, H
+	MOV	C, L
+	CALL	BSDMA		; set DMA buffer address
+
+	CALL	BREAD		; read disc
+
+	ORA	A
+	JNZ	STRDER	; if result > 0 then goto STRDER
+	XRA	A		; A = 0, CF = 0
+	JMP	STRDDN		; goto STRDDN
+
+STRDER:	MVI	A, 07h		; A = 7
+	STC			; CF = 1
+	
+STRDDN:	LHLD	BUFADD		; HL = buffer address
+	POP	D		; restore input DE for caller
+	POP	B		; restore input BC for caller
+	RET
+
+; ---- BIOS FUNCTION JUMP TABLE ---------------------------------
+BSLDSK:	LHLD	BFJTAB
+	LXI	D, 27
+	DAD	D
+	PCHL			; jump to the BIOS SELDSK routine
+BSTRCK:	LHLD	BFJTAB
+	LXI	D, 30
+	DAD	D
+	PCHL			; jump to the BIOS SETTRK routine
+BSSECT:	LHLD	BFJTAB
+	LXI	D, 33
+	DAD	D
+	PCHL			; jump to the BIOS SETSEC routine
+BSDMA:	LHLD	BFJTAB
+	LXI	D, 36
+	DAD	D
+	PCHL			; jump to the BIOS SETDMA routine
+BREAD:	LHLD	BFJTAB
+	LXI	D, 39
+	DAD	D
+	PCHL			; jump to the BIOS READ routine
 
 ; -------- DATA AREA --------
-INP_B:	DB	0		; input data in B
-INP_C:	DB	0		; input data in C
-INP_DE:	DW	0		; input data in DE
-INP_HL:	DW	0		; input data in HL
-BUFADD:	DW	0		; buffer start address
+INPRB	DB	0		; input data in B
+INPRDE	DW	0		; input data in DE
+INPRHL	DW	0		; input data in HL
+BUFADD	DW	0		; buffer start address
+BFJTAB	DW	0		; BIOS functions jump table base address
 	END

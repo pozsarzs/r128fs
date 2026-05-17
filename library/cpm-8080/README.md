@@ -31,7 +31,7 @@ and memory.
 |r128lib|07h|       |     |        |       |R128NF  |errcode|infoptr |
 |       |   |       |     |        |       |        |       |        |
 |rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
-|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
 |       |   |       |     |        |       |        |       |        |
 |remxlib|00h|       |     |pioaddr |bufaddr|REINIT  |0      |bufaddr |
 |remxlib|01h|banknum|     |sectnum |       |RESTRD  |errcode|bufaddr |

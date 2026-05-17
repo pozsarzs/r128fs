@@ -30,7 +30,7 @@ START:
 	CALL	RDSC
 	JR	C, INITER
 
-; read record
+; read sector
 	LD	A, (DISCID)
 	LD	B, A
 	LD	A, RDSTRD

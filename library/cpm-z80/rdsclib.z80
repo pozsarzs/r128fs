@@ -128,12 +128,7 @@ STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
 	POP	BC		; restore input BC for caller
 	RET
 
-; -------- DATA AREA --------
-INP_B:	DB	0		; input data in B
-INP_DE:	DW	0		; input data in DE
-INP_HL:	DW	0		; input data in HL
-BUFADD:	DW	0		; buffer start address
-BFJTAB:	DW	0		; BIOS functions jump table base address
+; ---- BIOS FUNCTION JUMP TABLE ---------------------------------
 BSLDSK:	LD	HL, (BFJTAB)
 	LD	DE, 27
 	ADD	HL, DE
@@ -154,4 +149,11 @@ BREAD:	LD	HL, (BFJTAB)
 	LD	DE, 39
 	ADD	HL, DE
 	JP	(HL)		; jump to the BIOS READ routine
+
+; -------- DATA AREA --------
+INP_B:	DB	0		; input data in B
+INP_DE:	DW	0		; input data in DE
+INP_HL:	DW	0		; input data in HL
+BUFADD:	DW	0		; buffer start address
+BFJTAB:	DW	0		; BIOS functions jump table base address
 	END

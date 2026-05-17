@@ -1,0 +1,80 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | rdscchk.asm                                                                |
+                ; | Reading a logical sector from disc, 8080, CP/M, v0.1                       |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+ 0100           	ORG	100h
+                	EXTRN	RDSC
+                
+                ; -------- CONSTANTS --------
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 0000 =         BRESET	EQU	00h		; BDOS system reset function
+ 0002 =         BCONOUT	EQU	02h		; BDOS console output function
+ 0009 =         BPRINT	EQU	09h		; BDOS print string function
+ 0000 =         RDINIT	EQU	00h		; Rdsclib initialize function
+ 0001 =         RDSTRD	EQU	01h		; Rdsclib sector read function
+                
+                ; -------- CODE AREA --------
+                START:
+                ; initialization and open
+ 0100 3E00      	MVI	A, RDINIT
+ 0102 216901    	LXI	H, BUFFER
+ 0105 CD0000    	CALL	RDSC
+ 0108 DA3701    	JC	INITER
+                
+                ; read sector
+ 010B 3A4A01    	LDA	DISCID
+ 010E 47        	MOV	B, A
+ 010F 3E01      	MVI	A, RDSTRD
+ 0111 2A4B01    	LHLD	TRACK
+ 0114 EB        	XCHG
+ 0115 2A4D01    	LHLD	SECTOR
+ 0118 CD0000    	CALL	RDSC
+ 011B DA3D01    	JC	READER
+                
+                ; dump buffer to console
+ 011E 216901    	LXI	H, BUFFER
+ 0121 0680      	MVI	B, 128
+ 0123 5E        PRLOOP:	MOV	E, M
+ 0124 0E02      	MVI	C, BCONOUT
+ 0126 C5        	PUSH	B
+ 0127 D5        	PUSH	D
+ 0128 E5        	PUSH	H
+ 0129 CD0500    	CALL	BDOS
+ 012C E1        	POP	H
+ 012D D1        	POP	D
+ 012E C1        	POP	B
+ 012F 23        	INX	H
+ 0130 05        	DCR	B
+ 0131 C22301    	JNZ	PRLOOP
+ 0134 C34501    	JMP	EXIT
+                
+                ; handling error
+ 0137 114F01    INITER:	LXI	D, MSGINI	; init error
+ 013A C34001    	JMP	PRNER
+                
+ 013D 115C01    READER:	LXI	D, MSGRED	; read error
+                
+ 0140 0E09      PRNER:	MVI	C, BPRINT	; print error message
+ 0142 CD0500    	CALL	BDOS
+                	
+ 0145 0E00      EXIT:	MVI	C, BRESET	; exit to BDOS
+ 0147 CD0500    	CALL	BDOS
+                
+                ; -------- DATA AREA --------
+ 014A 00        DISCID 	DB	0
+ 014B 0100      TRACK 	DW	1
+ 014D 0100      SECTOR 	DW	1
+ 014F 496E697420MSGINI 	DB	'Init error!$', 0
+ 015C 5265616420MSGRED 	DB	'Read error!$', 0
+S0169           BUFFER 	DS	128, 0
+ 01E9           	END	START
+
