@@ -63,9 +63,9 @@ EXIT:	MOV	AH, DEXIT	; exit to DOS
 	INT	DOS
 
 ; -------- DATA AREA --------
-ROMIMG	DB	'RMEMLIB TEST OK', 13, 10, '$'
-MSGINI	DB	'INIT ERROR$'
-MSGRED	DB	'READ ERROR$'
+ROMIMG	DB	'Rmemlib test ok.',13,10,'$'
+MSGINI	DB	'Init error!$'
+MSGRED	DB	'Read error!$'
 BUFFER	DB	128 DUP (?)
 
 CSEG	ENDS

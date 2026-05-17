@@ -62,18 +62,24 @@ DONE:	MVI	A, RIDONE
 	CALL	RIMG
 	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
+	JMP	EXIT
 
 ; handling error
-ERROR:	LXI	H, ERRMSG
-	MVI	C, BPRINT
-	XCHG
+INITER:	LXI	D, MSGINI	; init error
+	JMP	PRNER
+
+READER:	LXI	D, MSGRED	; read error
+
+PRNER:	MVI	C, BPRINT	; print error message
 	CALL	BDOS
-	MVI	C, BRESET	; exit to BDOS
+
+EXIT:	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
 RECNUM:	DW	0001h		; logical 128-byte record number
-ERRMSG:	DB	'Read error!$'
+MSGINI:	DB	'Init error!$'
+MSGRED:	DB	'Read error!$'
 FCB:	DB	0		; drive
 	DB	'R128EXRMIMG'	; 8.3 filename
 	DS	25, 0

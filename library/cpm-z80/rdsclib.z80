@@ -22,7 +22,7 @@ RNUM	EQU	02h		; number of routines
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
 ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
-;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
 ;
 ; Error codes:
 ;   00h. no error		CF = 0
@@ -36,12 +36,12 @@ RNUM	EQU	02h		; number of routines
 RDSC:	PUSH	BC		; save input BC for caller
 	PUSH	DE		; save input DE for caller
 
+	PUSH	AF		; save input AF
 	LD	(INP_HL), HL	; save input HL for selected routine 
 	LD	(INP_DE), DE	; save input DE for selected routine
-	LD	C, A
 	LD	A, B
 	LD	(INP_B), A	; save input B for selected routine
-	LD	A, C
+	POP	AF		; restore input AF
 
 	CP	RNUM		; compare A (function code) with max valid index
 	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
@@ -68,26 +68,90 @@ MNBADF:	POP	DE		; restore input DE for caller
 	SCF			; CF = 1 (return with error)
 	RET
 
-; ---- INITIALIZE MODULE -----------------------------------------------
+; ---- INITIALIZE MODULE ----------------------------------------------
 
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
 ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
 
-RDINIT:	RET
+RDINIT:	LD	HL, (INP_HL)	; get input HL data	
+	LD	(BUFADD), HL	; store buffer starting address
 
-; ---- READ A LOGICAL SECTOR -------------------------------------------
+	LD	HL, (0001h)	; HL = BIOS Warm Boot (WBOOT) pointer
+	LD	DE, -3		; DE = -3 (0000-0002h: JP nnnn)
+	ADD	HL, DE		; HL = HL - 3
+	LD	(BFJTAB), HL	; (BFJTAB) = HL, BIOS jump table base address
+
+INITDN: XOR	A		; A = 0, CF = 0
+	LD	HL, (BUFADD)	; HL = buffer address
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
+
+; ---- READ A LOGICAL SECTOR ------------------------------------------
 
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
-;|rdsclib|01h|discid |track|sector  |       |RDSTRD  |errcode|bufaddr |
+;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
 
-RDSTRD:	RET
+RDSTRD:	LD	A, (INP_B)	; get input B data
+	LD	C, A
+	CALL	BSLDSK		; select disc
+
+	LD	HL, (INP_DE)	; get input DE data
+	LD	B, H
+	LD	C, L
+	CALL	BSTRCK		; select track
+
+	LD	HL, (INP_HL)	; get input HL data
+	LD	B, H
+	LD	C, L
+	CALL	BSSECT		; select sector
+
+	LD	HL, (BUFADD)
+	LD	B, H
+	LD	C, L
+	CALL	BSDMA		; set DMA buffer address
+
+	CALL	BREAD		; read disc
+
+	OR	A, A
+	JP	NZ, STRDER	; if result > 0 then goto STRDER
+	XOR	A		; A = 0, CF = 0
+	JR	STRDDN		; goto STRDDN
+
+STRDER:	LD	A, 07h		; A = 7
+	SCF			; CF = 1
+	
+STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+	POP	DE		; restore input DE for caller
+	POP	BC		; restore input BC for caller
+	RET
 
 ; -------- DATA AREA --------
 INP_B:	DB	0		; input data in B
-INP_C:	DB	0		; input data in C
 INP_DE:	DW	0		; input data in DE
 INP_HL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
+BFJTAB:	DW	0		; BIOS functions jump table base address
+BSLDSK:	LD	HL, (BFJTAB)
+	LD	DE, 27
+	ADD	HL, DE
+	JP	(HL)		; jump to the BIOS SELDSK routine
+BSTRCK:	LD	HL, (BFJTAB)
+	LD	DE, 30
+	ADD	HL, DE
+	JP	(HL)		; jump to the BIOS SETTRK routine
+BSSECT:	LD	HL, (BFJTAB)
+	LD	DE, 33
+	ADD	HL, DE
+	JP	(HL)		; jump to the BIOS SETSEC routine
+BSDMA:	LD	HL, (BFJTAB)
+	LD	DE, 36
+	ADD	HL, DE
+	JP	(HL)		; jump to the BIOS SETDMA routine
+BREAD:	LD	HL, (BFJTAB)
+	LD	DE, 39
+	ADD	HL, DE
+	JP	(HL)		; jump to the BIOS READ routine
 	END

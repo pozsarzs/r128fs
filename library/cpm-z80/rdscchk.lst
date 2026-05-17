@@ -1,0 +1,88 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+RDSCCHK Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | rdscchk.z80                                                                |
+    5                   ; | Reading a logical sector from disc, Z80, CP/M-80, v0.1                     |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14         0100      	ORG	100h
+   15                   	EXTRN	RDSC
+   16                   
+   17                   ; -------- CONSTANTS --------
+   18         0005      BDOS	EQU	05h		; BDOS entry point
+   19         0000      BRESET	EQU	00h		; BDOS system reset function
+   20         0002      BCONOUT	EQU	02h		; BDOS console output function
+   21         0009      BPRINT	EQU	09h		; BDOS print string function
+   22         0000      RDINIT	EQU	00h		; Rdsclib initialize function
+   23         0001      RDSTRD	EQU	01h		; Rdsclib sector read function
+   24                   
+   25                   ; -------- CODE AREA --------
+   26 0100              START:
+   27                   ; initialization
+   28 0100  3E 00       	LD	A, RDINIT
+   29 0102  21 0163     	LD	HL, BUFFER
+   30 0105  CD 0000#    	CALL	RDSC
+   31 0108  38 28       	JR	C, INITER
+   32                   
+   33                   ; read record
+   34 010A  3A 0144     	LD	A, (DISCID)
+   35 010D  47          	LD	B, A
+   36 010E  3E 01       	LD	A, RDSTRD
+   37 0110  ED 5B 0145  	LD	DE, (TRACK)
+   38 0114  2A 0147     	LD	HL, (SECTOR)
+   39 0117  CD 0000#    	CALL	RDSC
+   40 011A  38 1B       	JR	C, READER
+   41                   
+   42                   ; dump buffer to console
+   43 011C  21 0163     	LD	HL, BUFFER
+   44 011F  06 80       	LD	B, 128
+   45 0121  5E          PRLOOP:	LD	E, (HL)
+   46 0122  0E 02       	LD	C, BCONOUT
+   47 0124  C5          	PUSH	BC
+   48 0125  D5          	PUSH	DE
+   49 0126  E5          	PUSH	HL
+   50 0127  CD 0005     	CALL	BDOS
+   51 012A  E1          	POP	HL
+   52 012B  D1          	POP	DE
+   53 012C  C1          	POP	BC
+   54 012D  23          	INC	HL
+   55 012E  10 F1       	DJNZ	PRLOOP
+   56 0130  18 0D       	JR	EXIT
+   57                   
+   58                   ; handling error
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+RDSCCHK Z80
+
+   59 0132  11 0149     INITER:	LD	DE, MSGINI	; init error
+   60 0135  18 03       	JR	PRNER
+   61                   
+   62 0137  11 0156     READER:	LD	DE, MSGRED	; read error
+   63                   
+   64 013A  0E 09       PRNER:	LD	C, BPRINT	; print error message
+   65 013C  CD 0005     	CALL	BDOS
+   66                   	
+   67 013F  0E 00       EXIT:	LD	C, BRESET	; exit to BDOS
+   68 0141  CD 0005     	CALL	BDOS
+   69                   
+   70                   ; -------- DATA AREA --------
+   71 0144  00          DISCID:	DB	0
+   72 0145  0001        TRACK:	DW	1
+   73 0147  0001        SECTOR:	DW	1
+   74 0149  49 6E 69 74 MSGINI:	DB	'Init error!$', 0
+   75 0156  52 65 61 64 MSGRED:	DB	'Read error!$', 0
+   76 0163  00 00 00 00 BUFFER:	DS	128, 0
+   77                   	END
+ 0 Error(s) Detected.
+ 227 Absolute Bytes. 19 Symbols Detected.
+            
+   58                   ; handling error
+Z80ASM SuperFas

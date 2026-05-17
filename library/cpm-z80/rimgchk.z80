@@ -31,13 +31,13 @@ START:
 	LD	DE, FCB
 	LD	HL, BUFFER
 	CALL	RIMG
-	JR	C, ERROR
+	JR	C, INITERR
 
 ; read record
 	LD	A, RISTRD
 	LD	DE, (RECNUM)
 	CALL	RIMG
-	JR	C, ERROR
+	JR	C, READERR
 
 ; dump buffer to console
 	LD	HL, BUFFER
@@ -58,20 +58,24 @@ PRLOOP:	LD	E, (HL)
 DONE:	LD	A, RIDONE
 	LD	B, 0
 	CALL	RIMG
-	LD	C, BRESET	; exit to BDOS
-	CALL	BDOS
+	JR	EXIT
 
 ; handling error
-ERROR:	LD	HL, ERRMSG
-	LD	C, BPRINT
-	EX	DE, HL
+INITER:	LD	DE, MSGINI	; init error
+	JR	PRNER
+
+READER:	LD	DE, MSGRED	; read error
+
+PRNER:	LD	C, PRINT	; print error message
 	CALL	BDOS
-	LD	C, BRESET	; exit to BDOS
+
+EXIT:	LD	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
 RECNUM:	DW	0001h		; logical 128-byte record number
-ERRMSG:	DB	'Read error!$'
+MSGINI:	DB	'Init error!$'
+MSGRED:	DB	'Read error!$'
 FCB:	DB	0		; drive
 	DB	'R128EXRMIMG'	; 8.3 filename
 	DS	25, 0

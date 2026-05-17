@@ -54,9 +54,9 @@ EXIT:	MVI	C, BRESET	; exit to BDOS
 	CALL	BDOS
 
 ; -------- DATA AREA --------
-ROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
-MSGINI:	DB	'INIT ERROR$', 0
-MSGRED:	DB	'READ ERROR$', 0
+ROMIMG:	DB	'Rmemlib test ok.',13,10,'$'
+MSGINI:	DB	'Init error!$', 0
+MSGRED:	DB	'Read error!$', 0
 BUFFER:	DS	128
 	END	START
 
