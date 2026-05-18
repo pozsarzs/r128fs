@@ -1,4 +1,9 @@
 @echo off
+rem R128 ROM filesystem
+rem Copyright (C) 2026 Pozsar Zsolt (pozsarzs@gmail.com)
+rem build.bat
+rem Build modules and tester programs
+
 if "%1"=="CYCLE" goto START
 %0 CYCLE rdsc rimg rmem
 goto END

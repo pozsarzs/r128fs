@@ -35,14 +35,14 @@ START:	PUSH	CS
 	MOV	DX, OFFSET FCB
 	CALL	RIMG
 	OR	AL, AL
-	JNZ	ERROR
+	JNZ	INITER
 
 ; read sector 0
 	MOV	AL, RISTRD
 	MOV	DX, RECNUM
 	CALL	RIMG
 	OR	AL, AL
-	JNZ	ERROR
+	JNZ	READER
 
 ; print buffer
 	MOV	DX, OFFSET BUFFER
@@ -52,8 +52,12 @@ START:	PUSH	CS
 	JMP	EXIT
 
 ; handling error
-ERROR:	MOV	DX, OFFSET ERRMSG ; error message
-	MOV	AH, DPRINT	; print error message
+INITER:	MOV	DX, OFFSET MSGINI ; init error
+	JMP	PRNER
+
+READER:	MOV	DX, OFFSET MSGRED ; read error
+
+PRNER:	MOV	AH, DPRINT	; print error message
 	INT	DOS
 	MOV	AL, 1		; error code = 1
 
@@ -62,7 +66,8 @@ EXIT:	MOV	AH, DEXIT	; exit to DOS
 
 ; -------- DATA AREA --------
 RECNUM 	DW	0001h		; logical 128-byte record number
-ERRMSG 	DB	'Read error!$'
+MSGINI:	DB	'Init error!$'
+MSGRED:	DB	'Read error!$'
 FCB 	DB	0		; drive
 	DB	'R128EXRMIMG'	; 8.3 filename
 	DB	25 DUP (?)

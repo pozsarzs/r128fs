@@ -90,7 +90,7 @@ INITDN: XRA	A		; A = 0, CF = 0
 	POP	B		; restore input BC for caller
 	RET
 
-; ---- READ A LOGICAL SECTOR -------------------------------------------
+; ---- READ A SECTOR --------------------------------------------------
 
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|

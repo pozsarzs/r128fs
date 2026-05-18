@@ -122,6 +122,10 @@ INITER:	MOV	AL, 04h		; A = 4, error code
 
 RISTRD:	MOV	SI, FCBADD	; SI = FCB base address
 	MOV	AX, INP_DX	; AX = sector number (from DX)
+
+
+	MOV	SI, FCBADD	; SI = FCB base address
+	MOV	AX, INP_DX	; AX = sector number (from DX)
 	
 	MOV	[SI+33], AX	; low word of sector
 	MOV	BYTE PTR [SI+35], 0 ; high byte
