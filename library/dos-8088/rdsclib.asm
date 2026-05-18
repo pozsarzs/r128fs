@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rdsclib.asm                                                                |
-; | Reading a logical sector from disc, 8088, DOS, v0.1                        |
+; | Handler routines for on-disc filesystem, 8088, DOS, v0.1                   |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,20 +11,21 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-TITLE	RDSC - R128 direct sector read library for DOS
+TITLE	RDSC - handler routines for on-disc filesystem for DOS
 NAME	RDSC
 
-; -------- CONSTANTS --------
-BIOS13	EQU	13h		; BIOS disk handler interrupt
-B13RDST	EQU	02h		; - read sector function
+; **** CONSTANTS ****
+BIOS13	EQU	13h		; BIOS disk handler function
+B13RDST	EQU	02h		; - read sector
 RNUM	EQU	02h		; number of routines
 
+; **** CODE AREA ****
 CSEG	SEGMENT PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 
 PUBLIC  RDSC
 
-; -------- CODE AREA --------
+; ---- ENTRY POINT AND JUMP TABLE ------------------------------------
 
 ;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
 ;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
@@ -38,7 +39,6 @@ PUBLIC  RDSC
 ;
 ; Preserves: CX, SI, DI
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RDSC	PROC	NEAR
 	PUSH	CX		; save input CX for caller
 	PUSH	SI		; save input SI for caller
@@ -60,15 +60,15 @@ RDSC	PROC	NEAR
 MNJTAB	DW	RDINIT		; 0: initialise module
 	DW	RDSTRD		; 1: read a logical sector and write to buffer
 
-MNBADF:	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
-	MOV     AL, 01h		; AL = 1 (error: bad function)
+MNBADF:	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
+	MOV	AL, 01h		; AL = 1 (error: bad function)
 	XOR	BX, BX		; BX = 0
 	STC			; CF = 1 (return with error)
 	RET
 
-; ---- INITIALIZE MODULE ----------------------------------------
+; ---- INITIALIZE MODULE ---------------------------------------------
 
 ;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
 ;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
@@ -79,9 +79,9 @@ RDINIT:	MOV	BX, INPRBX	; get input BX data
 
 INITDN: MOV	BX, BUFADD	; BX = buffer address
 	XOR	AL, AL		; AL = 0, CF = 0
-	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
+	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
 	RET
 
 ; ---- READ A SECTOR -------------------------------------------------
@@ -105,9 +105,9 @@ RDSTRD:	PUSH	DS		; save DS
 	XOR	AL, AL		; AL = 0, CF = 0
 	
 STRDDN:	MOV	BX, BUFADD	; BX = buffer address
-	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
+	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
 	RET
 
 STRDER:	MOV	AL, 07h		; AL = 7
@@ -116,7 +116,7 @@ STRDER:	MOV	AL, 07h		; AL = 7
 
 RDSC	ENDP
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INPRBX	DW	0		; input data in BX
 INPRCH	DB	0		; input data in CH
 INPRCL	DB	0		; input data in CL

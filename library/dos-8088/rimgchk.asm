@@ -11,14 +11,15 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 DOS	EQU	21H		; DOS functions
-DPRINT	EQU	09H		; write string to console function
-DEXIT	EQU	4CH		; exit to DOS function
+DPRINT	EQU	09H		; - write string to console
+DEXIT	EQU	4CH		; - exit to DOS
 RIINIT	EQU	00H		; Rimglib initialize function
 RISTRD	EQU	01H		; Rimglib sector read function
 RIDONE	EQU	02H		; Rimglib done function
 
+; **** CODE AREA ****
 CSEG	SEGMENT	PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 	ORG	100H
@@ -26,45 +27,41 @@ CSEG	SEGMENT	PUBLIC 'CODE'
 EXTRN	RIMG:NEAR
 
 START:	PUSH	CS
-	POP	DS
+	POP	DS		; DS = CS
 
-; initialization
-	MOV	AL, RIINIT
-	MOV	CL, 0
-	MOV	BX, OFFSET BUFFER
-	MOV	DX, OFFSET FCB
-	CALL	RIMG
+	MOV	AL, RIINIT	; AL = initialization
+	MOV	CL, 0		; CL = mode
+	MOV	BX, OFFSET BUFFER ; BX = buffer address
+	MOV	DX, OFFSET FCB	; DX = FCB address
+	CALL	RIMG		; call RIMG
 	OR	AL, AL
-	JNZ	INITER
+	JNZ	INITER		; detect init error
 
-; read sector 0
-	MOV	AL, RISTRD
-	MOV	DX, RECNUM
-	CALL	RIMG
+	MOV	AL, RISTRD	; AL = read sector
+	MOV	DX, RECNUM	; DX = sector number
+	CALL	RIMG		; call RIMG
 	OR	AL, AL
-	JNZ	READER
+	JNZ	READER		; detect read error
 
-; print buffer
-	MOV	DX, OFFSET BUFFER
-	MOV	AH, DPRINT
+	MOV	DX, OFFSET BUFFER ; buffer address
+	MOV	AH, DPRINT	; print buffer
 	INT	DOS
 	MOV	AL, 0		; error code = 0
 	JMP	EXIT
 
-; handling error
 INITER:	MOV	DX, OFFSET MSGINI ; init error
 	JMP	PRNER
 
 READER:	MOV	DX, OFFSET MSGRED ; read error
 
 PRNER:	MOV	AH, DPRINT	; print error message
-	INT	DOS
+	INT	DOS		; call DOS
 	MOV	AL, 1		; error code = 1
 
 EXIT:	MOV	AH, DEXIT	; exit to DOS
-	INT	DOS
+	INT	DOS		; call DOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 RECNUM 	DW	0001h		; logical 128-byte record number
 MSGINI:	DB	'Init error!$'
 MSGRED:	DB	'Read error!$'

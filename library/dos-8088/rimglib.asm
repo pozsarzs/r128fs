@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rimglib.asm                                                                |
-; | Reading a logical sector from image, 8088, DOS, v0.1                       |
+; | Handler routines for in-image filesystem, 8088, DOS, v0.1                  |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -11,30 +11,31 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-TITLE	RIMG - R128 image sector read library for DOS
+TITLE	RIMG - handler routines for in-image filesystem for DOS
 NAME	RIMG
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 DOS	EQU	21h		; DOS functions
-DSETDMA	EQU	1Ah		; DOS set DMA address function
-DOPEN	EQU	0Fh		; DOS open file function
-DCLOSE	EQU	10h		; DOS close file function
-DRDRND	EQU	21h		; DOS read random function
+DSETDMA	EQU	1Ah		; - set DMA address
+DOPEN	EQU	0Fh		; - open file
+DCLOSE	EQU	10h		; - close file
+DRDRND	EQU	21h		; - read random
 RNUM	EQU	03h		; number of routines
 SECT	EQU	0080h		; logical sector size
 
+; **** CODE AREA ****
 CSEG	SEGMENT PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 
 PUBLIC  RIMG
 
-; -------- CODE AREA --------
+; ---- ENTRY POINT AND JUMP TABLE ------------------------------------
 
-;|name   |AL |BX     |CL     |DX     |function|ret. AL|ret. BX|
-;|-------|:-:|:-----:|:-----:|:-----:|--------|:-----:|:-----:|
-;|rimglib|00h|bufaddr|onlyfop|fcbaddr|RIINIT  |errcode|bufaddr|
-;|rimglib|01h|       |       |sectnum|RISTRD  |errcode|bufaddr|
-;|rimglib|02h|       |onlyfcl|       |RIDONE  |errcode|       |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|rimglib|00h|bufaddr|    |onlyfop|fcbaddr |RIINIT  |errcode|bufaddr |
+;|rimglib|01h|       |    |       |sectnum |RISTRD  |errcode|bufaddr |
+;|rimglib|02h|       |    |onlyfcl|        |RIDONE  |errcode|        |
 ;
 ; Error codes:
 ;   00h. no error		CF = 0
@@ -45,7 +46,6 @@ PUBLIC  RIMG
 ;
 ; Preserves: CX, SI, DI
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RIMG	PROC	NEAR
 	PUSH	CX		; save input CX for caller
 	PUSH	SI		; save input SI for caller
@@ -67,19 +67,19 @@ MNJTAB	DW	RIINIT		; 0: initialise module
 	DW	RISTRD		; 1: read a logical sector and write to buffer
 	DW	RIDONE		; 2: clean up and/or close image file
 
-MNBADF:	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
-	MOV     AL, 01h		; AL = 1 (error: bad function)
+MNBADF:	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
+	MOV	AL, 01h		; AL = 1 (error: bad function)
 	XOR	BX, BX		; BX = 0
 	STC			; CF = 1 (return with error)
 	RET
 
-; ---- INITIALIZE MODULE --------------------------------------
+; ---- INITIALIZE MODULE ---------------------------------------------
 
-;|name   |AL |BX     |CL     |DX     |function|ret. AL|ret. BX|
-;|-------|:-:|:-----:|:-----:|:-----:|--------|:-----:|:-----:|
-;|rimglib|01h|       |       |sectnum|RISTRD  |errcode|bufaddr|
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|rimglib|00h|bufaddr|    |onlyfop|fcbaddr |RIINIT  |errcode|bufaddr |
 
 RIINIT: MOV	AL, INP_CL	; get input CL data	
 	OR	AL, AL
@@ -105,20 +105,20 @@ INITOP:
 	CLC			; CF = 0
 
 INITDN: MOV	BX, BUFADD	; BX = buffer address
-	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
+	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
 	RET
 
 INITER:	MOV	AL, 04h		; A = 4, error code
 	STC			; CF = 1
 	JMP	SHORT INITDN	; go INITDN
 
-; ---- READ A LOGICAL SECTOR ------------------------------------
+; ---- READ A LOGICAL SECTOR -----------------------------------------
 
-;|name   |AL |BX     |CL     |DX      |function|ret. AL|ret. BX |
-;|-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
-;|Rimglib|01h|       |       |sectnum |RMSTRD  |errcode|bufaddr |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|rimglib|01h|       |    |       |sectnum |RISTRD  |errcode|bufaddr |
 
 RISTRD:	MOV	SI, FCBADD	; SI = FCB base address
 	MOV	AX, INP_DX	; AX = sector number (from DX)
@@ -151,11 +151,11 @@ STRDDN:	MOV	BX, BUFADD
 	POP	CX		
 	RET
 
-; ---- CLEANUP MODULE -----------------------------------------
+; ---- CLEANUP MODULE ------------------------------------------------
 
-;|name   |AL |BX     |CL     |DX     |function|ret. AL|ret. BX|
-;|-------|:-:|:-----:|:-----:|:-----:|--------|:-----:|:-----:|
-;|rimglib|02h|       |onlyfcl|       |RIDONE  |errcode|       |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|rimglib|02h|       |    |onlyfcl|        |RIDONE  |errcode|        |
 
 RIDONE: MOV	AL, INP_CL	; get input B data	
 	OR	AL, AL
@@ -184,7 +184,7 @@ DONEER:	MOV	AL, 06h		; AL = 6, error code
 
 RIMG	ENDP
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INP_BX	DW	0		; input data in BX
 INP_CL	DB	0		; input data in CL
 INP_DX	DW	0		; input data in DX

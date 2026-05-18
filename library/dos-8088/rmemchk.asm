@@ -11,13 +11,14 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 DOS	EQU	21H		; DOS functions
-DPRINT	EQU	09H		; write string to console function
-DEXIT	EQU	4CH		; exit to DOS function
+DPRINT	EQU	09H		; - write string to console
+DEXIT	EQU	4CH		; - exit to DOS
 RMINIT	EQU	00H		; Rmemlib initialize function
 RMSTRD	EQU	01H		; Rmemlib sector read function
 
+; **** CODE AREA ****
 CSEG	SEGMENT	PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 	ORG	100H
@@ -25,44 +26,40 @@ CSEG	SEGMENT	PUBLIC 'CODE'
 EXTRN	RMEM:NEAR
 
 START:	PUSH	CS
-	POP	DS
+	POP	DS		; DS = CS
 
-; initialization
-	MOV	AL, RMINIT
-	MOV	BX, OFFSET BUFFER
-	MOV	DX, OFFSET ROMIMG
-	CALL	RMEM
+	MOV	AL, RMINIT	; AL = initialization
+	MOV	BX, OFFSET BUFFER ; BX = address of BUFFER
+	MOV	DX, OFFSET ROMIMG ; DX = address of ROMIMG
+	CALL	RMEM		; call RMEM
 	OR	AL, AL
-	JNZ	INITER
+	JNZ	INITER		; detect init error
 
-; read sector 0
-	MOV	AL, RMSTRD
-	MOV	DX, 0000H
-	CALL	RMEM
+	MOV	AL, RMSTRD	; AL = read sector	
+	MOV	DX, 0000h	; DX = sector number
+	CALL	RMEM		; call RMEM
 	OR	AL, AL
-	JNZ	READER
+	JNZ	READER		; detect read error
 
-; print buffer
-	MOV	DX, OFFSET BUFFER
-	MOV	AH, DPRINT
-	INT	DOS
+	MOV	DX, OFFSET BUFFER ; DX = buffer address
+	MOV	AH, DPRINT	; AH = print buffer
+	INT	DOS		; call DOS
 	MOV	AL, 0		; error code = 0
-	JMP	EXIT
+	JMP	EXIT		; goto EXIT
 
-; handling error
 INITER:	MOV	DX, OFFSET MSGINI ; init error
 	JMP	PRNER
 
 READER:	MOV	DX, OFFSET MSGRED ; read error
 
-PRNER:	MOV	AH, DPRINT	; print error message
-	INT	DOS
+PRNER:	MOV	AH, DPRINT	; AH = print message
+	INT	DOS		; call DOS
 	MOV	AL, 1		; error code = 1
 
-EXIT:	MOV	AH, DEXIT	; exit to DOS
-	INT	DOS
+EXIT:	MOV	AH, DEXIT	; AH = exit to DOS
+	INT	DOS		; call DOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 ROMIMG	DB	'Rmemlib test ok.',13,10,'$'
 MSGINI	DB	'Init error!$'
 MSGRED	DB	'Read error!$'

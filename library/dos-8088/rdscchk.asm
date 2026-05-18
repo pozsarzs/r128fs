@@ -11,14 +11,14 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 DOS	EQU	21H		; DOS functions
-DPRINT	EQU	09H		; write string to console function
-DEXIT	EQU	4CH		; exit to DOS function
-RDINIT	EQU	00H		; Rdsclib initialize function
-RDSTRD	EQU	01H		; Rdsclib sector read function
+DPRINT	EQU	09H		; - write string to console
+DEXIT	EQU	4CH		; - exit to DOS
+RDINIT	EQU	00H		; Rdsclib initialize
+RDSTRD	EQU	01H		; Rdsclib sector read
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
 CSEG	SEGMENT	PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 	ORG	100H
@@ -26,46 +26,42 @@ CSEG	SEGMENT	PUBLIC 'CODE'
 EXTRN	RDSC:NEAR
 
 START:	PUSH	CS
-	POP	DS
+	POP	DS		; DS = CS
 
-; initialization
-	MOV	AL, RDINIT
-	MOV	BX, OFFSET BUFFER
-	CALL	RDSC
+	MOV	AL, RDINIT	; AL = initialization
+	MOV	BX, OFFSET BUFFER ; BX = buffer address
+	CALL	RDSC		; call RDSC
 	OR	AL, AL
-	JNZ	INITER
+	JNZ	INITER		; detect init error
 
-; read sector
-	MOV	AL, RDSTRD
-	MOV	BX, SECTOR
-	MOV	CH, HEAD
-	MOV	CL, DISCID
-	MOV	DX, TRACK
-	CALL	RDSC
+	MOV	AL, RDSTRD	; AL = read sector
+	MOV	BX, SECTOR	; BX = sector number
+	MOV	CH, HEAD	; CH = head number
+	MOV	CL, DISCID	; CL = disk drive number
+	MOV	DX, TRACK	; DX = track number
+	CALL	RDSC		; call RDSC
 	OR	AL, AL
-	JNZ	READER
+	JNZ	READER		; detect read error
 
-; print buffer
-	MOV	DX, OFFSET BUFFER
-	MOV	AH, DPRINT
-	INT	DOS
+	MOV	DX, OFFSET BUFFER ; DX = buffer address
+	MOV	AH, DPRINT	; AH = print buffer
+	INT	DOS		; call DOS
 	MOV	AL, 0		; error code = 0
-	JMP	EXIT
+	JMP	EXIT		; goto EXIT
 
-; handling error
 INITER:	MOV	DX, OFFSET MSGINI ; init error
 	JMP	PRNER
 
 READER:	MOV	DX, OFFSET MSGRED ; read error
 
 PRNER:	MOV	AH, DPRINT	; print error message
-	INT	DOS
+	INT	DOS		; call DOS
 	MOV	AL, 1		; error code = 1
 
 EXIT:	MOV	AH, DEXIT	; exit to DOS
-	INT	DOS
+	INT	DOS		; call DOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****interrupt
 DISCID:	DB	0
 HEAD:	DB	0
 TRACK:	DW	1

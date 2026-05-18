@@ -11,10 +11,10 @@
 ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
 ; FOR A PARTICULAR PURPOSE.
 
-TITLE	R128 - R128 filesystem handler library for DOS
+TITLE	R128 - filesystem handler routines for DOS
 NAME	R128
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 DOS	EQU	21h		; DOS functions
 RNUM	EQU	08h		; number of routines
 
@@ -23,22 +23,23 @@ CSEG	SEGMENT PUBLIC 'CODE'
 
 PUBLIC  R128
 EXTRN	RDSC
-EXTRN	REMX
 EXTRN	RIMG
 EXTRN	RMEM
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
 
-;|name   |AL |BX     |CL     |DX      |function|ret. AL|ret. BX |
-;|-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
-;|r128lib|00h|bufaddr|discid |        |R128IN  |errcode|bufaddr |
-;|r128lib|01h|       |       |maskaddr|R128FF  |errcode|entryptr|
-;|r128lib|02h|       |       |        |R128FN  |errcode|entryptr|
-;|r128lib|03h|       |       |nameaddr|R128OP  |errcode|        |
-;|r128lib|04h|bufaddr|       |count   |R128RD  |errcode|bytesrd |
-;|r128lib|05h|       |       |pos     |R128SK  |errcode|        |
-;|r128lib|06h|       |       |        |R128CL  |errcode|        |
-;|r128lib|07h|       |       |        |R128NF  |errcode|infoptr |
+; ---- ENTRY POINT AND JUMP TABLE ------------------------------------
+
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|00h|bufaddr|    |discid |        |R128IN  |errcode|bufaddr |
+;|r128lib|01h|       |    |       |maskaddr|R128FF  |errcode|entryptr|
+;|r128lib|02h|       |    |       |        |R128FN  |errcode|entryptr|
+;|r128lib|03h|       |    |       |nameaddr|R128OP  |errcode|        |
+;|r128lib|04h|       |    |       |count   |R128RD  |errcode|bytesrd |
+;|r128lib|05h|       |    |       |pos     |R128SK  |errcode|        |
+;|r128lib|06h|       |    |       |        |R128CL  |errcode|        |
+;|r128lib|07h|       |    |       |        |R128NF  |errcode|infoptr |
 ;
 ; Error codes:
 ;   00h. no error		CF = 0
@@ -52,7 +53,6 @@ EXTRN	RMEM
 ;
 ; Preserves: CX, SI, DI
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RIMG	PROC	NEAR
 	PUSH	CX		; save input CX for caller
 	PUSH	SI		; save input SI for caller
@@ -79,81 +79,81 @@ MNJTAB	DW	R128IN		; 0: initialise module
 	DW	R128CL		; 6: close file
 	DW	R128NF		; 7: read media or file information
 
-MNBADF:	POP     DI		; restore input DI for caller
-	POP     SI		; restore input SI for caller
-	POP     CX		; restore input CX for caller
-	MOV     AL, 01h		; AL = 1 (error: bad function)
+MNBADF:	POP	DI		; restore input DI for caller
+	POP	SI		; restore input SI for caller
+	POP	CX		; restore input CX for caller
+	MOV	AL, 01h		; AL = 1 (error: bad function)
 	XOR	BX, BX		; BX = 0
 	STC			; CF = 1 (return with error)
 	RET
 
-; ---- INITIALIZE MODULE -----------------------------------------------
+; ---- INITIALIZE MODULE ---------------------------------------------
 
-;|name   |AL |BX     |CL     |DX      |function|ret. AL|ret. BX |
-;|-------|:-:|:-----:|:-----:|:------:|--------|:-----:|:------:|
-;|r128lib|00h|bufaddr|discid |        |R128IN  |errcode|bufaddr |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|00h|bufaddr|    |discid |        |R128IN  |errcode|bufaddr |
 
 R128IN:	RET
 
-; ---- FIND FIRST ------------------------------------------------------
+; ---- FIND FIRST ----------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|01h|       |    |       |maskaddr|R128FF  |errcode|entryptr|
 
 R128FF:	RET
 
-; ---- FIND NEXT -------------------------------------------------------
+; ---- FIND NEXT -----------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|02h|       |    |       |        |R128FN  |errcode|entryptr|
 
 R128FN:	RET
 
-; ---- OPEN FILE -------------------------------------------------------
+; ---- OPEN FILE -----------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|03h|       |    |       |nameaddr|R128OP  |errcode|        |
 
 R128OP:	RET
 
-; ---- READ FILE -------------------------------------------------------
+; ---- READ FILE -----------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|04h|       |    |       |count   |R128RD  |errcode|bytesrd |
 
 R128RD:	RET
 
-; ---- SEEK IN FILE ----------------------------------------------------
+; ---- SEEK IN FILE --------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|05h|       |    |       |pos     |R128SK  |errcode|        |
 
 R128SK:	RET
 
-; ---- CLOSE FILE ------------------------------------------------------
+; ---- CLOSE FILE ----------------------------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|06h|       |    |       |        |R128CL  |errcode|        |
 
 R128CL:	RET
 
-; ---- READ MEDIA OR FILE INFORMATION ----------------------------------
+; ---- READ MEDIA OR FILE INFORMATION --------------------------------
 
-;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |
+;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
+;|r128lib|07h|       |    |       |        |R128NF  |errcode|infoptr |
 
 R128NF:	RET
 
 R128	ENDP
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INP_BX	DW	0		; input data in BX
 INP_CL	DB	0		; input data in CL
 INP_DX	DW	0		; input data in DX
