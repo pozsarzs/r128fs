@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -10,8 +10,8 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
 	 	 	 	mail.com>                       |
  	 	 	 	; | rimglib.asm                                
 	 	 	 	                                |
- 	 	 	 	; | Reading a logical sector from image, 8088, 
-	 	 	 	DOS, v0.1                       |
+ 	 	 	 	; | Handler routines for in-image filesystem, 8
+	 	 	 	088, DOS, v0.1                  |
  	 	 	 	; +--------------------------------------------
 	 	 	 	--------------------------------+
  	 	 	 	; This is a free software: you can redistribute
@@ -24,47 +24,46 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
 	 	 	 	ty of MERCHANTABILITY or FITNESS
  	 	 	 	; FOR A PARTICULAR PURPOSE.
  	 	 	 	
- 	 	 	 	TITLE	RIMG - R128 image sector read library f
-	 	 	 	or DOS
+ 	 	 	 	TITLE	RIMG - handler routines for in-image fi
+	 	 	 	lesystem for DOS
  	 	 	 	NAME	RIMG
  	 	 	 	
- 	 	 	 	; -------- CONSTANTS --------
+ 	 	 	 	; **** CONSTANTS ****
  = 0021	 	 	 	DOS	EQU	21h	 	; DOS functions
- = 001A	 	 	 	DSETDMA	EQU	1Ah	 	; DOS set DMA a
-	 	 	 	ddress function
- = 000F	 	 	 	DOPEN	EQU	0Fh	 	; DOS open file
-	 	 	 	 function
- = 0010	 	 	 	DCLOSE	EQU	10h	 	; DOS close fil
-	 	 	 	e function
- = 0021	 	 	 	DRDRND	EQU	21h	 	; DOS read rand
-	 	 	 	om function
+ = 001A	 	 	 	DSETDMA	EQU	1Ah	 	; - set DMA add
+	 	 	 	ress
+ = 000F	 	 	 	DOPEN	EQU	0Fh	 	; - open file
+ = 0010	 	 	 	DCLOSE	EQU	10h	 	; - close file
+ = 0021	 	 	 	DRDRND	EQU	21h	 	; - read random
  = 0003	 	 	 	RNUM	EQU	03h	 	; number of rou
 	 	 	 	tines
  = 0080	 	 	 	SECT	EQU	0080h	 	; logical secto
 	 	 	 	r size
  	 	 	 	
+ 	 	 	 	; **** CODE AREA ****
  0000	 	 	 	CSEG	SEGMENT PUBLIC 'CODE'
  	 	 	 	 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:C
 	 	 	 	SEG
  	 	 	 	
  	 	 	 	PUBLIC  RIMG
  	 	 	 	
- 	 	 	 	; -------- CODE AREA --------
+ 	 	 	 	; ---- ENTRY POINT AND JUMP TABLE -------------
+	 	 	 	-----------------------
  	 	 	 	
- 	 	 	 	;|name   |AL |BX     |CL     |DX     |function|
-	 	 	 	ret. AL|ret. BX|
- 	 	 	 	;|-------|:-:|:-----:|:-----:|:-----:|--------|
-	 	 	 	:-----:|:-----:|
- 	 	 	 	;|rimglib|00h|bufaddr|onlyfop|fcbaddr|RIINIT  |
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|rimglib|00h|bufaddr|    |onlyfop|fcbaddr |RII
+	 	 	 	NIT  |errcode|bufaddr |
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
 
 
-	 	 	 	errcode|bufaddr|
- 	 	 	 	;|rimglib|01h|       |       |sectnum|RISTRD  |
-	 	 	 	errcode|bufaddr|
- 	 	 	 	;|rimglib|02h|       |onlyfcl|       |RIDONE  |
-	 	 	 	errcode|       |
+ 	 	 	 	;|rimglib|01h|       |    |       |sectnum |RIS
+	 	 	 	TRD  |errcode|bufaddr |
+ 	 	 	 	;|rimglib|02h|       |    |onlyfcl|        |RID
+	 	 	 	ONE  |errcode|        |
  	 	 	 	;
  	 	 	 	; Error codes:
  	 	 	 	;   00h. no error	 	CF = 0
@@ -75,7 +74,6 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  	 	 	 	;
  	 	 	 	; Preserves: CX, SI, DI
  	 	 	 	
- 	 	 	 	; ---- ENTRY POINT AND JUMP TABLE ----
  0000	 	 	 	RIMG	PROC	NEAR
  0000  51	 	 	 	PUSH	CX	 	; save input CX
 	 	 	 	 for caller
@@ -84,11 +82,11 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  0002  57	 	 	 	PUSH	DI	 	; save input DI
 	 	 	 	 for caller
  	 	 	 	
- 0003  89 1E 00B7 R	 	 	MOV	INP_BX, BX	; save input BX
+ 0003  89 1E 00BE R	 	 	MOV	INP_BX, BX	; save input BX
 	 	 	 	 for selected routine 
- 0007  88 0E 00B9 R	 	 	MOV	INP_CL, CL	; save input CL
+ 0007  88 0E 00C0 R	 	 	MOV	INP_CL, CL	; save input CL
 	 	 	 	 for selected routine
- 000B  89 16 00BA R	 	 	MOV	INP_DX, DX	; save input DX
+ 000B  89 16 00C1 R	 	 	MOV	INP_DX, DX	; save input DX
 	 	 	 	 for selected routine
  	 	 	 	
  000F  3C 03	 	 	 	CMP	AL, RNUM	; compare funct
@@ -103,24 +101,24 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  0018  FF A4 001C R	 	 	JMP	WORD PTR MNJTAB[SI] ; indirect 
 	 	 	 	jump to selected routine
  	 	 	 	
- 001C  002B R	 	 	MNJTAB	DW	RIINIT	 	; 0: initialize
+ 001C  002B R	 	 	MNJTAB	DW	RIINIT	 	; 0: initialise
 	 	 	 	 module
  001E  0064 R	 	 	 	DW	RISTRD	 	; 1: read a log
 	 	 	 	ical sector and write to buffer
- 0020  008F R	 	 	 	DW	RIDONE	 	; 2: clean up a
+ 0020  0096 R	 	 	 	DW	RIDONE	 	; 2: clean up a
 	 	 	 	nd/or close image file
  	 	 	 	
- 0022  5F	 	 	MNBADF:	POP     DI	 	; restore input
+ 0022  5F	 	 	MNBADF:	POP	DI	 	; restore input
 	 	 	 	 DI for caller
- 0023  5E	 	 	 	POP     SI	 	; restore input
+ 0023  5E	 	 	 	POP	SI	 	; restore input
 	 	 	 	 SI for caller
- Microsoft MACRO Assembler  Version 3.00               	Page	1-3
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
-
-
- 0024  59	 	 	 	POP     CX	 	; restore input
+ 0024  59	 	 	 	POP	CX	 	; restore input
 	 	 	 	 CX for caller
- 0025  B0 01	 	 	 	MOV     AL, 01h	 	; AL = 1 (error
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-3
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
+
+
+ 0025  B0 01	 	 	 	MOV	AL, 01h	 	; AL = 1 (error
 	 	 	 	: bad function)
  0027  33 DB	 	 	 	XOR	BX, BX	 	; BX = 0
  0029  F9	 	 	 	STC	 	 	; CF = 1 (retur
@@ -128,29 +126,29 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  002A  C3	 	 	 	RET
  	 	 	 	
  	 	 	 	; ---- INITIALIZE MODULE ----------------------
-	 	 	 	----------------
+	 	 	 	-----------------------
  	 	 	 	
- 	 	 	 	;|name   |AL |BX     |CL     |DX     |function|
-	 	 	 	ret. AL|ret. BX|
- 	 	 	 	;|-------|:-:|:-----:|:-----:|:-----:|--------|
-	 	 	 	:-----:|:-----:|
- 	 	 	 	;|rimglib|01h|       |       |sectnum|RISTRD  |
-	 	 	 	errcode|bufaddr|
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|rimglib|00h|bufaddr|    |onlyfop|fcbaddr |RII
+	 	 	 	NIT  |errcode|bufaddr |
  	 	 	 	
- 002B  A0 00B9 R	 	RIINIT: MOV	AL, INP_CL	; get input CL 
+ 002B  A0 00C0 R	 	RIINIT: MOV	AL, INP_CL	; get input CL 
 	 	 	 	data	
  002E  0A C0	 	 	 	OR	AL, AL
  0030  75 16	 	 	 	JNZ	INITOP	 	; if AL = 1 the
 	 	 	 	n goto INITOP
  	 	 	 	
- 0032  8B 16 00BA R	 	 	MOV	DX, INP_DX	; get input DX 
+ 0032  8B 16 00C1 R	 	 	MOV	DX, INP_DX	; get input DX 
 	 	 	 	data	
- 0036  89 16 00BE R	 	 	MOV	FCBADD, DX	; store FCB sta
+ 0036  89 16 00C5 R	 	 	MOV	FCBADD, DX	; store FCB sta
 	 	 	 	rting address
  	 	 	 	
- 003A  8B 1E 00B7 R	 	 	MOV	BX, INP_BX	; get input BX 
+ 003A  8B 1E 00BE R	 	 	MOV	BX, INP_BX	; get input BX 
 	 	 	 	data	
- 003E  89 1E 00BC R	 	 	MOV	BUFADD, BX	; store buffer 
+ 003E  89 1E 00C3 R	 	 	MOV	BUFADD, BX	; store buffer 
 	 	 	 	starting address
  	 	 	 	
  0042  B4 1A	 	 	 	MOV	AH, DSETDMA	; set DMA addre
@@ -161,7 +159,7 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  	 	 	 	
  0048	 	 	 	INITOP:
  0048  B4 0F	 	 	 	MOV	AH, DOPEN	; open file
- 004A  8B 16 00BE R	 	 	MOV	DX, FCBADD	; DX = FCB offs
+ 004A  8B 16 00C5 R	 	 	MOV	DX, FCBADD	; DX = FCB offs
 	 	 	 	et address
  004E  CD 21	 	 	 	INT	DOS	 	; call BDOS
  0050  FE C0	 	 	 	INC	AL	 	; check result 
@@ -171,17 +169,17 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  0054  32 C0	 	 	 	XOR	AL, AL	 	; A = 0, CF = 0
  0056  F8	 	 	 	CLC	 	 	; CF = 0
  	 	 	 	
- 0057  8B 1E 00BC R	 	INITDN: MOV	BX, BUFADD	; BX = buffer a
- Microsoft MACRO Assembler  Version 3.00               	Page	1-4
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
-
-
+ 0057  8B 1E 00C3 R	 	INITDN: MOV	BX, BUFADD	; BX = buffer a
 	 	 	 	ddress
- 005B  5F	 	 	 	POP     DI	 	; restore input
+ 005B  5F	 	 	 	POP	DI	 	; restore input
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-4
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
+
+
 	 	 	 	 DI for caller
- 005C  5E	 	 	 	POP     SI	 	; restore input
+ 005C  5E	 	 	 	POP	SI	 	; restore input
 	 	 	 	 SI for caller
- 005D  59	 	 	 	POP     CX	 	; restore input
+ 005D  59	 	 	 	POP	CX	 	; restore input
 	 	 	 	 CX for caller
  005E  C3	 	 	 	RET
  	 	 	 	
@@ -191,160 +189,166 @@ RIMG - R128 image sector read library for DOS	 	 	05-15-<6
  0062  EB F3	 	 	 	JMP	SHORT INITDN	; go INITDN
  	 	 	 	
  	 	 	 	; ---- READ A LOGICAL SECTOR ------------------
-	 	 	 	------------------
+	 	 	 	-----------------------
  	 	 	 	
- 	 	 	 	;|name   |AL |BX     |CL     |DX      |function
-	 	 	 	|ret. AL|ret. BX |
- 	 	 	 	;|-------|:-:|:-----:|:-----:|:------:|--------
-	 	 	 	|:-----:|:------:|
- 	 	 	 	;|Rimglib|01h|       |       |sectnum |RMSTRD  
-	 	 	 	|errcode|bufaddr |
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|rimglib|01h|       |    |       |sectnum |RIS
+	 	 	 	TRD  |errcode|bufaddr |
  	 	 	 	
- 0064  8B 36 00BE R	 	RISTRD:	MOV	SI, FCBADD	; SI = FCB base
+ 0064  8B 36 00C5 R	 	RISTRD:	MOV	SI, FCBADD	; SI = FCB base
 	 	 	 	 address
- 0068  A1 00BA R	 	 	MOV	AX, INP_DX	; AX = sector n
+ 0068  A1 00C1 R	 	 	MOV	AX, INP_DX	; AX = sector n
+	 	 	 	umber (from DX)
+ 	 	 	 	
+ 	 	 	 	
+ 006B  8B 36 00C5 R	 	 	MOV	SI, FCBADD	; SI = FCB base
+	 	 	 	 address
+ 006F  A1 00C1 R	 	 	MOV	AX, INP_DX	; AX = sector n
 	 	 	 	umber (from DX)
  	 	 	 	 	
- 006B  89 44 21	 	 	 	MOV	[SI+33], AX	; low word of s
+ 0072  89 44 21	 	 	 	MOV	[SI+33], AX	; low word of s
 	 	 	 	ector
- 006E  C6 44 23 00	 	 	MOV	BYTE PTR [SI+35], 0 ; high byte
+ 0075  C6 44 23 00	 	 	MOV	BYTE PTR [SI+35], 0 ; high byte
  	 	 	 	
- 0072  B4 21	 	 	 	MOV	AH, DRDRND	
- 0074  8B D6	 	 	 	MOV	DX, SI	 	; DX = FCB addr
+ 0079  B4 21	 	 	 	MOV	AH, DRDRND	
+ 007B  8B D6	 	 	 	MOV	DX, SI	 	; DX = FCB addr
 	 	 	 	ess
- 0076  B9 0001	 	 	 	MOV	CX, 1	 	; Read 1 record
- 0079  CD 21	 	 	 	INT	DOS	 	
+ 007D  B9 0001	 	 	 	MOV	CX, 1	 	; Read 1 record
+ 0080  CD 21	 	 	 	INT	DOS	 	
  	 	 	 	
- 007B  0A C0	 	 	 	OR	AL, AL	 	
- 007D  75 05	 	 	 	JNZ	STRDER	 	
+ 0082  0A C0	 	 	 	OR	AL, AL	 	
+ 0084  75 05	 	 	 	JNZ	STRDER	 	
  	 	 	 	
- 007F  32 C0	 	 	 	XOR	AL, AL	 	
- 0081  F8	 	 	 	CLC	 	 	
- 0082  EB 03	 	 	 	JMP	SHORT STRDDN
+ 0086  32 C0	 	 	 	XOR	AL, AL	 	
+ 0088  F8	 	 	 	CLC	 	 	
+ 0089  EB 03	 	 	 	JMP	SHORT STRDDN
  	 	 	 	
- 0084  B0 05	 	 	STRDER:	MOV	AL, 05h	 	
- 0086  F9	 	 	 	STC	 	 	
+ 008B  B0 05	 	 	STRDER:	MOV	AL, 05h	 	
+ 008D  F9	 	 	 	STC	 	 	
  	 	 	 	
- 0087  8B 1E 00BC R	 	STRDDN:	MOV	BX, BUFADD	
- 008B  5F	 	 	 	POP	DI	 	
- 008C  5E	 	 	 	POP	SI	 	
- 008D  59	 	 	 	POP	CX	 	
- 008E  C3	 	 	 	RET
+ 008E  8B 1E 00C3 R	 	STRDDN:	MOV	BX, BUFADD	
  Microsoft MACRO Assembler  Version 3.00               	Page	1-5
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
 
 
+ 0092  5F	 	 	 	POP	DI	 	
+ 0093  5E	 	 	 	POP	SI	 	
+ 0094  59	 	 	 	POP	CX	 	
+ 0095  C3	 	 	 	RET
  	 	 	 	
  	 	 	 	; ---- CLEANUP MODULE -------------------------
-	 	 	 	----------------
+	 	 	 	-----------------------
  	 	 	 	
- 	 	 	 	;|name   |AL |BX     |CL     |DX     |function|
-	 	 	 	ret. AL|ret. BX|
- 	 	 	 	;|-------|:-:|:-----:|:-----:|:-----:|--------|
-	 	 	 	:-----:|:-----:|
- 	 	 	 	;|rimglib|02h|       |onlyfcl|       |RIDONE  |
-	 	 	 	errcode|       |
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|rimglib|02h|       |    |onlyfcl|        |RID
+	 	 	 	ONE  |errcode|        |
  	 	 	 	
- 008F  A0 00B9 R	 	RIDONE: MOV	AL, INP_CL	; get input B d
+ 0096  A0 00C0 R	 	RIDONE: MOV	AL, INP_CL	; get input B d
 	 	 	 	ata	
- 0092  0A C0	 	 	 	OR	AL, AL
- 0094  75 07	 	 	 	JNZ	DONECL	 	; if AL = 1 the
+ 0099  0A C0	 	 	 	OR	AL, AL
+ 009B  75 07	 	 	 	JNZ	DONECL	 	; if AL = 1 the
 	 	 	 	n goto DONECL
  	 	 	 	
- 0096  B4 1A	 	 	 	MOV	AH, DSETDMA	; set DMA addre
+ 009D  B4 1A	 	 	 	MOV	AH, DSETDMA	; set DMA addre
 	 	 	 	ss
- 0098  BA 0080	 	 	 	MOV	DX, 0080h	; DX = default 
+ 009F  BA 0080	 	 	 	MOV	DX, 0080h	; DX = default 
 	 	 	 	DMA offset address
- 009B  CD 21	 	 	 	INT	DOS	 	; call DOS
+ 00A2  CD 21	 	 	 	INT	DOS	 	; call DOS
  	 	 	 	
- 009D  B4 10	 	 	DONECL:	MOV	AH, DCLOSE	; close file
- 009F  8B 16 00BE R	 	 	MOV	DX, FCBADD	; DX = FCB offs
+ 00A4  B4 10	 	 	DONECL:	MOV	AH, DCLOSE	; close file
+ 00A6  8B 16 00C5 R	 	 	MOV	DX, FCBADD	; DX = FCB offs
 	 	 	 	et address
- 00A3  CD 21	 	 	 	INT	DOS	 	; call BDOS
- 00A5  FE C0	 	 	 	INC	AL	 	; check result 
+ 00AA  CD 21	 	 	 	INT	DOS	 	; call BDOS
+ 00AC  FE C0	 	 	 	INC	AL	 	; check result 
 	 	 	 	(at error: FFh -> 00h)
- 00A7  74 09	 	 	 	JZ	DONEER	 	; at error go D
+ 00AE  74 09	 	 	 	JZ	DONEER	 	; at error go D
 	 	 	 	ONEER
- 00A9  32 C0	 	 	 	XOR	AL, AL	 	; AL = 0, CF = 
+ 00B0  32 C0	 	 	 	XOR	AL, AL	 	; AL = 0, CF = 
 	 	 	 	0
  	 	 	 	
- 00AB  BB 0000	 	 	DONEDN: MOV	BX, 0	 	; BX = 0
- 00AE  5F	 	 	 	POP	DI	 	; restore input
+ 00B2  BB 0000	 	 	DONEDN: MOV	BX, 0	 	; BX = 0
+ 00B5  5F	 	 	 	POP	DI	 	; restore input
 	 	 	 	 DI for caller
- 00AF  5E	 	 	 	POP	SI	 	; restore input
+ 00B6  5E	 	 	 	POP	SI	 	; restore input
 	 	 	 	 SI for caller
- 00B0  59	 	 	 	POP	CX	 	; restore input
+ 00B7  59	 	 	 	POP	CX	 	; restore input
 	 	 	 	 CX for caller
- 00B1  C3	 	 	 	RET
+ 00B8  C3	 	 	 	RET
  	 	 	 	
- 00B2  B0 06	 	 	DONEER:	MOV	AL, 06h	 	; AL = 6, error
+ 00B9  B0 06	 	 	DONEER:	MOV	AL, 06h	 	; AL = 6, error
 	 	 	 	 code
- 00B4  F9	 	 	 	STC	 	 	; CF = 1
- 00B5  EB F4	 	 	 	JMP	SHORT DONEDN	; go DONEDN
+ 00BB  F9	 	 	 	STC	 	 	; CF = 1
+ 00BC  EB F4	 	 	 	JMP	SHORT DONEDN	; go DONEDN
  	 	 	 	
- 00B7	 	 	 	RIMG	ENDP
+ 00BE	 	 	 	RIMG	ENDP
  	 	 	 	
- 	 	 	 	; -------- DATA AREA --------
- 00B7  0000	 	 	INP_BX	DW	0	 	; input data in
-	 	 	 	 BX
- 00B9  00	 	 	INP_CL	DB	0	 	; input data in
  Microsoft MACRO Assembler  Version 3.00               	Page	1-6
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
 
 
+ 	 	 	 	; **** DATA AREA ****
+ 00BE  0000	 	 	INP_BX	DW	0	 	; input data in
+	 	 	 	 BX
+ 00C0  00	 	 	INP_CL	DB	0	 	; input data in
 	 	 	 	 CL
- 00BA  0000	 	 	INP_DX	DW	0	 	; input data in
+ 00C1  0000	 	 	INP_DX	DW	0	 	; input data in
 	 	 	 	 DX
- 00BC  0000	 	 	BUFADD	DW	0	 	; buffer start 
+ 00C3  0000	 	 	BUFADD	DW	0	 	; buffer start 
 	 	 	 	address
- 00BE  0000	 	 	FCBADD	DW	0	 	; FCB start add
+ 00C5  0000	 	 	FCBADD	DW	0	 	; FCB start add
 	 	 	 	ress
  	 	 	 	
- 00C0	 	 	 	CSEG	ENDS
+ 00C7	 	 	 	CSEG	ENDS
  	 	 	 	 	END
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-RIMG - R128 image sector read library for DOS	 	 	05-15-<6    
+RIMG - handler routines for in-image filesystem for DOS	 	05-18-<6    
 
 
 Segments and Groups:
 
 	 	N a m e	 	 	Size	Align	Combine	Class
 
-CSEG . . . . . . . . . . . . . .	00C0	PARA  	PUBLIC	'CODE'
+CSEG . . . . . . . . . . . . . .	00C7	PARA  	PUBLIC	'CODE'
 
 Symbols:            
 
 	 	N a m e	 	 	Type	Value	Attr         
 
-BUFADD . . . . . . . . . . . . .	L WORD 	00BC	CSEG
+BUFADD . . . . . . . . . . . . .	L WORD 	00C3	CSEG
 DCLOSE . . . . . . . . . . . . .	Number	0010	
-DONECL . . . . . . . . . . . . .	L NEAR 	009D	CSEG
-DONEDN . . . . . . . . . . . . .	L NEAR 	00AB	CSEG
-DONEER . . . . . . . . . . . . .	L NEAR 	00B2	CSEG
+DONECL . . . . . . . . . . . . .	L NEAR 	00A4	CSEG
+DONEDN . . . . . . . . . . . . .	L NEAR 	00B2	CSEG
+DONEER . . . . . . . . . . . . .	L NEAR 	00B9	CSEG
 DOPEN. . . . . . . . . . . . . .	Number	000F	
 DOS. . . . . . . . . . . . . . .	Number	0021	
 DRDRND . . . . . . . . . . . . .	Number	0021	
 DSETDMA. . . . . . . . . . . . .	Number	001A	
-FCBADD . . . . . . . . . . . . .	L WORD 	00BE	CSEG
+FCBADD . . . . . . . . . . . . .	L WORD 	00C5	CSEG
 INITDN . . . . . . . . . . . . .	L NEAR 	0057	CSEG
 INITER . . . . . . . . . . . . .	L NEAR 	005F	CSEG
 INITOP . . . . . . . . . . . . .	L NEAR 	0048	CSEG
-INP_BX . . . . . . . . . . . . .	L WORD 	00B7	CSEG
-INP_CL . . . . . . . . . . . . .	L BYTE 	00B9	CSEG
-INP_DX . . . . . . . . . . . . .	L WORD 	00BA	CSEG
+INP_BX . . . . . . . . . . . . .	L WORD 	00BE	CSEG
+INP_CL . . . . . . . . . . . . .	L BYTE 	00C0	CSEG
+INP_DX . . . . . . . . . . . . .	L WORD 	00C1	CSEG
 MNBADF . . . . . . . . . . . . .	L NEAR 	0022	CSEG
 MNJTAB . . . . . . . . . . . . .	L WORD 	001C	CSEG
-RIDONE . . . . . . . . . . . . .	L NEAR 	008F	CSEG
+RIDONE . . . . . . . . . . . . .	L NEAR 	0096	CSEG
 RIINIT . . . . . . . . . . . . .	L NEAR 	002B	CSEG
 RIMG . . . . . . . . . . . . . .	N PROC	0000	CSEG	Global	Length 
-	 	 	 	=00B7
+	 	 	 	=00BE
 RISTRD . . . . . . . . . . . . .	L NEAR 	0064	CSEG
 RNUM . . . . . . . . . . . . . .	Number	0003	
 SECT . . . . . . . . . . . . . .	Number	0080	
-STRDDN . . . . . . . . . . . . .	L NEAR 	0087	CSEG
-STRDER . . . . . . . . . . . . .	L NEAR 	0084	CSEG
+STRDDN . . . . . . . . . . . . .	L NEAR 	008E	CSEG
+STRDER . . . . . . . . . . . . .	L NEAR 	008B	CSEG
 
 49370 Bytes free   
 

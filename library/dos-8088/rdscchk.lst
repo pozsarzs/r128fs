@@ -1,0 +1,154 @@
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-1
+	 	 	 	 	 	 	 	05-18-<6    
+
+
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; | R128 ROM filesystem                        
+	 	 	 	                                |
+ 	 	 	 	; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@g
+	 	 	 	mail.com>                       |
+ 	 	 	 	; | rdscchk.asm                                
+	 	 	 	                                |
+ 	 	 	 	; | Reading a sector from disc, 8088, DOS, v0.1
+	 	 	 	                                |
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; This is a free software: you can redistribute
+	 	 	 	 it and/or modify it under the
+ 	 	 	 	; terms of the MIT License.
+ 	 	 	 	;
+ 	 	 	 	; This program is distributed in the hope that 
+	 	 	 	it will be useful, but WITHOUT
+ 	 	 	 	; ANY WARRANTY; without even the implied warran
+	 	 	 	ty of MERCHANTABILITY or FITNESS
+ 	 	 	 	; FOR A PARTICULAR PURPOSE.
+ 	 	 	 	
+ 	 	 	 	; **** CONSTANTS ****
+ = 0021	 	 	 	DOS	EQU	21H	 	; DOS functions
+ = 0009	 	 	 	DPRINT	EQU	09H	 	; - write strin
+	 	 	 	g to console
+ = 004C	 	 	 	DEXIT	EQU	4CH	 	; - exit to DOS
+ = 0000	 	 	 	RDINIT	EQU	00H	 	; Rdsclib initi
+	 	 	 	alize
+ = 0001	 	 	 	RDSTRD	EQU	01H	 	; Rdsclib secto
+	 	 	 	r read
+ 	 	 	 	
+ 	 	 	 	; **** CODE AREA ****
+ 0000	 	 	 	CSEG	SEGMENT	PUBLIC 'CODE'
+ 	 	 	 	 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:C
+	 	 	 	SEG
+ 0100	 	 	 	 	ORG	100H
+ 	 	 	 	
+ 	 	 	 	EXTRN	RDSC:NEAR
+ 	 	 	 	
+ 0100  0E	 	 	START:	PUSH	CS
+ 0101  1F	 	 	 	POP	DS	 	; DS = CS
+ 	 	 	 	
+ 0102  B0 00	 	 	 	MOV	AL, RDINIT	; AL = initiali
+	 	 	 	zation
+ 0104  BB 0164 R	 	 	MOV	BX, OFFSET BUFFER ; BX = buffer
+	 	 	 	 address
+ 0107  E8 0000 E	 	 	CALL	RDSC	 	; call RDSC
+ 010A  0A C0	 	 	 	OR	AL, AL
+ 010C  75 25	 	 	 	JNZ	INITER	 	; detect init e
+	 	 	 	rror
+ 	 	 	 	
+ 010E  B0 01	 	 	 	MOV	AL, RDSTRD	; AL = read sec
+	 	 	 	tor
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-2
+	 	 	 	 	 	 	 	05-18-<6    
+
+
+ 0110  8B 1E 014A R	 	 	MOV	BX, SECTOR	; BX = sector n
+	 	 	 	umber
+ 0114  8A 2E 0147 R	 	 	MOV	CH, HEAD	; CH = head num
+	 	 	 	ber
+ 0118  8A 0E 0146 R	 	 	MOV	CL, DISCID	; CL = disk dri
+	 	 	 	ve number
+ 011C  8B 16 0148 R	 	 	MOV	DX, TRACK	; DX = track nu
+	 	 	 	mber
+ 0120  E8 0000 E	 	 	CALL	RDSC	 	; call RDSC
+ 0123  0A C0	 	 	 	OR	AL, AL
+ 0125  75 12	 	 	 	JNZ	READER	 	; detect read e
+	 	 	 	rror
+ 	 	 	 	
+ 0127  BA 0164 R	 	 	MOV	DX, OFFSET BUFFER ; DX = buffer
+	 	 	 	 address
+ 012A  B4 09	 	 	 	MOV	AH, DPRINT	; AH = print bu
+	 	 	 	ffer
+ 012C  CD 21	 	 	 	INT	DOS	 	; call DOS
+ 012E  B0 00	 	 	 	MOV	AL, 0	 	; error code = 
+	 	 	 	0
+ 0130  EB 10 90	 	 	 	JMP	EXIT	 	; goto EXIT
+ 	 	 	 	
+ 0133  BA 014C R	 	INITER:	MOV	DX, OFFSET MSGINI ; init error
+ 0136  EB 04 90	 	 	 	JMP	PRNER
+ 	 	 	 	
+ 0139  BA 0158 R	 	READER:	MOV	DX, OFFSET MSGRED ; read error
+ 	 	 	 	
+ 013C  B4 09	 	 	PRNER:	MOV	AH, DPRINT	; print error m
+	 	 	 	essage
+ 013E  CD 21	 	 	 	INT	DOS	 	; call DOS
+ 0140  B0 01	 	 	 	MOV	AL, 1	 	; error code = 
+	 	 	 	1
+ 	 	 	 	
+ 0142  B4 4C	 	 	EXIT:	MOV	AH, DEXIT	; exit to DOS
+ 0144  CD 21	 	 	 	INT	DOS	 	; call DOS
+ 	 	 	 	
+ 	 	 	 	; **** DATA AREA ****interrupt
+ 0146  01	 	 	DISCID	DB	1
+ 0147  00	 	 	HEAD	DB	0
+ 0148  0001	 	 	TRACK	DW	1
+ 014A  0001	 	 	SECTOR	DW	1
+ 014C  49 6E 69 74 20 65	MSGINI	DB	'Init error!$'
+       72 72 6F 72 21 24	
+ 0158  52 65 61 64 20 65	MSGRED	DB	'Read error!$'
+       72 72 6F 72 21 24	
+ 0164  0200 [	 	 	BUFFER	DB	512 DUP (?), '$'
+                ??	 	
+                    ]	 	
+                   24	 	
+ 	 	 	 	
+ 0365	 	 	 	CSEG	ENDS
+ 	 	 	 	 	END	START
+
+ Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
+	 	 	 	-1
+	 	 	 	 	 	 	 	05-18-<6    
+
+
+Segments and Groups:
+
+	 	N a m e	 	 	Size	Align	Combine	Class
+
+CSEG . . . . . . . . . . . . . .	0365	PARA  	PUBLIC	'CODE'
+
+Symbols:            
+
+	 	N a m e	 	 	Type	Value	Attr         
+
+BUFFER . . . . . . . . . . . . .	L BYTE 	0164	CSEG	Length =0200
+DEXIT. . . . . . . . . . . . . .	Number	004C	
+DISCID . . . . . . . . . . . . .	L BYTE 	0146	CSEG
+DOS. . . . . . . . . . . . . . .	Number	0021	
+DPRINT . . . . . . . . . . . . .	Number	0009	
+EXIT . . . . . . . . . . . . . .	L NEAR 	0142	CSEG
+HEAD . . . . . . . . . . . . . .	L BYTE 	0147	CSEG
+INITER . . . . . . . . . . . . .	L NEAR 	0133	CSEG
+MSGINI . . . . . . . . . . . . .	L BYTE 	014C	CSEG
+MSGRED . . . . . . . . . . . . .	L BYTE 	0158	CSEG
+PRNER. . . . . . . . . . . . . .	L NEAR 	013C	CSEG
+RDINIT . . . . . . . . . . . . .	Number	0000	
+RDSC . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
+RDSTRD . . . . . . . . . . . . .	Number	0001	
+READER . . . . . . . . . . . . .	L NEAR 	0139	CSEG
+SECTOR . . . . . . . . . . . . .	L WORD 	014A	CSEG
+START. . . . . . . . . . . . . .	L NEAR 	0100	CSEG
+TRACK. . . . . . . . . . . . . .	L WORD 	0148	CSEG
+
+49610 Bytes free   
+
+Warning Severe
+Errors	Errors 
+0	0

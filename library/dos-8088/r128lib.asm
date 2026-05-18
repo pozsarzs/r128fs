@@ -18,15 +18,15 @@ NAME	R128
 DOS	EQU	21h		; DOS functions
 RNUM	EQU	08h		; number of routines
 
+; **** CODE AREA ****
 CSEG	SEGMENT PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
 
-PUBLIC  R128
-EXTRN	RDSC
-EXTRN	RIMG
-EXTRN	RMEM
+EXTRN	RDSC:NEAR
+EXTRN	RIMG:NEAR
+EXTRN	RMEM:NEAR
 
-; **** CODE AREA ****
+PUBLIC  R128
 
 ; ---- ENTRY POINT AND JUMP TABLE ------------------------------------
 
@@ -53,7 +53,7 @@ EXTRN	RMEM
 ;
 ; Preserves: CX, SI, DI
 
-RIMG	PROC	NEAR
+R128	PROC	NEAR
 	PUSH	CX		; save input CX for caller
 	PUSH	SI		; save input SI for caller
 	PUSH	DI		; save input DI for caller
@@ -118,7 +118,7 @@ R128FN:	RET
 ;|r128lib|03h|       |    |       |nameaddr|R128OP  |errcode|        |
 
 R128OP:	RET
-
+
 ; ---- READ FILE -----------------------------------------------------
 
 ;|name   |AL |BX     |CH  |CL     |DX      |function|ret. AL|ret. BX |

@@ -30,5 +30,6 @@ goto LOOP
 
 :NEXT
 masm r128lib.asm r128lib.obj r128lib.lst;
+lib r128.lib +r128lib.obj r128.lst;
 
 :END

@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-	 	 	 	 	 	 	 	05-15-<6    
+	 	 	 	 	 	 	 	05-18-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -24,12 +24,11 @@
 	 	 	 	ty of MERCHANTABILITY or FITNESS
  	 	 	 	; FOR A PARTICULAR PURPOSE.
  	 	 	 	
- 	 	 	 	; -------- CONSTANTS --------
+ 	 	 	 	; **** CONSTANTS ****
  = 0021	 	 	 	DOS	EQU	21H	 	; DOS functions
- = 0009	 	 	 	DPRINT	EQU	09H	 	; write string 
-	 	 	 	to console function
- = 004C	 	 	 	DEXIT	EQU	4CH	 	; exit to DOS f
-	 	 	 	unction
+ = 0009	 	 	 	DPRINT	EQU	09H	 	; - write strin
+	 	 	 	g to console
+ = 004C	 	 	 	DEXIT	EQU	4CH	 	; - exit to DOS
  = 0000	 	 	 	RIINIT	EQU	00H	 	; Rimglib initi
 	 	 	 	alize function
  = 0001	 	 	 	RISTRD	EQU	01H	 	; Rimglib secto
@@ -37,6 +36,7 @@
  = 0002	 	 	 	RIDONE	EQU	02H	 	; Rimglib done 
 	 	 	 	function
  	 	 	 	
+ 	 	 	 	; **** CODE AREA ****
  0000	 	 	 	CSEG	SEGMENT	PUBLIC 'CODE'
  	 	 	 	 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:C
 	 	 	 	SEG
@@ -45,99 +45,115 @@
  	 	 	 	EXTRN	RIMG:NEAR
  	 	 	 	
  0100  0E	 	 	START:	PUSH	CS
- 0101  1F	 	 	 	POP	DS
+ 0101  1F	 	 	 	POP	DS	 	; DS = CS
  	 	 	 	
- 	 	 	 	; initialization
- 0102  B0 00	 	 	 	MOV	AL, RIINIT
- 0104  B1 00	 	 	 	MOV	CL, 0
- 0106  BB 016C R	 	 	MOV	BX, OFFSET BUFFER
- 0109  BA 0147 R	 	 	MOV	DX, OFFSET FCB
- 010C  E8 0000 E	 	 	CALL	RIMG
+ 0102  B0 00	 	 	 	MOV	AL, RIINIT	; AL = initiali
+	 	 	 	zation
+ 0104  B1 00	 	 	 	MOV	CL, 0	 	; CL = mode
+ 0106  BB 017E R	 	 	MOV	BX, OFFSET BUFFER ; BX = buffer
+	 	 	 	 address
+ 0109  BA 0159 R	 	 	MOV	DX, OFFSET FCB	; DX = FCB addr
+	 	 	 	ess
+ 010C  E8 0000 E	 	 	CALL	RIMG	 	; call RIMG
  010F  0A C0	 	 	 	OR	AL, AL
- 0111  75 19	 	 	 	JNZ	ERROR
- 	 	 	 	
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-	 	 	 	 	 	 	 	05-15-<6    
+	 	 	 	 	 	 	 	05-18-<6    
 
 
- 	 	 	 	; read sector 0
- 0113  B0 01	 	 	 	MOV	AL, RISTRD
- 0115  8B 16 0139 R	 	 	MOV	DX, RECNUM
- 0119  E8 0000 E	 	 	CALL	RIMG
- 011C  0A C0	 	 	 	OR	AL, AL
- 011E  75 0C	 	 	 	JNZ	ERROR
+ 0111  75 19	 	 	 	JNZ	INITER	 	; detect init e
+	 	 	 	rror
  	 	 	 	
- 	 	 	 	; print buffer
- 0120  BA 016C R	 	 	MOV	DX, OFFSET BUFFER
- 0123  B4 09	 	 	 	MOV	AH, DPRINT
+ 0113  B0 01	 	 	 	MOV	AL, RISTRD	; AL = read sec
+	 	 	 	tor
+ 0115  8B 16 013F R	 	 	MOV	DX, RECNUM	; DX = sector n
+	 	 	 	umber
+ 0119  E8 0000 E	 	 	CALL	RIMG	 	; call RIMG
+ 011C  0A C0	 	 	 	OR	AL, AL
+ 011E  75 12	 	 	 	JNZ	READER	 	; detect read e
+	 	 	 	rror
+ 	 	 	 	
+ 0120  BA 017E R	 	 	MOV	DX, OFFSET BUFFER ; buffer addr
+	 	 	 	ess
+ 0123  B4 09	 	 	 	MOV	AH, DPRINT	; print buffer
  0125  CD 21	 	 	 	INT	DOS
  0127  B0 00	 	 	 	MOV	AL, 0	 	; error code = 
 	 	 	 	0
- 0129  EB 0A 90	 	 	 	JMP	EXIT
+ 0129  EB 10 90	 	 	 	JMP	EXIT
  	 	 	 	
- 	 	 	 	; handling error
- 012C  BA 013B R	 	ERROR:	MOV	DX, OFFSET ERRMSG ; error messa
-	 	 	 	ge
- 012F  B4 09	 	 	 	MOV	AH, DPRINT	; print error m
+ 012C  BA 0141 R	 	INITER:	MOV	DX, OFFSET MSGINI ; init error
+ 012F  EB 04 90	 	 	 	JMP	PRNER
+ 	 	 	 	
+ 0132  BA 014D R	 	READER:	MOV	DX, OFFSET MSGRED ; read error
+ 	 	 	 	
+ 0135  B4 09	 	 	PRNER:	MOV	AH, DPRINT	; print error m
 	 	 	 	essage
- 0131  CD 21	 	 	 	INT	DOS
- 0133  B0 01	 	 	 	MOV	AL, 1	 	; error code = 
+ 0137  CD 21	 	 	 	INT	DOS	 	; call DOS
+ 0139  B0 01	 	 	 	MOV	AL, 1	 	; error code = 
 	 	 	 	1
  	 	 	 	
- 0135  B4 4C	 	 	EXIT:	MOV	AH, DEXIT	; exit to DOS
- 0137  CD 21	 	 	 	INT	DOS
+ 013B  B4 4C	 	 	EXIT:	MOV	AH, DEXIT	; exit to DOS
+ 013D  CD 21	 	 	 	INT	DOS	 	; call DOS
  	 	 	 	
- 	 	 	 	; -------- DATA AREA --------
- 0139  0001	 	 	RECNUM 	DW	0001h	 	; logical 128-b
+ 	 	 	 	; **** DATA AREA ****
+ 013F  0001	 	 	RECNUM 	DW	0001h	 	; logical 128-b
 	 	 	 	yte record number
- 013B  52 65 61 64 20 65	ERRMSG 	DB	'Read error!$'
+ 0141  49 6E 69 74 20 65	MSGINI:	DB	'Init error!$'
        72 72 6F 72 21 24	
- 0147  00	 	 	FCB 	DB	0	 	; drive
- 0148  52 31 32 38 45 58	 	DB	'R128EXRMIMG'	; 8.3 filename
+ 014D  52 65 61 64 20 65	MSGRED:	DB	'Read error!$'
+       72 72 6F 72 21 24	
+ 0159  00	 	 	FCB 	DB	0	 	; drive
+ 015A  52 31 32 38 45 58	 	DB	'R128EXRMIMG'	; 8.3 filename
        52 4D 49 4D 47	 	
- 0153     19 [	 	 	 	DB	25 DUP (?)
+ 0165     19 [	 	 	 	DB	25 DUP (?)
                 ??	 	
                     ]	 	
  	 	 	 	
- 016C     80 [	 	 	BUFFER	DB	128 DUP (?), '$'
+ 017E     80 [	 	 	BUFFER	DB	128 DUP (?), '$'
                 ??	 	
                     ]	 	
                    24	 	
  	 	 	 	
- 01ED	 	 	 	CSEG	ENDS
+ 01FF	 	 	 	CSEG	ENDS
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-3
+	 	 	 	 	 	 	 	05-18-<6    
+
+
  	 	 	 	 	END	START
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-	 	 	 	 	 	 	 	05-15-<6    
+	 	 	 	 	 	 	 	05-18-<6    
 
 
 Segments and Groups:
 
 	 	N a m e	 	 	Size	Align	Combine	Class
 
-CSEG . . . . . . . . . . . . . .	01ED	PARA  	PUBLIC	'CODE'
+CSEG . . . . . . . . . . . . . .	01FF	PARA  	PUBLIC	'CODE'
 
 Symbols:            
 
 	 	N a m e	 	 	Type	Value	Attr         
 
-BUFFER . . . . . . . . . . . . .	L BYTE 	016C	CSEG	Length =0080
+BUFFER . . . . . . . . . . . . .	L BYTE 	017E	CSEG	Length =0080
 DEXIT. . . . . . . . . . . . . .	Number	004C	
 DOS. . . . . . . . . . . . . . .	Number	0021	
 DPRINT . . . . . . . . . . . . .	Number	0009	
-ERRMSG . . . . . . . . . . . . .	L BYTE 	013B	CSEG
-ERROR. . . . . . . . . . . . . .	L NEAR 	012C	CSEG
-EXIT . . . . . . . . . . . . . .	L NEAR 	0135	CSEG
-FCB. . . . . . . . . . . . . . .	L BYTE 	0147	CSEG
-RECNUM . . . . . . . . . . . . .	L WORD 	0139	CSEG
+EXIT . . . . . . . . . . . . . .	L NEAR 	013B	CSEG
+FCB. . . . . . . . . . . . . . .	L BYTE 	0159	CSEG
+INITER . . . . . . . . . . . . .	L NEAR 	012C	CSEG
+MSGINI . . . . . . . . . . . . .	L NEAR 	0141	CSEG
+MSGRED . . . . . . . . . . . . .	L NEAR 	014D	CSEG
+PRNER. . . . . . . . . . . . . .	L NEAR 	0135	CSEG
+READER . . . . . . . . . . . . .	L NEAR 	0132	CSEG
+RECNUM . . . . . . . . . . . . .	L WORD 	013F	CSEG
 RIDONE . . . . . . . . . . . . .	Number	0002	
 RIINIT . . . . . . . . . . . . .	Number	0000	
 RIMG . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
 RISTRD . . . . . . . . . . . . .	Number	0001	
 START. . . . . . . . . . . . . .	L NEAR 	0100	CSEG
 
-49604 Bytes free   
+49574 Bytes free   
 
 Warning Severe
 Errors	Errors 

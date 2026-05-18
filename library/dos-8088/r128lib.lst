@@ -1,0 +1,300 @@
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-1
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; | R128 ROM filesystem                        
+	 	 	 	                                |
+ 	 	 	 	; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@g
+	 	 	 	mail.com>                       |
+ 	 	 	 	; | r128lib.asm                                
+	 	 	 	                                |
+ 	 	 	 	; | Filesystem handler routines, 8088, DOS, v0.
+	 	 	 	1                               |
+ 	 	 	 	; +--------------------------------------------
+	 	 	 	--------------------------------+
+ 	 	 	 	; This is a free software: you can redistribute
+	 	 	 	 it and/or modify it under the
+ 	 	 	 	; terms of the MIT License.
+ 	 	 	 	;
+ 	 	 	 	; This program is distributed in the hope that 
+	 	 	 	it will be useful, but WITHOUT
+ 	 	 	 	; ANY WARRANTY; without even the implied warran
+	 	 	 	ty of MERCHANTABILITY or FITNESS
+ 	 	 	 	; FOR A PARTICULAR PURPOSE.
+ 	 	 	 	
+ 	 	 	 	TITLE	R128 - filesystem handler routines for 
+	 	 	 	DOS
+ 	 	 	 	NAME	R128
+ 	 	 	 	
+ 	 	 	 	; **** CONSTANTS ****
+ = 0021	 	 	 	DOS	EQU	21h	 	; DOS functions
+ = 0008	 	 	 	RNUM	EQU	08h	 	; number of rou
+	 	 	 	tines
+ 	 	 	 	
+ 	 	 	 	; **** CODE AREA ****
+ 0000	 	 	 	CSEG	SEGMENT PUBLIC 'CODE'
+ 	 	 	 	 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:C
+	 	 	 	SEG
+ 	 	 	 	
+ 	 	 	 	EXTRN	RDSC:NEAR
+ 	 	 	 	EXTRN	RIMG:NEAR
+ 	 	 	 	EXTRN	RMEM:NEAR
+ 	 	 	 	
+ 	 	 	 	PUBLIC  R128
+ 	 	 	 	
+ 	 	 	 	; ---- ENTRY POINT AND JUMP TABLE -------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|00h|bufaddr|    |discid |        |R12
+	 	 	 	8IN  |errcode|bufaddr |
+ 	 	 	 	;|r128lib|01h|       |    |       |maskaddr|R12
+	 	 	 	8FF  |errcode|entryptr|
+ 	 	 	 	;|r128lib|02h|       |    |       |        |R12
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-2
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+	 	 	 	8FN  |errcode|entryptr|
+ 	 	 	 	;|r128lib|03h|       |    |       |nameaddr|R12
+	 	 	 	8OP  |errcode|        |
+ 	 	 	 	;|r128lib|04h|       |    |       |count   |R12
+	 	 	 	8RD  |errcode|bytesrd |
+ 	 	 	 	;|r128lib|05h|       |    |       |pos     |R12
+	 	 	 	8SK  |errcode|        |
+ 	 	 	 	;|r128lib|06h|       |    |       |        |R12
+	 	 	 	8CL  |errcode|        |
+ 	 	 	 	;|r128lib|07h|       |    |       |        |R12
+	 	 	 	8NF  |errcode|infoptr |
+ 	 	 	 	;
+ 	 	 	 	; Error codes:
+ 	 	 	 	;   00h. no error	 	CF = 0
+ 	 	 	 	;   01h: bad function	 	CF = 1
+ 	 	 	 	;   02h: shift overflow	 	CF = 1
+ 	 	 	 	;   03h: address overflow	CF = 1
+ 	 	 	 	;   04h: file open error	CF = 1
+ 	 	 	 	;   05h: file read error	CF = 1
+ 	 	 	 	;   06h: file close error	CF = 1
+ 	 	 	 	;   07h: sector read error	CF = 1
+ 	 	 	 	;
+ 	 	 	 	; Preserves: CX, SI, DI
+ 	 	 	 	
+ 0000	 	 	 	R128	PROC	NEAR
+ 0000  51	 	 	 	PUSH	CX	 	; save input CX
+	 	 	 	 for caller
+ 0001  56	 	 	 	PUSH	SI	 	; save input SI
+	 	 	 	 for caller
+ 0002  57	 	 	 	PUSH	DI	 	; save input DI
+	 	 	 	 for caller
+ 	 	 	 	
+ 0003  89 1E 003D R	 	 	MOV	INP_BX, BX	; save input BX
+	 	 	 	 for selected routine 
+ 0007  88 0E 003F R	 	 	MOV	INP_CL, CL	; save input CL
+	 	 	 	 for selected routine
+ 000B  89 16 0040 R	 	 	MOV	INP_DX, DX	; save input DX
+	 	 	 	 for selected routine
+ 	 	 	 	
+ 000F  3C 08	 	 	 	CMP	AL, RNUM	; compare funct
+	 	 	 	ion code with max valid index
+ 0011  73 19	 	 	 	JAE	MNBADF	 	; if A >= RNUM:
+	 	 	 	 invalid function, jump to MNBADF
+ 	 	 	 	
+ 0013  98	 	 	 	CBW	 	 	; AX = AL
+ 0014  D1 E0	 	 	 	SHL	AX, 1	 	; AX = AX * 2 (
+	 	 	 	word index into jump table)
+ 0016  8B F0	 	 	 	MOV	SI, AX	 	; SI = AX
+ 0018  FF A4 001C R	 	 	JMP	WORD PTR MNJTAB[SI] ; indirect 
+	 	 	 	jump to selected routine
+ 	 	 	 	
+ 001C  0035 R	 	 	MNJTAB	DW	R128IN	 	; 0: initialise
+	 	 	 	 module
+ 001E  0036 R	 	 	 	DW	R128FF	 	; 1: find first
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-3
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+ 0020  0037 R	 	 	 	DW	R128FN	 	; 2: find next
+ 0022  0038 R	 	 	 	DW	R128OP	 	; 3: open file
+ 0024  0039 R	 	 	 	DW	R128RD	 	; 4: read file
+ 0026  003A R	 	 	 	DW	R128SK	 	; 5: seek in fi
+	 	 	 	le
+ 0028  003B R	 	 	 	DW	R128CL	 	; 6: close file
+ 002A  003C R	 	 	 	DW	R128NF	 	; 7: read media
+	 	 	 	 or file information
+ 	 	 	 	
+ 002C  5F	 	 	MNBADF:	POP	DI	 	; restore input
+	 	 	 	 DI for caller
+ 002D  5E	 	 	 	POP	SI	 	; restore input
+	 	 	 	 SI for caller
+ 002E  59	 	 	 	POP	CX	 	; restore input
+	 	 	 	 CX for caller
+ 002F  B0 01	 	 	 	MOV	AL, 01h	 	; AL = 1 (error
+	 	 	 	: bad function)
+ 0031  33 DB	 	 	 	XOR	BX, BX	 	; BX = 0
+ 0033  F9	 	 	 	STC	 	 	; CF = 1 (retur
+	 	 	 	n with error)
+ 0034  C3	 	 	 	RET
+ 	 	 	 	
+ 	 	 	 	; ---- INITIALIZE MODULE ----------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|00h|bufaddr|    |discid |        |R12
+	 	 	 	8IN  |errcode|bufaddr |
+ 	 	 	 	
+ 0035  C3	 	 	R128IN:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- FIND FIRST -----------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|01h|       |    |       |maskaddr|R12
+	 	 	 	8FF  |errcode|entryptr|
+ 	 	 	 	
+ 0036  C3	 	 	R128FF:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- FIND NEXT ------------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|02h|       |    |       |        |R12
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-4
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+	 	 	 	8FN  |errcode|entryptr|
+ 	 	 	 	
+ 0037  C3	 	 	R128FN:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- OPEN FILE ------------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|03h|       |    |       |nameaddr|R12
+	 	 	 	8OP  |errcode|        |
+ 	 	 	 	
+ 0038  C3	 	 	R128OP:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- READ FILE ------------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|04h|       |    |       |count   |R12
+	 	 	 	8RD  |errcode|bytesrd |
+ 	 	 	 	
+ 0039  C3	 	 	R128RD:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- SEEK IN FILE ---------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|05h|       |    |       |pos     |R12
+	 	 	 	8SK  |errcode|        |
+ 	 	 	 	
+ 003A  C3	 	 	R128SK:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- CLOSE FILE -----------------------------
+	 	 	 	-----------------------
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|06h|       |    |       |        |R12
+	 	 	 	8CL  |errcode|        |
+ 	 	 	 	
+ 003B  C3	 	 	R128CL:	RET
+ 	 	 	 	
+ 	 	 	 	; ---- READ MEDIA OR FILE INFORMATION ---------
+	 	 	 	-----------------------
+ Microsoft MACRO Assembler  Version 3.00               	Page	1-5
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+ 	 	 	 	
+ 	 	 	 	;|name   |AL |BX     |CH  |CL     |DX      |fun
+	 	 	 	ction|ret. AL|ret. BX |
+ 	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
+	 	 	 	-----|:-----:|:------:|
+ 	 	 	 	;|r128lib|07h|       |    |       |        |R12
+	 	 	 	8NF  |errcode|infoptr |
+ 	 	 	 	
+ 003C  C3	 	 	R128NF:	RET
+ 	 	 	 	
+ 003D	 	 	 	R128	ENDP
+ 	 	 	 	
+ 	 	 	 	; **** DATA AREA ****
+ 003D  0000	 	 	INP_BX	DW	0	 	; input data in
+	 	 	 	 BX
+ 003F  00	 	 	INP_CL	DB	0	 	; input data in
+	 	 	 	 CL
+ 0040  0000	 	 	INP_DX	DW	0	 	; input data in
+	 	 	 	 DX
+ 	 	 	 	
+ 0042	 	 	 	CSEG	ENDS
+ 	 	 	 	 	END
+
+ Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
+	 	 	 	-1
+R128 - filesystem handler routines for DOS	 	 	05-18-<6    
+
+
+Segments and Groups:
+
+	 	N a m e	 	 	Size	Align	Combine	Class
+
+CSEG . . . . . . . . . . . . . .	0042	PARA  	PUBLIC	'CODE'
+
+Symbols:            
+
+	 	N a m e	 	 	Type	Value	Attr         
+
+DOS. . . . . . . . . . . . . . .	Number	0021	
+INP_BX . . . . . . . . . . . . .	L WORD 	003D	CSEG
+INP_CL . . . . . . . . . . . . .	L BYTE 	003F	CSEG
+INP_DX . . . . . . . . . . . . .	L WORD 	0040	CSEG
+MNBADF . . . . . . . . . . . . .	L NEAR 	002C	CSEG
+MNJTAB . . . . . . . . . . . . .	L WORD 	001C	CSEG
+R128 . . . . . . . . . . . . . .	N PROC	0000	CSEG	Global	Length 
+	 	 	 	=003D
+R128CL . . . . . . . . . . . . .	L NEAR 	003B	CSEG
+R128FF . . . . . . . . . . . . .	L NEAR 	0036	CSEG
+R128FN . . . . . . . . . . . . .	L NEAR 	0037	CSEG
+R128IN . . . . . . . . . . . . .	L NEAR 	0035	CSEG
+R128NF . . . . . . . . . . . . .	L NEAR 	003C	CSEG
+R128OP . . . . . . . . . . . . .	L NEAR 	0038	CSEG
+R128RD . . . . . . . . . . . . .	L NEAR 	0039	CSEG
+R128SK . . . . . . . . . . . . .	L NEAR 	003A	CSEG
+RDSC . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
+RIMG . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
+RMEM . . . . . . . . . . . . . .	L NEAR 	0000	CSEG	External
+RNUM . . . . . . . . . . . . . .	Number	0008	
+
+49586 Bytes free   
+
+Warning Severe
+Errors	Errors 
+0	0

@@ -62,12 +62,12 @@ EXIT:	MOV	AH, DEXIT	; exit to DOS
 	INT	DOS		; call DOS
 
 ; **** DATA AREA ****interrupt
-DISCID:	DB	0
-HEAD:	DB	0
-TRACK:	DW	1
-SECTOR:	DW	1
-MSGINI:	DB	'Init error!$'
-MSGRED:	DB	'Read error!$'
+DISCID	DB	1
+HEAD	DB	0
+TRACK	DW	1
+SECTOR	DW	1
+MSGINI	DB	'Init error!$'
+MSGRED	DB	'Read error!$'
 BUFFER	DB	512 DUP (?), '$'
 
 CSEG	ENDS
