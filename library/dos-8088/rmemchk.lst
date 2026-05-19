@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -57,7 +57,7 @@
 	 	 	 	rror
  	 	 	 	
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  0111  B0 01	 	 	 	MOV	AL, RMSTRD	; AL = read sec
@@ -112,7 +112,7 @@
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
 Segments and Groups:

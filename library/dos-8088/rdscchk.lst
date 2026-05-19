@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -57,7 +57,7 @@
  010E  B0 01	 	 	 	MOV	AL, RDSTRD	; AL = read sec
 	 	 	 	tor
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  0110  8B 1E 014A R	 	 	MOV	BX, SECTOR	; BX = sector n
@@ -97,9 +97,9 @@
  0144  CD 21	 	 	 	INT	DOS	 	; call DOS
  	 	 	 	
  	 	 	 	; **** DATA AREA ****interrupt
- 0146  01	 	 	DISCID	DB	1
+ 0146  80	 	 	DISCID	DB	80h
  0147  00	 	 	HEAD	DB	0
- 0148  0001	 	 	TRACK	DW	1
+ 0148  0000	 	 	TRACK	DW	0
  014A  0001	 	 	SECTOR	DW	1
  014C  49 6E 69 74 20 65	MSGINI	DB	'Init error!$'
        72 72 6F 72 21 24	
@@ -115,7 +115,7 @@
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
 Segments and Groups:

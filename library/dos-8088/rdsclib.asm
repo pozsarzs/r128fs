@@ -90,8 +90,8 @@ INITDN: MOV	BX, BUFADD	; BX = buffer address
 ;|-------|:-:|:-----:|:--:|:-----:|:------:|--------|:-----:|:------:|
 ;|rdsclib|01h|sector |head|discid |track   |RDSTRD  |errcode|bufaddr |
 
-RDSTRD:	PUSH	DS		; save DS
-	POP	ES		; ES = restored DS
+RDSTRD:	;PUSH	CS		; save CS
+	;POP	ES		; ES = restored CS
 
 	MOV	AH, B13RDST	; function code
 	MOV	AL, 1		; sector number

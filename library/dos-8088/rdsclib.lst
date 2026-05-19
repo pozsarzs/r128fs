@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6    
+RDSC - handler routines for on-disc filesystem for DOS	 	05-19-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -57,7 +57,7 @@ RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6
  	 	 	 	; Error codes:
  	 	 	 	;   00h. no error	 	CF = 0
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6    
+RDSC - handler routines for on-disc filesystem for DOS	 	05-19-<6    
 
 
  	 	 	 	;   01h: bad function	 	CF = 1
@@ -73,13 +73,13 @@ RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6
  0002  57	 	 	 	PUSH	DI	 	; save input DI
 	 	 	 	 for caller
  	 	 	 	
- 0003  89 1E 006C R	 	 	MOV	INPRBX, BX	; save input BX
+ 0003  89 1E 006A R	 	 	MOV	INPRBX, BX	; save input BX
 	 	 	 	 for selected routine 
- 0007  88 2E 006E R	 	 	MOV	INPRCH, CH	; save input CL
+ 0007  88 2E 006C R	 	 	MOV	INPRCH, CH	; save input CL
 	 	 	 	 for selected routine
- 000B  88 0E 006F R	 	 	MOV	INPRCL, CL	; save input CL
+ 000B  88 0E 006D R	 	 	MOV	INPRCL, CL	; save input CL
 	 	 	 	 for selected routine
- 000F  89 16 0070 R	 	 	MOV	INPRDX, DX	; save input DX
+ 000F  89 16 006E R	 	 	MOV	INPRDX, DX	; save input DX
 	 	 	 	 for selected routine
  	 	 	 	
  0013  3C 02	 	 	 	CMP	AL, RNUM	; compare funct
@@ -115,7 +115,7 @@ RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6
  	 	 	 	; ---- INITIALIZE MODULE ----------------------
 	 	 	 	-----------------------
  Microsoft MACRO Assembler  Version 3.00               	Page	1-3
-RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6    
+RDSC - handler routines for on-disc filesystem for DOS	 	05-19-<6    
 
 
  	 	 	 	
@@ -126,12 +126,12 @@ RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6
  	 	 	 	;|rdsclib|00h|bufaddr|    |       |        |RDI
 	 	 	 	NIT  |0      |bufaddr |
  	 	 	 	
- 002D  8B 1E 006C R	 	RDINIT:	MOV	BX, INPRBX	; get input BX 
+ 002D  8B 1E 006A R	 	RDINIT:	MOV	BX, INPRBX	; get input BX 
 	 	 	 	data	
- 0031  89 1E 0072 R	 	 	MOV	BUFADD, BX	; store buffer 
+ 0031  89 1E 0070 R	 	 	MOV	BUFADD, BX	; store buffer 
 	 	 	 	starting address
  	 	 	 	
- 0035  8B 1E 0072 R	 	INITDN: MOV	BX, BUFADD	; BX = buffer a
+ 0035  8B 1E 0070 R	 	INITDN: MOV	BX, BUFADD	; BX = buffer a
 	 	 	 	ddress
  0039  32 C0	 	 	 	XOR	AL, AL	 	; AL = 0, CF = 
 	 	 	 	0
@@ -153,73 +153,73 @@ RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6
  	 	 	 	;|rdsclib|01h|sector |head|discid |track   |RDS
 	 	 	 	TRD  |errcode|bufaddr |
  	 	 	 	
- 003F  1E	 	 	RDSTRD:	PUSH	DS	 	; save DS
- 0040  07	 	 	 	POP	ES	 	; ES = restored
-	 	 	 	 DS
+ 003F	 	 	 	RDSTRD:	;PUSH	CS	 	; save CS
+ 	 	 	 	 	;POP	ES	 	; ES = restored
+	 	 	 	 CS
  	 	 	 	
- 0041  B4 02	 	 	 	MOV	AH, B13RDST	; function code
- 0043  B0 01	 	 	 	MOV	AL, 1	 	; sector number
- 0045  8B 1E 0072 R	 	 	MOV	BX, BUFADD	; buffer addres
+ 003F  B4 02	 	 	 	MOV	AH, B13RDST	; function code
+ 0041  B0 01	 	 	 	MOV	AL, 1	 	; sector number
+ 0043  8B 1E 0070 R	 	 	MOV	BX, BUFADD	; buffer addres
 	 	 	 	s
- 0049  8A 2E 0070 R	 	 	MOV	CH, BYTE PTR INPRDX ; track num
+ 0047  8A 2E 006E R	 	 	MOV	CH, BYTE PTR INPRDX ; track num
 	 	 	 	ber
- 004D  8A 0E 006C R	 	 	MOV	CL, BYTE PTR INPRBX ; sector nu
+ 004B  8A 0E 006A R	 	 	MOV	CL, BYTE PTR INPRBX ; sector nu
 	 	 	 	mber
- 0051  8A 36 006E R	 	 	MOV	DH, INPRCH	; head number
- 0055  8A 16 006F R	 	 	MOV	DL, INPRCL	; disc drive nu
+ 004F  8A 36 006C R	 	 	MOV	DH, INPRCH	; head number
+ 0053  8A 16 006D R	 	 	MOV	DL, INPRCL	; disc drive nu
 	 	 	 	mber
- 0059  CD 13	 	 	 	INT	BIOS13	 	; call BIOS fun
+ 0057  CD 13	 	 	 	INT	BIOS13	 	; call BIOS fun
 	 	 	 	ction
- 005B  72 0A	 	 	 	JC	STRDER	 	; if C = 1 then
+ 0059  72 0A	 	 	 	JC	STRDER	 	; if C = 1 then
 	 	 	 	 goto STRDER
  Microsoft MACRO Assembler  Version 3.00               	Page	1-4
-RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6    
+RDSC - handler routines for on-disc filesystem for DOS	 	05-19-<6    
 
 
- 005D  32 C0	 	 	 	XOR	AL, AL	 	; AL = 0, CF = 
+ 005B  32 C0	 	 	 	XOR	AL, AL	 	; AL = 0, CF = 
 	 	 	 	0
  	 	 	 	 	
- 005F  8B 1E 0072 R	 	STRDDN:	MOV	BX, BUFADD	; BX = buffer a
+ 005D  8B 1E 0070 R	 	STRDDN:	MOV	BX, BUFADD	; BX = buffer a
 	 	 	 	ddress
- 0063  5F	 	 	 	POP	DI	 	; restore input
+ 0061  5F	 	 	 	POP	DI	 	; restore input
 	 	 	 	 DI for caller
- 0064  5E	 	 	 	POP	SI	 	; restore input
+ 0062  5E	 	 	 	POP	SI	 	; restore input
 	 	 	 	 SI for caller
- 0065  59	 	 	 	POP	CX	 	; restore input
+ 0063  59	 	 	 	POP	CX	 	; restore input
 	 	 	 	 CX for caller
- 0066  C3	 	 	 	RET
+ 0064  C3	 	 	 	RET
  	 	 	 	
- 0067  B0 07	 	 	STRDER:	MOV	AL, 07h	 	; AL = 7
- 0069  F9	 	 	 	STC	 	 	; CF = 1
- 006A  EB F3	 	 	 	JMP	STRDDN	 	; goto STRDDN
+ 0065  B0 07	 	 	STRDER:	MOV	AL, 07h	 	; AL = 7
+ 0067  F9	 	 	 	STC	 	 	; CF = 1
+ 0068  EB F3	 	 	 	JMP	STRDDN	 	; goto STRDDN
  	 	 	 	
- 006C	 	 	 	RDSC	ENDP
+ 006A	 	 	 	RDSC	ENDP
  	 	 	 	
  	 	 	 	; **** DATA AREA ****
- 006C  0000	 	 	INPRBX	DW	0	 	; input data in
+ 006A  0000	 	 	INPRBX	DW	0	 	; input data in
 	 	 	 	 BX
- 006E  00	 	 	INPRCH	DB	0	 	; input data in
+ 006C  00	 	 	INPRCH	DB	0	 	; input data in
 	 	 	 	 CH
- 006F  00	 	 	INPRCL	DB	0	 	; input data in
+ 006D  00	 	 	INPRCL	DB	0	 	; input data in
 	 	 	 	 CL
- 0070  0000	 	 	INPRDX	DW	0	 	; input data in
+ 006E  0000	 	 	INPRDX	DW	0	 	; input data in
 	 	 	 	 DX
- 0072  0000	 	 	BUFADD	DW	0	 	; buffer start 
+ 0070  0000	 	 	BUFADD	DW	0	 	; buffer start 
 	 	 	 	address
  	 	 	 	
- 0074	 	 	 	CSEG	ENDS
+ 0072	 	 	 	CSEG	ENDS
  	 	 	 	 	END
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-RDSC - handler routines for on-disc filesystem for DOS	 	05-18-<6    
+RDSC - handler routines for on-disc filesystem for DOS	 	05-19-<6    
 
 
 Segments and Groups:
 
 	 	N a m e	 	 	Size	Align	Combine	Class
 
-CSEG . . . . . . . . . . . . . .	0074	PARA  	PUBLIC	'CODE'
+CSEG . . . . . . . . . . . . . .	0072	PARA  	PUBLIC	'CODE'
 
 Symbols:            
 
@@ -227,21 +227,21 @@ Symbols:
 
 B13RDST. . . . . . . . . . . . .	Number	0002	
 BIOS13 . . . . . . . . . . . . .	Number	0013	
-BUFADD . . . . . . . . . . . . .	L WORD 	0072	CSEG
+BUFADD . . . . . . . . . . . . .	L WORD 	0070	CSEG
 INITDN . . . . . . . . . . . . .	L NEAR 	0035	CSEG
-INPRBX . . . . . . . . . . . . .	L WORD 	006C	CSEG
-INPRCH . . . . . . . . . . . . .	L BYTE 	006E	CSEG
-INPRCL . . . . . . . . . . . . .	L BYTE 	006F	CSEG
-INPRDX . . . . . . . . . . . . .	L WORD 	0070	CSEG
+INPRBX . . . . . . . . . . . . .	L WORD 	006A	CSEG
+INPRCH . . . . . . . . . . . . .	L BYTE 	006C	CSEG
+INPRCL . . . . . . . . . . . . .	L BYTE 	006D	CSEG
+INPRDX . . . . . . . . . . . . .	L WORD 	006E	CSEG
 MNBADF . . . . . . . . . . . . .	L NEAR 	0024	CSEG
 MNJTAB . . . . . . . . . . . . .	L WORD 	0020	CSEG
 RDINIT . . . . . . . . . . . . .	L NEAR 	002D	CSEG
 RDSC . . . . . . . . . . . . . .	N PROC	0000	CSEG	Global	Length 
-	 	 	 	=006C
+	 	 	 	=006A
 RDSTRD . . . . . . . . . . . . .	L NEAR 	003F	CSEG
 RNUM . . . . . . . . . . . . . .	Number	0002	
-STRDDN . . . . . . . . . . . . .	L NEAR 	005F	CSEG
-STRDER . . . . . . . . . . . . .	L NEAR 	0067	CSEG
+STRDDN . . . . . . . . . . . . .	L NEAR 	005D	CSEG
+STRDER . . . . . . . . . . . . .	L NEAR 	0065	CSEG
 
 49686 Bytes free   
 

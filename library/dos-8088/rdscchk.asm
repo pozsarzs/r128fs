@@ -62,9 +62,9 @@ EXIT:	MOV	AH, DEXIT	; exit to DOS
 	INT	DOS		; call DOS
 
 ; **** DATA AREA ****interrupt
-DISCID	DB	1
+DISCID	DB	80h
 HEAD	DB	0
-TRACK	DW	1
+TRACK	DW	0
 SECTOR	DW	1
 MSGINI	DB	'Init error!$'
 MSGRED	DB	'Read error!$'

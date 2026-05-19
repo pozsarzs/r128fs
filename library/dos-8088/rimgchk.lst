@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -57,7 +57,7 @@
  010C  E8 0000 E	 	 	CALL	RIMG	 	; call RIMG
  010F  0A C0	 	 	 	OR	AL, AL
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  0111  75 19	 	 	 	JNZ	INITER	 	; detect init e
@@ -115,14 +115,14 @@
  	 	 	 	
  01FF	 	 	 	CSEG	ENDS
  Microsoft MACRO Assembler  Version 3.00               	Page	1-3
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
  	 	 	 	 	END	START
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-	 	 	 	 	 	 	 	05-18-<6    
+	 	 	 	 	 	 	 	05-19-<6    
 
 
 Segments and Groups:

@@ -1,5 +1,5 @@
  Microsoft MACRO Assembler  Version 3.00               	Page	1-1
-RMEM - handler routines for in-memory filesystem for DOS	05-18-<6    
+RMEM - handler routines for in-memory filesystem for DOS	05-19-<6    
 
 
  	 	 	 	; +--------------------------------------------
@@ -57,7 +57,7 @@ RMEM - handler routines for in-memory filesystem for DOS	05-18-<6
  	 	 	 	;   00h. no error	 	CF = 0
  	 	 	 	;   01h: bad function	 	CF = 1
  Microsoft MACRO Assembler  Version 3.00               	Page	1-2
-RMEM - handler routines for in-memory filesystem for DOS	05-18-<6    
+RMEM - handler routines for in-memory filesystem for DOS	05-19-<6    
 
 
  	 	 	 	;   02h: shift overflow	 	CF = 1
@@ -115,7 +115,7 @@ RMEM - handler routines for in-memory filesystem for DOS	05-18-<6
 	 	 	 	ction|ret. AL|ret. BX |
  	 	 	 	;|-------|:-:|:-----:|:--:|:-----:|:------:|---
  Microsoft MACRO Assembler  Version 3.00               	Page	1-3
-RMEM - handler routines for in-memory filesystem for DOS	05-18-<6    
+RMEM - handler routines for in-memory filesystem for DOS	05-19-<6    
 
 
 	 	 	 	-----|:-----:|:------:|
@@ -173,7 +173,7 @@ RMEM - handler routines for in-memory filesystem for DOS	05-18-<6
  0050  8B 3E 0073 R	 	 	MOV	DI, BUFADD	; destination i
 	 	 	 	ndex: DI = buffer address
  Microsoft MACRO Assembler  Version 3.00               	Page	1-4
-RMEM - handler routines for in-memory filesystem for DOS	05-18-<6    
+RMEM - handler routines for in-memory filesystem for DOS	05-19-<6    
 
 
  0054  B9 0080	 	 	 	MOV	CX, SECT	; counter: CX =
@@ -221,7 +221,7 @@ RMEM - handler routines for in-memory filesystem for DOS	05-18-<6
 
  Microsoft MACRO Assembler  Version 3.00               	Page	Symbols
 	 	 	 	-1
-RMEM - handler routines for in-memory filesystem for DOS	05-18-<6    
+RMEM - handler routines for in-memory filesystem for DOS	05-19-<6    
 
 
 Segments and Groups:

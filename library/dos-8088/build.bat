@@ -4,6 +4,7 @@ rem Copyright (C) 2026 Pozsar Zsolt (pozsarzs@gmail.com)
 rem build.bat
 rem Build modules and tester programs
 
+del  r128.lib
 if "%1"=="CYCLE" goto START
 %0 CYCLE rdsc rimg rmem
 goto END
@@ -13,10 +14,9 @@ shift
 :LOOP
 if "%1"=="" goto NEXT
 
-del r128.lib
 masm %1lib.asm %1lib.obj %1lib.lst;
 if errorlevel 1 goto END
-lib r128.lib +%1lib.obj r128.lst;
+lib r128.lib +%1lib.obj;
 masm %1chk.asm %1chk.obj %1chk.lst;
 if errorlevel 1 goto END
 link %1chk.obj+%1lib.obj;
@@ -30,6 +30,7 @@ goto LOOP
 
 :NEXT
 masm r128lib.asm r128lib.obj r128lib.lst;
-lib r128.lib +r128lib.obj r128.lst;
+lib r128.lib +r128lib.obj;
+del r128.bak
 
 :END
