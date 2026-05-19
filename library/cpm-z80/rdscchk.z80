@@ -14,58 +14,55 @@
 	ORG	100h
 	EXTRN	RDSC
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
-BRESET	EQU	00h		; BDOS system reset function
-BCONOUT	EQU	02h		; BDOS console output function
-BPRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; - system reset function
+BCONOUT	EQU	02h		; - console output function
+BPRINT	EQU	09h		; - print string function
 RDINIT	EQU	00h		; Rdsclib initialize function
 RDSTRD	EQU	01h		; Rdsclib sector read function
 
-; -------- CODE AREA --------
-START:	LD	A, RDINIT; initialization
-	LD	HL, BUFFER
-	CALL	RDSC
-	JR	C, INITER
+; **** CODE AREA --------
+START:	LD	A, RDINIT	; A = initialization
+	LD	HL, BUFFER	; HL = buffer address
+	CALL	RDSC		; call RDSC
+	JR	C, INITER	; detect init error
 
-; read sector
-	LD	A, (DISCID)
+	LD	A, (DISCID)	; A = disc ID
 	LD	B, A
-	LD	A, RDSTRD
-	LD	DE, (TRACK)
-	LD	HL, (SECTOR)
-	CALL	RDSC
-	JR	C, READER
+	LD	A, RDSTRD	; A = read sector
+	LD	DE, (TRACK)	; DE = track number
+	LD	HL, (SECTOR)	; HL = sector number
+	CALL	RDSC		; call RDSC
+	JR	C, READER	; detect read error
 
-; dump buffer to console
-	LD	HL, BUFFER
-	LD	B, 128
-PRLOOP:	LD	E, (HL)
-	LD	C, BCONOUT
+	LD	HL, BUFFER	; HL = buffer address
+	LD	B, 128		; counter
+PRLOOP:	LD	E, (HL)		; print buffer to console with loop
+	LD	C, BCONOUT	; print to console
 	PUSH	BC
 	PUSH	DE
 	PUSH	HL
-	CALL	BDOS
+	CALL	BDOS		; call BDOS
 	POP	HL
 	POP	DE
 	POP	BC
 	INC	HL
 	DJNZ	PRLOOP
-	JR	EXIT
+	JR	EXIT		; goto EXIT
 
-; handling error
-INITER:	LD	DE, MSGINI	; init error
+INITER:	LD	DE, MSGINI	; DE = init error message
 	JR	PRNER
 
-READER:	LD	DE, MSGRED	; read error
+READER:	LD	DE, MSGRED	; DE = read error message
 
-PRNER:	LD	C, BPRINT	; print error message
-	CALL	BDOS
+PRNER:	LD	C, BPRINT	; DE = print error
+	CALL	BDOS		; call BDOS
 	
-EXIT:	LD	C, BRESET	; exit to BDOS
-	CALL	BDOS
+EXIT:	LD	C, BRESET	; C = exit to BDOS
+	CALL	BDOS		; call BDOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 DISCID:	DB	0
 TRACK:	DW	1
 SECTOR:	DW	1

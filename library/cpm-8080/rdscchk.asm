@@ -14,62 +14,59 @@
 	ORG	100h
 	EXTRN	RDSC
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
-BRESET	EQU	00h		; BDOS system reset function
-BCONOUT	EQU	02h		; BDOS console output function
-BPRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; - system reset function
+BCONOUT	EQU	02h		; - console output function
+BPRINT	EQU	09h		; - print string function
 RDINIT	EQU	00h		; Rdsclib initialize function
 RDSTRD	EQU	01h		; Rdsclib sector read function
 
-; -------- CODE AREA --------
-START:
-; initialization and open
-	MVI	A, RDINIT
-	LXI	H, BUFFER
-	CALL	RDSC
-	JC	INITER
+; **** CODE AREA ****
+START:	MVI	A, RDINIT	; A = initialization
+	LXI	H, BUFFER	; HL = buffer address
+	CALL	RDSC		; call RDSC
+	JC	INITER		; detect init error
 
-; read sector
-	LDA	DISCID
+	LDA	DISCID		; A = disc ID
 	MOV	B, A
-	MVI	A, RDSTRD
-	LHLD	TRACK
-	XCHG
-	LHLD	SECTOR
-	CALL	RDSC
-	JC	READER
+	MVI	A, RDSTRD	; A = read sector
+	LHLD	TRACK		; HL = track number
+	XCHG			; DE <-> HL
+	LHLD	SECTOR		; HL = sector number
+	CALL	RDSC		; call RDSC
+	JC	READER		; detect read error
 
 ; dump buffer to console
-	LXI	H, BUFFER
-	MVI	B, 128
-PRLOOP:	MOV	E, M
-	MVI	C, BCONOUT
+	LXI	H, BUFFER	; HL = buffer address
+	MVI	B, 128		; counter
+PRLOOP:	MOV	E, M		; print buffer to console with loop
+	MVI	C, BCONOUT	; print to console
 	PUSH	B
 	PUSH	D
 	PUSH	H
-	CALL	BDOS
+	CALL	BDOS		; call BDOS
 	POP	H
 	POP	D
 	POP	B
 	INX	H
 	DCR	B
 	JNZ	PRLOOP
-	JMP	EXIT
+	JMP	EXIT		; goto EXIT
 
 ; handling error
-INITER:	LXI	D, MSGINI	; init error
+INITER:	LXI	D, MSGINI	; DE = init error message
 	JMP	PRNER
 
-READER:	LXI	D, MSGRED	; read error
+READER:	LXI	D, MSGRED	; DE = read error message
 
-PRNER:	MVI	C, BPRINT	; print error message
-	CALL	BDOS
+PRNER:	MVI	C, BPRINT	; C = print error message
+	CALL	BDOS		; call BDOS
 	
-EXIT:	MVI	C, BRESET	; exit to BDOS
-	CALL	BDOS
+EXIT:	MVI	C, BRESET	; C = exit to BDOS
+	CALL	BDOS		; call BDOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 DISCID 	DB	0
 TRACK 	DW	1
 SECTOR 	DW	1

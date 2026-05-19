@@ -173,7 +173,7 @@ accessing the R128 file system.
 
 ![R128 Data Flow Diagram on CP/M](picture/r128-cpm.png)
 
-- `library/cpm*/r128lib.*` – the R128 filesystem core library
+- `library/cpm*/r128lib.*` – the R128 filesystem core module
 - `library/cpm*/rdsclib.*` – disc-based block device driver
 - `library/cpm*/rimglib.*` – image file–based block device driver
 - `library/cpm*/rmemlib.*` – memory–based block device driver
@@ -192,7 +192,8 @@ accessing the R128 file system.
 
 ![R128 Data Flow Diagram on DOS](picture/r128-dos.png)
 
-- `library/dos-8088/r128lib.*` – the R128 filesystem core library
+- `library/dos-8088/r128.lib` – all modules in one library file
+- `library/dos-8088/r128lib.*` – the R128 filesystem core module
 - `library/dos-8088/rdsclib.*` – disc-based block device driver
 - `library/dos-8088/rimglib.*` – image file–based block device driver
 - `library/dos-8088/rmemlib.*` – memory–based block device driver

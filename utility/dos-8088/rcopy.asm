@@ -13,8 +13,10 @@
 
 ; -------- CONSTANTS --------
 DOS	EQU	21H		; DOS functions
-DPRINT	EQU	09H		; write string to console function
-DEXIT	EQU	4CH		; exit to DOS function
+DPRINT	EQU	09H		; - write string to console
+DEXIT	EQU	4CH		; - exit to DOS
+
+; **** CODE AREA ****
 
 CSEG	SEGMENT	PUBLIC 'CODE'
 	ASSUME	CS:CSEG, DS:CSEG, ES:CSEG, SS:CSEG
@@ -35,7 +37,7 @@ ERROR:	MOV	DX, OFFSET ERRMSG ; error message
 EXIT:	MOV	AH, DEXIT	; exit to DOS
 	INT	DOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 ERRMSG 	DB	'Error!$'
 
 CSEG	ENDS

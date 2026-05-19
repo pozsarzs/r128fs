@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | r128lib.asm                                                                |
-; | Filesystem handler routines, 8080, CP/M, v0.1                              |
+; | Interface between the app. and hardware-handling modules, 8080, CP/M, v0.1 |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -17,14 +17,16 @@ EXTRN	REMX
 EXTRN	RIMG
 EXTRN	RMEM
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
 RINIT	EQU	00h		; R???lib initialize function
 RSTRD	EQU	01h		; R???lib sector read function
 RDONE	EQU	02h		; R???lib done function
 RNUM	EQU	08h		; number of routines
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
+
+; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -50,7 +52,6 @@ RNUM	EQU	08h		; number of routines
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 R128:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
@@ -116,7 +117,7 @@ R128FN:	RET
 ;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
 
 R128OP:	RET
-
+
 ; ---- READ FILE -------------------------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
@@ -149,7 +150,7 @@ R128CL:	RET
 
 R128NF:	RET
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INP_B:	DB	0		; input data in B
 INP_C:	DB	0		; input data in C
 INP_DE:	DW	0		; input data in DE

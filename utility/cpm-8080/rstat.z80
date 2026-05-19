@@ -14,15 +14,15 @@
 	ORG	100h
 EXTRN	R128
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	005h			; BDOS system call
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
 START:
 
 ; (..)
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 MSG01:	DB   	'', 0Dh, 0Ah, '$'
 	END
 

@@ -1,4 +1,9 @@
 @echo off
+rem R128 ROM filesystem
+rem Copyright (C) 2026 Pozsar Zsolt (pozsarzs@gmail.com)
+rem build.bat
+rem Build utilities
+
 if "%1"=="CYCLE" goto START
 %0 CYCLE rcopy rdir rstat rtype
 goto END

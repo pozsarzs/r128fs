@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rdsclib.asm                                                                |
-; | Reading a logical sector from disc, 8080, CP/M, v0.1                       |
+; | Handler routines for on-disc filesystem, 8080, CP/M, v0.1                  |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,11 +13,13 @@
 
 PUBLIC RDSC
 
-; -------- CONSTANTS --------
+; **** CONSTANTS --------
 BDOS	EQU	05h		; BDOS entry point
 RNUM	EQU	02h		; number of routines
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
+
+; ---- ENTRY POINT AND JUMP TABLE ----
 
 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
@@ -32,7 +34,6 @@ RNUM	EQU	02h		; number of routines
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RDSC:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
@@ -152,7 +153,7 @@ BREAD:	LHLD	BFJTAB
 	DAD	D
 	PCHL			; jump to the BIOS READ routine
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INPRB	DB	0		; input data in B
 INPRDE	DW	0		; input data in DE
 INPRHL	DW	0		; input data in HL
