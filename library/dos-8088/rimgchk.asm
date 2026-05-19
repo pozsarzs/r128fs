@@ -49,10 +49,10 @@ START:	PUSH	CS
 	MOV	AL, 0		; error code = 0
 	JMP	EXIT
 
-INITER:	MOV	DX, OFFSET MSGINI ; init error
+INITER:	MOV	DX, OFFSET MSGINI ; DX = init error message
 	JMP	PRNER
 
-READER:	MOV	DX, OFFSET MSGRED ; read error
+READER:	MOV	DX, OFFSET MSGRED ; DX = read error message
 
 PRNER:	MOV	AH, DPRINT	; print error message
 	INT	DOS		; call DOS

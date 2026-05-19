@@ -14,65 +14,59 @@
 	ORG	100h
 	EXTRN	RIMG
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
-BRESET	EQU	00h		; BDOS system reset function
-BCONOUT	EQU	02h		; BDOS console output function
-BPRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; - system reset function
+BCONOUT	EQU	02h		; - console output function
+BPRINT	EQU	09h		; - print string function
 RIINIT	EQU	00h		; Rimglib initialize function
 RISTRD	EQU	01h		; Rimglib sector read function
 RIDONE	EQU	02h		; Rimglib done function
 
-; -------- CODE AREA --------
-START:
-; initialization and open
-	LD	A, RIINIT
-	LD	B, 0
-	LD	DE, FCB
-	LD	HL, BUFFER
-	CALL	RIMG
-	JR	C, INITERR
+; **** CODE AREA ****
+START:	LD	A, RIINIT	; A = initialization and open
+	LD	B, 0		; B = mode
+	LD	DE, FCB		; DE = FCB address
+	LD	HL, BUFFER	; HL = buffer address
+	CALL	RIMG		; call RIMG
+	JR	C, INITERR	; detect init error
 
-; read record
-	LD	A, RISTRD
-	LD	DE, (RECNUM)
-	CALL	RIMG
-	JR	C, READERR
+	LD	A, RISTRD	; A = read a sector
+	LD	DE, (RECNUM)	; DE = sector number
+	CALL	RIMG		; call RIMG
+	JR	C, READERR	; detect read error
 
-; dump buffer to console
-	LD	HL, BUFFER
-	LD	B, 128
-PRLOOP:	LD	E, (HL)
-	LD	C, BCONOUT
+	LD	HL, BUFFER	; print buffer to console with loop
+	LD	B, 128		; counter
+PRLOOP:	LD	E, (HL)		; E = buffer address
+	LD	C, BCONOUT	; C = print to console
 	PUSH	BC
 	PUSH	DE
 	PUSH	HL
-	CALL	BDOS
+	CALL	BDOS		; call BDOS
 	POP	HL
 	POP	DE
 	POP	BC
 	INC	HL
 	DJNZ	PRLOOP
 
-; close and cleanup
-DONE:	LD	A, RIDONE
-	LD	B, 0
-	CALL	RIMG
-	JR	EXIT
+DONE:	LD	A, RIDONE	; A = close and cleanup
+	LD	B, 0		; B = mode
+	CALL	RIMG		; call RIMG
+	JR	EXIT		; goto EXIT
 
-; handling error
-INITER:	LD	DE, MSGINI	; init error
+INITER:	LD	DE, MSGINI	; DE = init error message
 	JR	PRNER
 
-READER:	LD	DE, MSGRED	; read error
+READER:	LD	DE, MSGRED	; DE = read error message
 
-PRNER:	LD	C, PRINT	; print error message
-	CALL	BDOS
+PRNER:	LD	C, PRINT	; C = print error message
+	CALL	BDOS		; call BDOS
 
-EXIT:	LD	C, BRESET	; exit to BDOS
-	CALL	BDOS
+EXIT:	LD	C, BRESET	; C = exit to BDOS
+	CALL	BDOS		; call BDOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 RECNUM:	DW	0001h		; logical 128-byte record number
 MSGINI:	DB	'Init error!$'
 MSGRED:	DB	'Read error!$'

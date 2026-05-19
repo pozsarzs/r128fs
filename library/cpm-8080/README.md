@@ -17,7 +17,40 @@
 This is a collection of routines for managing R128 file systems on disk, image,
 and memory.
 
-### Available functions
+### Modules
+
+ - _R128lib_: interface between the application and hardware-handling modules
+ - _Rdsclib_: handler routines for on-disc filesystem
+ - _Remxlib_: handler routines for on-chip filesystem via PEMX device
+ - _Rimglib_: handler routines for in-image filesystem
+ - _Rmemlib_: handler routines for in-memory filesystem 
+
+### Functions
+
+ - _R128IN_: initialize R128lib module
+ - _R128FF_: find first file
+ - _R128FN_: find next file
+ - _R128OP_: open file
+ - _R128RD_: read file
+ - _R128SK_: seek in file
+ - _R128CL_: close file
+ - _R128NF_: get media or file information
+
+ - _RDINIT_: initialize Rdsclib module
+ - _RDSTRD_: read a physical sector from disc (512 Byte)
+
+ - _REINIT_: initialize Remxlib module 
+ - _RESTRD_: read a logical sector from ROM via PEMX device (128 Byte) 
+
+
+ - _RIINIT_: initialize Rimglib module 
+ - _RISTRD_: read a logical sector from disc image (128 Byte) 
+ - _RIDONE_: close module
+
+ - _RMINIT_: initialize Rmemlib module
+ - _RMSTRD_: read a logical sector from memory (128 Byte) 
+
+### Module I/O register specification
 
 |name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
 |-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
@@ -75,4 +108,3 @@ and memory.
 - _romaddr:_ start address of ROM with R128 filesystem
 - _sectnum:_ the number of the sector to be read
 - _track:_ number of the track 
-- _sectnum:_ the number of the physical sector to be read

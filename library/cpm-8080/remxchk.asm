@@ -14,12 +14,12 @@
 	ORG	100h
 	EXTRN	REMX
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
 REINIT	EQU	00h		; Remxlib initialize function
 RESTRD	EQU	01h		; Remxlib sector read function
 
-; -------- CODE AREA --------
+; **** CODE AREA *****
 START:
 ; initialization and open
 
@@ -30,6 +30,6 @@ START:
 ; handling error
 
 	RET
-; -------- DATA AREA --------
+; **** DATA AREA ****
 BUFFER:	DS	128, 0
 	END

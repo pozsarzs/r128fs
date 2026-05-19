@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | remxlib.z80                                                                |
-; | Reading a logical sector from PEMX device, 8080, CP/M, v0.1                |
+; | Handler routines for on-chip filesystem via PEMX device, 8080, CP/M, v0.1  |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,11 +13,11 @@
 
 PUBLIC REMX
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h		; BDOS entry point
 RNUM	EQU	02h		; number of routines
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -81,7 +81,7 @@ REINIT:	RET
 
 RESTRD:	RET
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 ADDR:	DB	0		; I/O address
 	END
 

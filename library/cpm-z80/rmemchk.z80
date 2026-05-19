@@ -14,47 +14,42 @@
 	ORG	100h
 	EXTRN	RMEM
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	0005h		; BDOS entry point
-BRESET	EQU	00h		; BDOS system reset function
-BPRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; - system reset function
+BPRINT	EQU	09h		; - print string function
 RMINIT	EQU	00h		; Rmemlib initialize function
 RMSTRD	EQU	01h		; Rmemlib sector read function
 
-; -------- CODE AREA --------
-START:
-; initialization
-	LD	A, RMINIT
-	LD	DE, ROMIMG
-	LD	HL, BUFFER
-	CALL	RMEM
-	JR	C, INITER
+; **** CODE AREA ****
+START:	LD	A, RMINIT	; A = initialization
+	LD	DE, ROMIMG	; DE = ROMIMG address
+	LD	HL, BUFFER	; HL = BUFFER address
+	CALL	RMEM		; call RMEM
+	JR	C, INITER	; detect init error
 
-; read sector 0
-	LD	A, RMSTRD
-	LD	DE, 0000h
-	CALL	RMEM
-	JR	C, READER
+	LD	A, RMSTRD	; A = read sector
+	LD	DE, 0000h	; DE = sector number
+	CALL	RMEM		; call RMEM
+	JR	C, READER	; detect read error
 
-; print buffer
-	LD	DE, BUFFER
-	LD	C, BPRINT
-	CALL	BDOS
-	JR	EXIT
+	LD	DE, BUFFER	; DE = buffer address
+	LD	C, BPRINT	; C = print buffer 
+	CALL	BDOS		; call BDOS
+	JR	EXIT		; goto EXIT
 
-; handling error
-INITER:	LD	DE, MSGINI	; init error
+INITER:	LD	DE, MSGINI	; DE = init error message
 	JR	PRNER
 
-READER:	LD	DE, MSGRED	; read error
+READER:	LD	DE, MSGRED	; DE =read error message
 
-PRNER:	LD	C, PRINT	; print error message
-	CALL	BDOS
+PRNER:	LD	C, PRINT	; C = print error message
+	CALL	BDOS		; call BDOS
 
-EXIT:	LD	C, BRESET	; exit to BDOS
-	CALL	BDOS
+EXIT:	LD	C, BRESET	; C = exit to BDOS
+	CALL	BDOS		; call BDOS
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 ROMIMG:	DB	'Rmemlib test ok.',13,10,'$'
 MSGINI:	DB	'Init error!$', 0
 MSGRED:	DB	'Read error!$', 0

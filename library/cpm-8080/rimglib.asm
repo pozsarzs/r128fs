@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rimglib.asm                                                                |
-; | Reading a logical sector from disc image, 8080, CP/M-80, v0.1              |
+; | Handler routines for in-image filesystem, 8080, CP/M-80, v0.1              |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,15 +13,17 @@
 
 PUBLIC RIMG
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	05h			; BDOS entry point
-BSETDMA	EQU	1Ah			; BDOS set DMA address function
-BOPEN	EQU	0Fh			; BDOS open file function
-BCLOSE	EQU	10h			; BDOS close file function
-BRDRND	EQU	21h			; BDOS read random function
+BSETDMA	EQU	1Ah			; - set DMA address function
+BOPEN	EQU	0Fh			; - open file function
+BCLOSE	EQU	10h			; - close file function
+BRDRND	EQU	21h			; - read random function
 RNUM	EQU	03h			; Number of routines
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
+
+; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -39,7 +41,6 @@ RNUM	EQU	03h			; Number of routines
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RIMG:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
@@ -185,7 +186,7 @@ DONEER:	MVI	A, 06h		; A = 6, error code
 	STC			; CF = 1
 	JMP	DONEDN		; go DONEDN
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INPRB:	DB	0		; input data in B
 INPRDE:	DW	0		; input data in DE
 INPRHL:	DW	0		; input data in HL

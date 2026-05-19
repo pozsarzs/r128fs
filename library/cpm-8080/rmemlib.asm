@@ -2,7 +2,7 @@
 ; | R128 ROM filesystem                                                        |
 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
 ; | rmemlib.asm                                                                |
-; | Reading a logical sector from memory, 8080, CP/M-80, v0.1                  |
+; | Handler routines for in-memory filesystem, 8080, CP/M-80, v0.1             |
 ; +----------------------------------------------------------------------------+
 ; This is a free software: you can redistribute it and/or modify it under the
 ; terms of the MIT License.
@@ -13,11 +13,13 @@
 
 PUBLIC	RMEM
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 RNUM	EQU	02h		; number of routines
 SECT	EQU	0080h		; logical sector size
 
-; -------- CODE AREA --------
+; **** CODE AREA ****
+
+; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
 
 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -33,7 +35,6 @@ SECT	EQU	0080h		; logical sector size
 ; Preserves: BC, DE
 ; Clobbers:  AF, HL
 
-; ---- ENTRY POINT AND JUMP TABLE ----
 RMEM:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
@@ -139,7 +140,7 @@ STRDDN:	LHLD	BUFADD		; HL = buffer address
 	POP	B		; restore input BC for caller
 	RET
 
-; -------- DATA AREA --------
+; **** DATA AREA ****
 INPRDE:	DW	0		; input data in DE
 INPRHL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address

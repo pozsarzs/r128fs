@@ -23,9 +23,7 @@ RDINIT	EQU	00h		; Rdsclib initialize function
 RDSTRD	EQU	01h		; Rdsclib sector read function
 
 ; -------- CODE AREA --------
-START:
-; initialization
-	LD	A, RDINIT
+START:	LD	A, RDINIT; initialization
 	LD	HL, BUFFER
 	CALL	RDSC
 	JR	C, INITER

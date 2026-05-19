@@ -14,41 +14,37 @@
 	ORG	100h
 	EXTRN	RIMG
 
-; -------- CONSTANTS --------
+; **** CONSTANTS ****
 BDOS	EQU	0005h		; BDOS entry point
-BRESET	EQU	00h		; BDOS system reset function
-BCONOUT	EQU	02h		; BDOS console output function
-BPRINT	EQU	09h		; BDOS print string function
+BRESET	EQU	00h		; - system reset function
+BCONOUT	EQU	02h		; - console output function
+BPRINT	EQU	09h		; - print string function
 RIINIT	EQU	00h		; Rimglib initialize function
 RISTRD	EQU	01h		; Rimglib sector read function
 RIDONE	EQU	02h		; Rimglib done function
 
-; -------- CODE AREA --------
-START:
-; initialization and open
-	MVI	A, RIINIT
-	MVI	B, 0
-	LXI	D, FCB
-	LXI	H, BUFFER
-	CALL	RIMG
-	JC	ERROR
+; **** CODE AREA ****
+START:	MVI	A, RIINIT	; A = initialization and open
+	MVI	B, 0		; B = mode
+	LXI	D, FCB		; DE = address of FCB
+	LXI	H, BUFFER	; HL = address of BUFFER
+	CALL	RIMG		; call RIMG
+	JC	ERROR		; detect init error
 
-; read record
-	MVI	A, RISTRD
-	LHLD	RECNUM
-	XCHG
-	CALL	RIMG
-	JC	ERROR
+	MVI	A, RISTRD	; A = read a record
+	LHLD	RECNUM		; HL = record number
+	XCHG			; DE <-> HL
+	CALL	RIMG		; call RIMG
+	JC	ERROR		; detect read error
 
-; dump buffer to console
-	LXI	H, BUFFER
-	MVI	B, 128
-PRLOOP:	MOV	E, M
-	MVI	C, BCONOUT
+	LXI	H, BUFFER	; HL = buffer address
+	MVI	B, 128		; B = counter
+PRLOOP:	MOV	E, M		; print buffer to console with loop
+	MVI	C, BCONOUT	; print to console
 	PUSH	B
 	PUSH	D
 	PUSH	H
-	CALL	BDOS
+	CALL	BDOS		; call BDOS
 	POP	H
 	POP	D
 	POP	B
@@ -56,25 +52,24 @@ PRLOOP:	MOV	E, M
 	DCR	B
 	JNZ	PRLOOP
 
-; close and cleanup
-DONE:	MVI	A, RIDONE
-	MVI	B, 0
-	CALL	RIMG
+DONE:	MVI	A, RIDONE	; A = close and cleanup
+	MVI	B, 0		; B = mode
+	CALL	RIMG		; call RIMG
 	MVI	C, BRESET	; exit to BDOS
-	CALL	BDOS
-	JMP	EXIT
+	CALL	BDOS		; call BDOS
+	JMP	EXIT		; goto exit
 
 ; handling error
-INITER:	LXI	D, MSGINI	; init error
+INITER:	LXI	D, MSGINI	; DE = init error message
 	JMP	PRNER
 
-READER:	LXI	D, MSGRED	; read error
+READER:	LXI	D, MSGRED	; DE = read error message
 
-PRNER:	MVI	C, BPRINT	; print error message
-	CALL	BDOS
+PRNER:	MVI	C, BPRINT	; C = print error message
+	CALL	BDOS		; call BDOS
 
-EXIT:	MVI	C, BRESET	; exit to BDOS
-	CALL	BDOS
+EXIT:	MVI	C, BRESET	; C = exit to BDOS
+	CALL	BDOS		; call BDOS
 
 ; -------- DATA AREA --------
 RECNUM:	DW	0001h		; logical 128-byte record number
