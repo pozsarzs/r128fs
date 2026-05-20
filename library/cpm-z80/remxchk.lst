@@ -1,0 +1,41 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+REMXCHK Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | remxchk.z80                                                                |
+    5                   ; | Reading a logical sector from PEIX device, 8080, CP/M, v0.1                |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14         0100      	ORG	100h
+   15                   	EXTRN	REMX
+   16                   
+   17                   ; **** CONSTANTS ****
+   18         0005      BDOS	EQU	05h		; BDOS entry point
+   19         0000      REINIT	EQU	00h		; Remxlib initialize function
+   20         0001      RESTRD	EQU	01h		; Remxlib sector read function
+   21                   
+   22                   ; **** CODE AREA ****
+   23 0100              START:
+   24                   ; initialization and open
+   25                   
+   26                   ; read record
+   27                   
+   28                   ; dump buffer to console
+   29                   
+   30                   ; handling error
+   31                   
+   32 0100  C9          	RET
+   33                   ; **** DATA AREA ****
+   34 0101  00 00 00 00 BUFFER:	DS	128, 0
+   35                   	END
+ 0 Error(s) Detected.
+ 129 Absolute Bytes. 6 Symbols Detected.
+              ; FOR A PAR

@@ -29,12 +29,12 @@ START:	LD	A, RIINIT	; A = initialization and open
 	LD	DE, FCB		; DE = FCB address
 	LD	HL, BUFFER	; HL = buffer address
 	CALL	RIMG		; call RIMG
-	JR	C, INITERR	; detect init error
+	JR	C, INITER	; detect init error
 
 	LD	A, RISTRD	; A = read a sector
 	LD	DE, (RECNUM)	; DE = sector number
 	CALL	RIMG		; call RIMG
-	JR	C, READERR	; detect read error
+	JR	C, READER	; detect read error
 
 	LD	HL, BUFFER	; print buffer to console with loop
 	LD	B, 128		; counter
@@ -60,7 +60,7 @@ INITER:	LD	DE, MSGINI	; DE = init error message
 
 READER:	LD	DE, MSGRED	; DE = read error message
 
-PRNER:	LD	C, PRINT	; C = print error message
+PRNER:	LD	C, BPRINT	; C = print error message
 	CALL	BDOS		; call BDOS
 
 EXIT:	LD	C, BRESET	; C = exit to BDOS
@@ -75,3 +75,4 @@ FCB:	DB	0		; drive
 	DS	25, 0
 BUFFER:	DS	128, 0
 	END
+

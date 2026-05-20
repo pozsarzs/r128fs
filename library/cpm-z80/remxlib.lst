@@ -1,0 +1,98 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+REMXLIB Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | remxlib.z80                                                                |
+    5                   ; | Handler routines for on-chip filesystem via PEMX device, Z80, CP/M, v0.1   |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14                   PUBLIC REMX
+   15                   
+   16                   ; **** CONSTANTS ****
+   17         0005      BDOS	EQU	05h		; BDOS entry point
+   18         0002      RNUM	EQU	02h		; number of routines
+   19                   
+   20                   ; **** CODE AREA ****
+   21                   
+   22                   ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
+   23                   
+   24                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   25                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   26                   ;|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+   27                   ;|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
+   28                   ;
+   29                   ; Error codes:
+   30                   ;   00h. no error		CF = 0
+   31                   ;   01h: bad function		CF = 1
+   32                   ;
+   33                   ; Preserves: BC, DE
+   34                   ; Clobbers:  AF, HL
+   35                   
+   36 0000' C5          REMX:	PUSH	BC		; save input BC for caller
+   37 0001' D5          	PUSH	DE		; save input DE for caller
+   38                   
+   39                   ;	LD	(INP_HL), HL	; save input HL for selected routine 
+   40                   ;	LD	(INP_DE), DE	; save input DE for selected routine
+   41 0002' 4F          	LD	C, A
+   42 0003' 78          	LD	A, B
+   43                   ;	LD	(INP_B), A	; save input B for selected routine
+   44 0004' 79          	LD	A, C
+   45                   
+   46 0005' FE 02       	CP	RNUM		; compare A (function code) with max valid index
+   47 0007' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   48                   
+   49 0009' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   50 000A' 6F          	LD	L, A
+   51 000B' 26 00       	LD	H, 0		; HL = zero-extended offset
+   52 000D' 11 0016'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   53 0010' 19          	ADD	HL, DE		; HL = address of table + offset
+   54                   
+   55 0011' 5E          	LD	E, (HL)		; load low byte of handler address
+   56 0012' 23          	INC	HL
+   57 0013' 56          	LD	D, (HL)		; load high byte
+   58 0014' EB          	EX	DE, HL		; HL = handler address
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+REMXLIB Z80
+
+   59 0015' E9          	JP	(HL)		; indirect jump to selected routine
+   60                   
+   61 0016' 0023'       MNJTAB:	DW	REINIT		; 0: initialize module and/or open image file
+   62 0018' 0024'       	DW	RESTRD		; 1: read a logical sector from image and write to buffer
+   63                   
+   64 001A' D1          MNBADF:	POP	DE		; restore input DE for caller
+   65 001B' C1          	POP	BC		; restore input BC for caller
+   66 001C' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
+   67 001E' 21 0000     	LD	HL, 0000h	; HL = 0
+   68 0021' 37          	SCF			; CF = 1 (return with error)
+   69 0022' C9          	RET
+   70                   
+   71                   ; ---- INITIALIZE MODULE -----------------------------------------------
+   72                   
+   73                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   74                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   75                   ;|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+   76                   
+   77 0023' C9          REINIT:	RET
+   78                   
+   79                   ; ---- READ A LOGICAL SECTOR -------------------------------------------
+   80                   
+   81                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   82                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   83                   ;|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
+   84                   
+   85 0024' C9          RESTRD:	RET
+   86                   
+   87                   ; **** DATA AREA ****
+   88 0025' 00          ADDR:	DB	0		; I/O address
+   89                   	END
+ 0 Error(s) Detected. 38 Program Bytes.
+ 8 Symbols Detected.
+ |HL     |funct

@@ -43,7 +43,7 @@ INITER:	LD	DE, MSGINI	; DE = init error message
 
 READER:	LD	DE, MSGRED	; DE =read error message
 
-PRNER:	LD	C, PRINT	; C = print error message
+PRNER:	LD	C, BPRINT	; C = print error message
 	CALL	BDOS		; call BDOS
 
 EXIT:	LD	C, BRESET	; C = exit to BDOS
@@ -55,3 +55,4 @@ MSGINI:	DB	'Init error!$', 0
 MSGRED:	DB	'Read error!$', 0
 BUFFER:	DS	128
 	END
+

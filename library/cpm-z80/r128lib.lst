@@ -1,0 +1,177 @@
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   1
+R128LIB Z80
+
+    1                   ; +----------------------------------------------------------------------------+
+    2                   ; | R128 ROM filesystem                                                        |
+    3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+    4                   ; | r128lib.z80                                                                |
+    5                   ; | Interface between the app. and hardware-handling modules, Z80, CP/M, v0.1  |
+    6                   ; +----------------------------------------------------------------------------+
+    7                   ; This is a free software: you can redistribute it and/or modify it under the
+    8                   ; terms of the MIT License.
+    9                   ;
+   10                   ; This program is distributed in the hope that it will be useful, but WITHOUT
+   11                   ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+   12                   ; FOR A PARTICULAR PURPOSE.
+   13                   
+   14                   PUBLIC	R128
+   15                   EXTRN	RDSC
+   16                   EXTRN	REMX
+   17                   EXTRN	RIMG
+   18                   EXTRN	RMEM
+   19                   
+   20                   ; **** CONSTANTS ****
+   21         0005      BDOS	EQU	05h		; BDOS entry point
+   22         0000      RINIT	EQU	00h		; R???lib initialize function
+   23         0001      RSTRD	EQU	01h		; R???lib sector read function
+   24         0002      RDONE	EQU	02h		; R???lib done function
+   25         0008      RNUM	EQU	08h		; number of routines
+   26                   
+   27                   ; **** CODE AREA ****
+   28                   
+   29                   ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
+   30                   
+   31                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   32                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   33                   ;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+   34                   ;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+   35                   ;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+   36                   ;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+   37                   ;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+   38                   ;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+   39                   ;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+   40                   ;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+   41                   ;
+   42                   ; Error codes:
+   43                   ;   00h. no error		CF = 0
+   44                   ;   01h: bad function		CF = 1
+   45                   ;   02h: shift overflow		CF = 1
+   46                   ;   03h: address overflow	CF = 1
+   47                   ;   04h: file open error	CF = 1
+   48                   ;   05h: file read error	CF = 1
+   49                   ;   06h: file close error	CF = 1
+   50                   ;   07h: sector read error	CF = 1
+   51                   ;
+   52                   ; Preserves: BC, DE
+   53                   ; Clobbers:  AF, HL
+   54                   
+   55 0000' C5          R128:	PUSH	BC		; save input BC for caller
+   56 0001' D5          	PUSH	DE		; save input DE for caller
+   57                   
+   58 0002' 22 0045'    	LD	(INP_HL), HL	; save input HL for selected routine 
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
+R128LIB Z80
+
+   59 0005' ED 53 0043' 	LD	(INP_DE), DE	; save input DE for selected routine
+   60 0009' 4F          	LD	C, A
+   61 000A' 78          	LD	A, B
+   62 000B' 32 0041'    	LD	(INP_B), A	; save input B for selected routine
+   63 000E' 79          	LD	A, C
+   64                   
+   65 000F' FE 08       	CP	RNUM		; compare A (function code) with max valid index
+   66 0011' 30 1D       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   67                   
+   68 0013' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   69 0014' 6F          	LD	L, A
+   70 0015' 26 00       	LD	H, 0		; HL = zero-extended offset
+   71 0017' 11 0020'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   72 001A' 19          	ADD	HL, DE		; HL = address of table + offset
+   73                   
+   74 001B' 5E          	LD	E, (HL)		; load low byte of handler address
+   75 001C' 23          	INC	HL
+   76 001D' 56          	LD	D, (HL)		; load high byte
+   77 001E' EB          	EX	DE, HL		; HL = handler address
+   78 001F' E9          	JP	(HL)		; indirect jump to selected routine
+   79                   
+   80 0020' 0039'       MNJTAB:	DW	R128IN		; 0: initialize module
+   81 0022' 003A'       	DW	R128FF		; 1: find first
+   82 0024' 003B'       	DW	R128FN		; 2: find next
+   83 0026' 003C'       	DW	R128OP		; 3: open file
+   84 0028' 003D'       	DW	R128RD		; 4: read file
+   85 002A' 003E'       	DW	R128SK		; 5: seek in file
+   86 002C' 003F'       	DW	R128CL		; 6: close file
+   87 002E' 0040'       	DW	R128NF		; 7: read media or file information
+   88                   
+   89 0030' D1          MNBADF:	POP	DE		; restore input DE for caller
+   90 0031' C1          	POP	BC		; restore input BC for caller
+   91 0032' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
+   92 0034' 21 0000     	LD	HL, 0000h	; HL = 0
+   93 0037' 37          	SCF			; CF = 1 (return with error)
+   94 0038' C9          	RET
+   95                   
+   96                   ; ---- INITIALIZE MODULE -----------------------------------------------
+   97                   
+   98                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   99                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  100                   ;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+  101                   
+  102 0039' C9          R128IN:	RET
+  103                   
+  104                   ; ---- FIND FIRST ------------------------------------------------------
+  105                   
+  106                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  107                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  108                   ;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+  109                   
+  110 003A' C9          R128FF:	RET
+  111                   
+  112                   ; ---- FIND NEXT -------------------------------------------------------
+  113                   
+  114                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  115                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  116                   ;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
+R128LIB Z80
+
+  117                   
+  118 003B' C9          R128FN:	RET
+  119                   
+  120                   ; ---- OPEN FILE -------------------------------------------------------
+  121                   
+  122                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  123                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  124                   ;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+  125                   
+  126 003C' C9          R128OP:	RET
+  127                   
+  128                   ; ---- READ FILE -------------------------------------------------------
+  129                   
+  130                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  131                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  132                   ;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+  133                   
+  134 003D' C9          R128RD:	RET
+  135                   
+  136                   ; ---- SEEK IN FILE ----------------------------------------------------
+  137                   
+  138                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  139                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  140                   ;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+  141                   
+  142 003E' C9          R128SK:	RET
+  143                   
+  144                   ; ---- CLOSE FILE ------------------------------------------------------
+  145                   
+  146                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  147                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  148                   ;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+  149                   
+  150 003F' C9          R128CL:	RET
+  151                   
+  152                   ; ---- READ MEDIA OR FILE INFORMATION ----------------------------------
+  153                   
+  154                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+  155                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+  156                   ;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+  157                   
+  158 0040' C9          R128NF:	RET
+  159                   
+  160                   ; **** DATA AREA ****
+  161 0041' 00          INP_B:	DB	0		; input data in B
+  162 0042' 00          INP_C:	DB	0		; input data in C
+  163 0043' 0000        INP_DE:	DW	0		; input data in DE
+  164 0045' 0000        INP_HL:	DW	0		; input data in HL
+  165                   	END
+ 0 Error(s) Detected. 71 Program Bytes.
+ 24 Symbols Detected.
+   |      |    

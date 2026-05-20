@@ -5,7 +5,7 @@ RDSCLIB Z80
     2                   ; | R128 ROM filesystem                                                        |
     3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
     4                   ; | rdsclib.z80                                                                |
-    5                   ; | Reading a logical sector from disc, Z80, CP/M, v0.1                        |
+    5                   ; | Handler routines for on-disc filesystem, Z80, CP/M, v0.1                   |
     6                   ; +----------------------------------------------------------------------------+
     7                   ; This is a free software: you can redistribute it and/or modify it under the
     8                   ; terms of the MIT License.
@@ -16,157 +16,159 @@ RDSCLIB Z80
    13                   
    14                   PUBLIC RDSC
    15                   
-   16                   ; -------- CONSTANTS --------
+   16                   ; **** CONSTANTS ****
    17         0005      BDOS	EQU	05h		; BDOS entry point
    18         0002      RNUM	EQU	02h		; number of routines
    19                   
-   20                   ; -------- CODE AREA --------
+   20                   ; **** CODE AREA ****
    21                   
-   22                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
-   23                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
-   24                   ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
-   25                   ;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
-   26                   ;
-   27                   ; Error codes:
-   28                   ;   00h. no error		CF = 0
-   29                   ;   01h: bad function		CF = 1
-   30                   ;   07h: sector read error	CF = 1
-   31                   ;
-   32                   ; Preserves: BC, DE
-   33                   ; Clobbers:  AF, HL
-   34                   
-   35                   ; ---- ENTRY POINT AND JUMP TABLE ----
-   36 0000' C5          RDSC:	PUSH	BC		; save input BC for caller
-   37 0001' D5          	PUSH	DE		; save input DE for caller
-   38                   
-   39 0002' F5          	PUSH	AF		; save input AF
-   40 0003' 22 0079'    	LD	(INP_HL), HL	; save input HL for selected routine 
-   41 0006' ED 53 0077' 	LD	(INP_DE), DE	; save input DE for selected routine
-   42 000A' 78          	LD	A, B
-   43 000B' 32 0076'    	LD	(INP_B), A	; save input B for selected routine
-   44 000E' F1          	POP	AF		; restore input AF
-   45                   
-   46 000F' FE 02       	CP	RNUM		; compare A (function code) with max valid index
-   47 0011' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
-   48                   
-   49 0013' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
-   50 0014' 6F          	LD	L, A
-   51 0015' 26 00       	LD	H, 0		; HL = zero-extended offset
-   52 0017' 11 0020'    	LD	DE, MNJTAB	; DE = address of jump table entry
-   53 001A' 19          	ADD	HL, DE		; HL = address of table + offset
-   54                   
-   55 001B' 5E          	LD	E, (HL)		; load low byte of handler address
-   56 001C' 23          	INC	HL
-   57 001D' 56          	LD	D, (HL)		; load high byte
-   58 001E' EB          	EX	DE, HL		; HL = handler address
+   22                   ; ---- ENTRY POINT AND JUMP TABLE -------------------------------------
+   23                   
+   24                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+   25                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+   26                   ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
+   27                   ;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
+   28                   ;
+   29                   ; Error codes:
+   30                   ;   00h. no error		CF = 0
+   31                   ;   01h: bad function		CF = 1
+   32                   ;   07h: sector read error	CF = 1
+   33                   ;
+   34                   ; Preserves: BC, DE
+   35                   ; Clobbers:  AF, HL
+   36                   
+   37 0000' C5          RDSC:	PUSH	BC		; save input BC for caller
+   38 0001' D5          	PUSH	DE		; save input DE for caller
+   39                   
+   40 0002' F5          	PUSH	AF		; save input AF
+   41 0003' 22 00A1'    	LD	(INP_HL), HL	; save input HL for selected routine 
+   42 0006' ED 53 009F' 	LD	(INP_DE), DE	; save input DE for selected routine
+   43 000A' 78          	LD	A, B
+   44 000B' 32 009E'    	LD	(INP_B), A	; save input B for selected routine
+   45 000E' F1          	POP	AF		; restore input AF
+   46                   
+   47 000F' FE 02       	CP	RNUM		; compare A (function code) with max valid index
+   48 0011' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   49                   
+   50 0013' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   51 0014' 6F          	LD	L, A
+   52 0015' 26 00       	LD	H, 0		; HL = zero-extended offset
+   53 0017' 11 0020'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   54 001A' 19          	ADD	HL, DE		; HL = address of table + offset
+   55                   
+   56 001B' 5E          	LD	E, (HL)		; load low byte of handler address
+   57 001C' 23          	INC	HL
+   58 001D' 56          	LD	D, (HL)		; load high byte
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RDSCLIB Z80
 
-   59 001F' E9          	JP	(HL)		; indirect jump to selected routine
-   60                   
-   61 0020' 002D'       MNJTAB:	DW	RDINIT		; 0: initialize module and/or open image file
-   62 0022' 0044'       	DW	RDSTRD		; 1: read a logical sector from image and write to buffer
-   63                   
-   64 0024' D1          MNBADF:	POP	DE		; restore input DE for caller
-   65 0025' C1          	POP	BC		; restore input BC for caller
-   66 0026' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
-   67 0028' 21 0000     	LD	HL, 0000h	; HL = 0
-   68 002B' 37          	SCF			; CF = 1 (return with error)
-   69 002C' C9          	RET
-   70                   
-   71                   ; ---- INITIALIZE MODULE ----------------------------------------------
-   72                   
-   73                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
-   74                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
-   75                   ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
-   76                   
-   77 002D' 2A 0079'    RDINIT:	LD	HL, (INP_HL)	; get input HL data	
-   78 0030' 22 007B'    	LD	(BUFADD), HL	; store buffer starting address
-   79                   
-   80 0033' 2A 0001     	LD	HL, (0001h)	; HL = BIOS Warm Boot (WBOOT) pointer
-   81 0036' 11 FFFD     	LD	DE, -3		; DE = -3 (0000-0002h: JP nnnn)
-   82 0039' 19          	ADD	HL, DE		; HL = HL - 3
-   83 003A' 22 007D'    	LD	(BFJTAB), HL	; (BFJTAB) = HL, BIOS jump table base address
-   84                   
-   85 003D' AF          INITDN: XOR	A		; A = 0, CF = 0
-   86 003E' 2A 007B'    	LD	HL, (BUFADD)	; HL = buffer address
-   87 0041' D1          	POP	DE		; restore input DE for caller
-   88 0042' C1          	POP	BC		; restore input BC for caller
-   89 0043' C9          	RET
-   90                   
-   91                   ; ---- READ A LOGICAL SECTOR ------------------------------------------
-   92                   
-   93                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
-   94                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
-   95                   ;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
-   96                   
-   97 0044' 3A 0076'    RDSTRD:	LD	A, (INP_B)	; get input B data
-   98 0047' 4F          	LD	C, A
-   99 0048' CD 007F'    	CALL	BSLDSK		; select disc
-  100                   
-  101 004B' 2A 0077'    	LD	HL, (INP_DE)	; get input DE data
-  102 004E' 44          	LD	B, H
-  103 004F' 4D          	LD	C, L
-  104 0050' CD 0087'    	CALL	BSTRCK		; select track
-  105                   
-  106 0053' 2A 0079'    	LD	HL, (INP_HL)	; get input HL data
-  107 0056' 44          	LD	B, H
-  108 0057' 4D          	LD	C, L
-  109 0058' CD 008F'    	CALL	BSSECT		; select sector
-  110                   
-  111 005B' 2A 007B'    	LD	HL, (BUFADD)
-  112 005E' 44          	LD	B, H
-  113 005F' 4D          	LD	C, L
-  114 0060' CD 0097'    	CALL	BSDMA		; set DMA buffer address
-  115                   
-  116 0063' CD 009F'    	CALL	BREAD		; read disc
+   59 001E' EB          	EX	DE, HL		; HL = handler address
+   60 001F' E9          	JP	(HL)		; indirect jump to selected routine
+   61                   
+   62 0020' 002D'       MNJTAB:	DW	RDINIT		; 0: initialize module and/or open image file
+   63 0022' 0044'       	DW	RDSTRD		; 1: read a logical sector from image and write to buffer
+   64                   
+   65 0024' D1          MNBADF:	POP	DE		; restore input DE for caller
+   66 0025' C1          	POP	BC		; restore input BC for caller
+   67 0026' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
+   68 0028' 21 0000     	LD	HL, 0000h	; HL = 0
+   69 002B' 37          	SCF			; CF = 1 (return with error)
+   70 002C' C9          	RET
+   71                   
+   72                   ; ---- INITIALIZE MODULE ----------------------------------------------
+   73                   
+   74                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+   75                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+   76                   ;|rdsclib|00h|       |     |        |bufaddr|RDINIT  |0      |bufaddr |
+   77                   
+   78 002D' 2A 00A1'    RDINIT:	LD	HL, (INP_HL)	; get input HL data	
+   79 0030' 22 00A3'    	LD	(BUFADD), HL	; store buffer starting address
+   80                   
+   81 0033' 2A 0001     	LD	HL, (0001h)	; HL = BIOS Warm Boot (WBOOT) pointer
+   82 0036' 11 FFFD     	LD	DE, -3		; DE = -3 (0000-0002h: JP nnnn)
+   83 0039' 19          	ADD	HL, DE		; HL = HL - 3
+   84 003A' 22 00A5'    	LD	(BFJTAB), HL	; (BFJTAB) = HL, BIOS jump table base address
+   85                   
+   86 003D' AF          INITDN: XOR	A		; A = 0, CF = 0
+   87 003E' 2A 00A3'    	LD	HL, (BUFADD)	; HL = buffer address
+   88 0041' D1          	POP	DE		; restore input DE for caller
+   89 0042' C1          	POP	BC		; restore input BC for caller
+   90 0043' C9          	RET
+   91                   
+   92                   ; ---- READ A SECTOR --------------------------------------------------
+   93                   
+   94                   ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
+   95                   ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
+   96                   ;|rdsclib|01h|discid |     |track   |sector |RDSTRD  |errcode|bufaddr |
+   97                   
+   98 0044' 3A 009E'    RDSTRD:	LD	A, (INP_B)	; get input B data
+   99 0047' 4F          	LD	C, A
+  100 0048' CD 0076'    	CALL	BSLDSK		; select disc
+  101                   
+  102 004B' 2A 009F'    	LD	HL, (INP_DE)	; get input DE data
+  103 004E' 44          	LD	B, H
+  104 004F' 4D          	LD	C, L
+  105 0050' CD 007E'    	CALL	BSTRCK		; select track
+  106                   
+  107 0053' 2A 00A1'    	LD	HL, (INP_HL)	; get input HL data
+  108 0056' 44          	LD	B, H
+  109 0057' 4D          	LD	C, L
+  110 0058' CD 0086'    	CALL	BSSECT		; select sector
+  111                   
+  112 005B' 2A 00A3'    	LD	HL, (BUFADD)
+  113 005E' 44          	LD	B, H
+  114 005F' 4D          	LD	C, L
+  115 0060' CD 008E'    	CALL	BSDMA		; set DMA buffer address
+  116                   
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
 RDSCLIB Z80
 
-  117                   
-  118 0066' B7          	OR	A, A
-  119 0067' C2 006D'    	JP	NZ, STRDER	; if result > 0 then goto STRDER
-  120 006A' AF          	XOR	A		; A = 0, CF = 0
-  121 006B' 18 03       	JR	STRDDN		; goto STRDDN
-  122                   
-  123 006D' 3E 07       STRDER:	LD	A, 07h		; A = 7
-  124 006F' 37          	SCF			; CF = 1
-  125                   	
-  126 0070' 2A 007B'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
-  127 0073' D1          	POP	DE		; restore input DE for caller
-  128 0074' C1          	POP	BC		; restore input BC for caller
-  129 0075' C9          	RET
-  130                   
-  131                   ; -------- DATA AREA --------
-  132 0076' 00          INP_B:	DB	0		; input data in B
-  133 0077' 0000        INP_DE:	DW	0		; input data in DE
-  134 0079' 0000        INP_HL:	DW	0		; input data in HL
-  135 007B' 0000        BUFADD:	DW	0		; buffer start address
-  136 007D' 0000        BFJTAB:	DW	0		; BIOS functions jump table base address
-  137 007F' 2A 007D'    BSLDSK:	LD	HL, (BFJTAB)
-  138 0082' 11 001B     	LD	DE, 27
-  139 0085' 19          	ADD	HL, DE
-  140 0086' E9          	JP	(HL)		; jump to the BIOS SELDSK routine
-  141 0087' 2A 007D'    BSTRCK:	LD	HL, (BFJTAB)
-  142 008A' 11 001E     	LD	DE, 30
-  143 008D' 19          	ADD	HL, DE
-  144 008E' E9          	JP	(HL)		; jump to the BIOS SETTRK routine
-  145 008F' 2A 007D'    BSSECT:	LD	HL, (BFJTAB)
-  146 0092' 11 0021     	LD	DE, 33
-  147 0095' 19          	ADD	HL, DE
-  148 0096' E9          	JP	(HL)		; jump to the BIOS SETSEC routine
-  149 0097' 2A 007D'    BSDMA:	LD	HL, (BFJTAB)
-  150 009A' 11 0024     	LD	DE, 36
-  151 009D' 19          	ADD	HL, DE
-  152 009E' E9          	JP	(HL)		; jump to the BIOS SETDMA routine
-  153 009F' 2A 007D'    BREAD:	LD	HL, (BFJTAB)
-  154 00A2' 11 0027     	LD	DE, 39
-  155 00A5' 19          	ADD	HL, DE
-  156 00A6' E9          	JP	(HL)		; jump to the BIOS READ routine
-  157                   	END
+  117 0063' CD 0096'    	CALL	BREAD		; read disc
+  118                   
+  119 0066' B7          	OR	A, A
+  120 0067' C2 006D'    	JP	NZ, STRDER	; if result > 0 then goto STRDER
+  121 006A' AF          	XOR	A		; A = 0, CF = 0
+  122 006B' 18 03       	JR	STRDDN		; goto STRDDN
+  123                   
+  124 006D' 3E 07       STRDER:	LD	A, 07h		; A = 7
+  125 006F' 37          	SCF			; CF = 1
+  126                   	
+  127 0070' 2A 00A3'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+  128 0073' D1          	POP	DE		; restore input DE for caller
+  129 0074' C1          	POP	BC		; restore input BC for caller
+  130 0075' C9          	RET
+  131                   
+  132                   ; ---- BIOS FUNCTION JUMP TABLE ---------------------------------
+  133 0076' 2A 00A5'    BSLDSK:	LD	HL, (BFJTAB)
+  134 0079' 11 001B     	LD	DE, 27
+  135 007C' 19          	ADD	HL, DE
+  136 007D' E9          	JP	(HL)		; jump to the BIOS SELDSK routine
+  137 007E' 2A 00A5'    BSTRCK:	LD	HL, (BFJTAB)
+  138 0081' 11 001E     	LD	DE, 30
+  139 0084' 19          	ADD	HL, DE
+  140 0085' E9          	JP	(HL)		; jump to the BIOS SETTRK routine
+  141 0086' 2A 00A5'    BSSECT:	LD	HL, (BFJTAB)
+  142 0089' 11 0021     	LD	DE, 33
+  143 008C' 19          	ADD	HL, DE
+  144 008D' E9          	JP	(HL)		; jump to the BIOS SETSEC routine
+  145 008E' 2A 00A5'    BSDMA:	LD	HL, (BFJTAB)
+  146 0091' 11 0024     	LD	DE, 36
+  147 0094' 19          	ADD	HL, DE
+  148 0095' E9          	JP	(HL)		; jump to the BIOS SETDMA routine
+  149 0096' 2A 00A5'    BREAD:	LD	HL, (BFJTAB)
+  150 0099' 11 0027     	LD	DE, 39
+  151 009C' 19          	ADD	HL, DE
+  152 009D' E9          	JP	(HL)		; jump to the BIOS READ routine
+  153                   
+  154                   ; **** DATA AREA ****
+  155 009E' 00          INP_B:	DB	0		; input data in B
+  156 009F' 0000        INP_DE:	DW	0		; input data in DE
+  157 00A1' 0000        INP_HL:	DW	0		; input data in HL
+  158 00A3' 0000        BUFADD:	DW	0		; buffer start address
+  159 00A5' 0000        BFJTAB:	DW	0		; BIOS functions jump table base address
+  160                   	END
  0 Error(s) Detected. 167 Program Bytes.
  20 Symbols Detected.
-SLDSK:	LD	HL, (BFJTAB)
-  138 0082' 11 001B     	LD	DE, 27
-  139 0085' 19          	ADD	HL, DE
-  140
+:	LD	HL, (BFJTAB)
+  142 0089' 11 0021     	LD	DE, 33
+  143 008C' 19         

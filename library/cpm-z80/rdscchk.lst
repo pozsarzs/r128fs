@@ -17,72 +17,66 @@ RDSCCHK Z80
    14         0100      	ORG	100h
    15                   	EXTRN	RDSC
    16                   
-   17                   ; -------- CONSTANTS --------
+   17                   ; **** CONSTANTS ****
    18         0005      BDOS	EQU	05h		; BDOS entry point
-   19         0000      BRESET	EQU	00h		; BDOS system reset function
-   20         0002      BCONOUT	EQU	02h		; BDOS console output function
-   21         0009      BPRINT	EQU	09h		; BDOS print string function
+   19         0000      BRESET	EQU	00h		; - system reset function
+   20         0002      BCONOUT	EQU	02h		; - console output function
+   21         0009      BPRINT	EQU	09h		; - print string function
    22         0000      RDINIT	EQU	00h		; Rdsclib initialize function
    23         0001      RDSTRD	EQU	01h		; Rdsclib sector read function
    24                   
-   25                   ; -------- CODE AREA --------
-   26 0100              START:
-   27                   ; initialization
-   28 0100  3E 00       	LD	A, RDINIT
-   29 0102  21 0163     	LD	HL, BUFFER
-   30 0105  CD 0000#    	CALL	RDSC
-   31 0108  38 28       	JR	C, INITER
-   32                   
-   33                   ; read record
-   34 010A  3A 0144     	LD	A, (DISCID)
-   35 010D  47          	LD	B, A
-   36 010E  3E 01       	LD	A, RDSTRD
-   37 0110  ED 5B 0145  	LD	DE, (TRACK)
-   38 0114  2A 0147     	LD	HL, (SECTOR)
-   39 0117  CD 0000#    	CALL	RDSC
-   40 011A  38 1B       	JR	C, READER
-   41                   
-   42                   ; dump buffer to console
-   43 011C  21 0163     	LD	HL, BUFFER
-   44 011F  06 80       	LD	B, 128
-   45 0121  5E          PRLOOP:	LD	E, (HL)
-   46 0122  0E 02       	LD	C, BCONOUT
-   47 0124  C5          	PUSH	BC
-   48 0125  D5          	PUSH	DE
-   49 0126  E5          	PUSH	HL
-   50 0127  CD 0005     	CALL	BDOS
-   51 012A  E1          	POP	HL
-   52 012B  D1          	POP	DE
-   53 012C  C1          	POP	BC
-   54 012D  23          	INC	HL
-   55 012E  10 F1       	DJNZ	PRLOOP
-   56 0130  18 0D       	JR	EXIT
-   57                   
-   58                   ; handling error
+   25                   ; **** CODE AREA --------
+   26 0100  3E 00       START:	LD	A, RDINIT	; A = initialization
+   27 0102  21 0163     	LD	HL, BUFFER	; HL = buffer address
+   28 0105  CD 0000#    	CALL	RDSC		; call RDSC
+   29 0108  38 28       	JR	C, INITER	; detect init error
+   30                   
+   31 010A  3A 0144     	LD	A, (DISCID)	; A = disc ID
+   32 010D  47          	LD	B, A
+   33 010E  3E 01       	LD	A, RDSTRD	; A = read sector
+   34 0110  ED 5B 0145  	LD	DE, (TRACK)	; DE = track number
+   35 0114  2A 0147     	LD	HL, (SECTOR)	; HL = sector number
+   36 0117  CD 0000#    	CALL	RDSC		; call RDSC
+   37 011A  38 1B       	JR	C, READER	; detect read error
+   38                   
+   39 011C  21 0163     	LD	HL, BUFFER	; HL = buffer address
+   40 011F  06 80       	LD	B, 128		; counter
+   41 0121  5E          PRLOOP:	LD	E, (HL)		; print buffer to console with loop
+   42 0122  0E 02       	LD	C, BCONOUT	; print to console
+   43 0124  C5          	PUSH	BC
+   44 0125  D5          	PUSH	DE
+   45 0126  E5          	PUSH	HL
+   46 0127  CD 0005     	CALL	BDOS		; call BDOS
+   47 012A  E1          	POP	HL
+   48 012B  D1          	POP	DE
+   49 012C  C1          	POP	BC
+   50 012D  23          	INC	HL
+   51 012E  10 F1       	DJNZ	PRLOOP
+   52 0130  18 0D       	JR	EXIT		; goto EXIT
+   53                   
+   54 0132  11 0149     INITER:	LD	DE, MSGINI	; DE = init error message
+   55 0135  18 03       	JR	PRNER
+   56                   
+   57 0137  11 0156     READER:	LD	DE, MSGRED	; DE = read error message
+   58                   
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RDSCCHK Z80
 
-   59 0132  11 0149     INITER:	LD	DE, MSGINI	; init error
-   60 0135  18 03       	JR	PRNER
-   61                   
-   62 0137  11 0156     READER:	LD	DE, MSGRED	; read error
-   63                   
-   64 013A  0E 09       PRNER:	LD	C, BPRINT	; print error message
-   65 013C  CD 0005     	CALL	BDOS
-   66                   	
-   67 013F  0E 00       EXIT:	LD	C, BRESET	; exit to BDOS
-   68 0141  CD 0005     	CALL	BDOS
-   69                   
-   70                   ; -------- DATA AREA --------
-   71 0144  00          DISCID:	DB	0
-   72 0145  0001        TRACK:	DW	1
-   73 0147  0001        SECTOR:	DW	1
-   74 0149  49 6E 69 74 MSGINI:	DB	'Init error!$', 0
-   75 0156  52 65 61 64 MSGRED:	DB	'Read error!$', 0
-   76 0163  00 00 00 00 BUFFER:	DS	128, 0
-   77                   	END
+   59 013A  0E 09       PRNER:	LD	C, BPRINT	; DE = print error
+   60 013C  CD 0005     	CALL	BDOS		; call BDOS
+   61                   	
+   62 013F  0E 00       EXIT:	LD	C, BRESET	; C = exit to BDOS
+   63 0141  CD 0005     	CALL	BDOS		; call BDOS
+   64                   
+   65                   ; **** DATA AREA ****
+   66 0144  00          DISCID:	DB	0
+   67 0145  0001        TRACK:	DW	1
+   68 0147  0001        SECTOR:	DW	1
+   69 0149  49 6E 69 74 MSGINI:	DB	'Init error!$', 0
+   70 0156  52 65 61 64 MSGRED:	DB	'Read error!$', 0
+   71 0163  00 00 00 00 BUFFER:	DS	128, 0
+   72                   	END
  0 Error(s) Detected.
  227 Absolute Bytes. 19 Symbols Detected.
-            
-   58                   ; handling error
-Z80ASM SuperFas
+         
+   54 0132  11 0149     INITER:	LD	DE, MSGINI	; DE = init error mess

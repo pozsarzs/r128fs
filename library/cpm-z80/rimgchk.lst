@@ -17,73 +17,70 @@ RIMGCHK Z80
    14         0100      	ORG	100h
    15                   	EXTRN	RIMG
    16                   
-   17                   ; -------- CONSTANTS --------
-   18         0005      BDOS	EQU	05h			; BDOS entry point
-   19         0000      BRESET	EQU	00h			; BDOS system reset function
-   20         0002      BCONOUT	EQU	02h			; BDOS console output function
-			BPRINT	EQU	09h			; BDOS print string function
-   21         0000      RIINIT	EQU	00h			; Rimglib initialize function
-   22         0001      RISTRD	EQU	01h			; Rimglib sector read function
-   23         0002      RIDONE	EQU	02h			; Rimglib done function
-   24                   
-   25                   ; -------- CODE AREA --------
-   26 0100              START:
-   27                   ; initialization and open
-   28 0100  3E 00       	LD	A, RIINIT
-   29 0102  06 00       	LD	B, 0
-   30 0104  11 0156     	LD	DE, FCB
-   31 0107  21 017B     	LD	HL, BUFFER
-   32 010A  CD 0000#    	CALL	RIMG
-   33 010D  38 2B       	JR	C, ERROR
-   34                   
-   35                   ; read record
-   36 010F  3E 01       	LD	A, RISTRD
-   37 0111  ED 5B 0148  	LD	DE, (RECNUM)
-   38 0115  CD 0000#    	CALL	RIMG
-   39 0118  38 20       	JR	C, ERROR
-   40                   
-   41                   ; dump buffer to console
-   42 011A  21 017B     	LD	HL, BUFFER
-   43 011D  06 80       	LD	B, 128
-   44 011F  5E          PRLOOP:	LD	E, (HL)
-   45 0120  0E 02       	LD	C, BCONOUT
-   46 0122  C5          	PUSH	BC
-   47 0123  D5          	PUSH	DE
-   48 0124  E5          	PUSH	HL
-   49 0125  CD 0005     	CALL	BDOS
-   50 0128  E1          	POP	HL
-   51 0129  D1          	POP	DE
-   52 012A  C1          	POP	BC
-   53 012B  23          	INC	HL
-   54 012C  10 F1       	DJNZ	PRLOOP
-   55                   
-   56                   ; close and cleanup
-   57 012E  3E 02       DONE:	LD	A, RIDONE
-   58 0130  06 00       	LD	B, 0
+   17                   ; **** CONSTANTS ****
+   18         0005      BDOS	EQU	05h		; BDOS entry point
+   19         0000      BRESET	EQU	00h		; - system reset function
+   20         0002      BCONOUT	EQU	02h		; - console output function
+   21         0009      BPRINT	EQU	09h		; - print string function
+   22         0000      RIINIT	EQU	00h		; Rimglib initialize function
+   23         0001      RISTRD	EQU	01h		; Rimglib sector read function
+   24         0002      RIDONE	EQU	02h		; Rimglib done function
+   25                   
+   26                   ; **** CODE AREA ****
+   27 0100  3E 00       START:	LD	A, RIINIT	; A = initialization and open
+   28 0102  06 00       	LD	B, 0		; B = mode
+   29 0104  11 0163     	LD	DE, FCB		; DE = FCB address
+   30 0107  21 0188     	LD	HL, BUFFER	; HL = buffer address
+   31 010A  CD 0000#    	CALL	RIMG		; call RIMG
+   32 010D  38 28       	JR	C, INITER	; detect init error
+   33                   
+   34 010F  3E 01       	LD	A, RISTRD	; A = read a sector
+   35 0111  ED 5B 0149  	LD	DE, (RECNUM)	; DE = sector number
+   36 0115  CD 0000#    	CALL	RIMG		; call RIMG
+   37 0118  38 22       	JR	C, READER	; detect read error
+   38                   
+   39 011A  21 0188     	LD	HL, BUFFER	; print buffer to console with loop
+   40 011D  06 80       	LD	B, 128		; counter
+   41 011F  5E          PRLOOP:	LD	E, (HL)		; E = buffer address
+   42 0120  0E 02       	LD	C, BCONOUT	; C = print to console
+   43 0122  C5          	PUSH	BC
+   44 0123  D5          	PUSH	DE
+   45 0124  E5          	PUSH	HL
+   46 0125  CD 0005     	CALL	BDOS		; call BDOS
+   47 0128  E1          	POP	HL
+   48 0129  D1          	POP	DE
+   49 012A  C1          	POP	BC
+   50 012B  23          	INC	HL
+   51 012C  10 F1       	DJNZ	PRLOOP
+   52                   
+   53 012E  3E 02       DONE:	LD	A, RIDONE	; A = close and cleanup
+   54 0130  06 00       	LD	B, 0		; B = mode
+   55 0132  CD 0000#    	CALL	RIMG		; call RIMG
+   56 0135  18 0D       	JR	EXIT		; goto EXIT
+   57                   
+   58 0137  11 014B     INITER:	LD	DE, MSGINI	; DE = init error message
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RIMGCHK Z80
 
-   59 0132  CD 0000#    	CALL	RIMG
-   60 0135  0E 00       	LD	C, BRESET		; exit to BDOS
-   61 0137  CD 0005     	CALL	BDOS
+   59 013A  18 03       	JR	PRNER
+   60                   
+   61 013C  11 0157     READER:	LD	DE, MSGRED	; DE = read error message
    62                   
-   63                   ; handling error
-   64 013A  21 014A     ERROR:	LD	HL, ERRMSG
-   65 013D  0E 09       	LD	C, BPRINT
-   66 013F  EB          	EX	DE, HL
-   67 0140  CD 0005     	CALL	BDOS
-   68 0143  0E 00       	LD	C, BRESET		; exit to BDOS
-   69 0145  CD 0005     	CALL	BDOS
-   70                   
-   71                   ; -------- DATA AREA --------
-   72 0148  0001        RECNUM:	DW	0001h			; logical 128-byte record number
-   73 014A  52 65 61 64 ERRMSG:	DB	'Read error!$'
-   74 0156  00          FCB:	DB	0			; drive
-   75 0157  52 31 32 38 	DB	'R128EXRMIMG'		; 8.3 filename
-   76 0162  00 00 00 00 	DS	25, 0
-   77 017B  00 00 00 00 BUFFER:	DS	128, 0
-   78                   	END
+   63 013F  0E 09       PRNER:	LD	C, BPRINT	; C = print error message
+   64 0141  CD 0005     	CALL	BDOS		; call BDOS
+   65                   
+   66 0144  0E 00       EXIT:	LD	C, BRESET	; C = exit to BDOS
+   67 0146  CD 0005     	CALL	BDOS		; call BDOS
+   68                   
+   69                   ; **** DATA AREA ****
+   70 0149  0001        RECNUM:	DW	0001h		; logical 128-byte record number
+   71 014B  49 6E 69 74 MSGINI:	DB	'Init error!$'
+   72 0157  52 65 61 64 MSGRED:	DB	'Read error!$'
+   73 0163  00          FCB:	DB	0		; drive
+   74 0164  52 31 32 38 	DB	'R128EXRMIMG'	; 8.3 filename
+   75 016F  00 00 00 00 	DS	25, 0
+   76 0188  00 00 00 00 BUFFER:	DS	128, 0
+   77                   	END
  0 Error(s) Detected.
- 251 Absolute Bytes. 15 Symbols Detected.
- 0
-Z80ASM S
+ 264 Absolute Bytes. 20 Symbols Detected.
+st Relocating Macr

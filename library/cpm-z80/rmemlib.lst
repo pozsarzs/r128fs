@@ -5,7 +5,7 @@ RMEMLIB Z80
     2                   ; | R128 ROM filesystem                                                        |
     3                   ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
     4                   ; | rmemlib.z80                                                                |
-    5                   ; | Reading a logical sector from memory, Z80, CP/M-80, v0.1                   |
+    5                   ; | Handler routines for in-memory filesystem, Z80, CP/M-80, v0.1              |
     6                   ; +----------------------------------------------------------------------------+
     7                   ; This is a free software: you can redistribute it and/or modify it under the
     8                   ; terms of the MIT License.
@@ -16,127 +16,127 @@ RMEMLIB Z80
    13                   
    14                   PUBLIC	RMEM
    15                   
-   16                   ; -------- CONSTANTS --------
+   16                   ; **** CONSTANTS ****
    17         0002      RNUM	EQU	02h		; number of routines
    18         0080      SECT	EQU	0080h		; logical sector size
    19                   
-   20                   ; -------- CODE AREA --------
+   20                   ; **** CODE AREA ****
    21                   
-   22                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-   23                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-   24                   ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
-   25                   ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
-   26                   ;
-   27                   ; Error codes:
-   28                   ;   00h. no error		CF = 0
-   29                   ;   01h: bad function		CF = 1
-   30                   ;   02h: shift overflow		CF = 1
-   31                   ;   03h: address overflow	CF = 1
-   32                   ;
-   33                   ; Preserves: BC, DE
-   34                   ; Clobbers:  AF, HL
-   35                   
-   36                   ; ---- ENTRY POINT AND JUMP TABLE ----
-   37 0000' C5          RMEM:	PUSH	BC		; save input BC for caller
-   38 0001' D5          	PUSH	DE		; save input DE for caller
-   39                   
-   40 0002' 22 006D'    	LD	(INP_HL), HL	; save input HL for selected routine 
-   41 0005' ED 53 006B' 	LD	(INP_DE), DE	; save input DE for selected routine
-   42                   
-   43 0009' FE 02       	CP	RNUM		; compare A (function code) with max valid index
-   44 000B' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
-   45                   
-   46 000D' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
-   47 000E' 6F          	LD	L, A
-   48 000F' 26 00       	LD	H, 0		; HL = zero-extended offset
-   49 0011' 11 001A'    	LD	DE, MNJTAB	; DE = address of jump table entry
-   50 0014' 19          	ADD	HL, DE		; HL = address of table + offset
-   51                   
-   52 0015' 5E          	LD	E, (HL)		; load low byte of handler address
-   53 0016' 23          	INC	HL
-   54 0017' 56          	LD	D, (HL)		; load high byte
-   55 0018' EB          	EX	DE, HL		; HL = handler address
-   56 0019' E9          	JP	(HL)		; indirect jump to selected routine
-   57                   
-   58 001A' 0027'       MNJTAB:	DW	RMINIT		; 0: initialize module
+   22                   ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
+   23                   
+   24                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   25                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   26                   ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+   27                   ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
+   28                   ;
+   29                   ; Error codes:
+   30                   ;   00h. no error		CF = 0
+   31                   ;   01h: bad function		CF = 1
+   32                   ;   02h: shift overflow		CF = 1
+   33                   ;   03h: address overflow	CF = 1
+   34                   ;
+   35                   ; Preserves: BC, DE
+   36                   ; Clobbers:  AF, HL
+   37                   
+   38 0000' C5          RMEM:	PUSH	BC		; save input BC for caller
+   39 0001' D5          	PUSH	DE		; save input DE for caller
+   40                   
+   41 0002' 22 006D'    	LD	(INP_HL), HL	; save input HL for selected routine 
+   42 0005' ED 53 006B' 	LD	(INP_DE), DE	; save input DE for selected routine
+   43                   
+   44 0009' FE 02       	CP	RNUM		; compare A (function code) with max valid index
+   45 000B' 30 11       	JR	NC, MNBADF	; if A >= RNUM: invalid function, jump to MNBADF
+   46                   
+   47 000D' 87          	ADD	A, A		; A = A * 2 (word index into jump table)
+   48 000E' 6F          	LD	L, A
+   49 000F' 26 00       	LD	H, 0		; HL = zero-extended offset
+   50 0011' 11 001A'    	LD	DE, MNJTAB	; DE = address of jump table entry
+   51 0014' 19          	ADD	HL, DE		; HL = address of table + offset
+   52                   
+   53 0015' 5E          	LD	E, (HL)		; load low byte of handler address
+   54 0016' 23          	INC	HL
+   55 0017' 56          	LD	D, (HL)		; load high byte
+   56 0018' EB          	EX	DE, HL		; HL = handler address
+   57 0019' E9          	JP	(HL)		; indirect jump to selected routine
+   58                   
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   2
 RMEMLIB Z80
 
-   59 001C' 003C'       	DW	RMSTRD		; 1: read a logical sector and write to buffer
-   60                   
-   61 001E' D1          MNBADF:	POP	DE		; restore input DE for caller
-   62 001F' C1          	POP	BC		; restore input BC for caller
-   63 0020' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
-   64 0022' 21 0000     	LD	HL, 0000h	; HL = 0
-   65 0025' 37          	SCF			; CF = 1 (return with error)
-   66 0026' C9          	RET
-   67                   
-   68                   ; ---- INITIALIZE MODULE -----------------------------------------------
-   69                   
-   70                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-   71                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-   72                   ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
-   73                   
-   74 0027' 2A 006D'    RMINIT:	LD	HL, (INP_HL)	; get input HL data	
-   75 002A' 22 006F'    	LD	(BUFADD), HL	; store buffer starting address
-   76 002D' ED 5B 006B' 	LD	DE, (INP_DE)	; get input DE data	
-   77 0031' ED 53 0071' 	LD	(ROMADD), DE	; store ROM starting address
-   78                   
-   79 0035' AF          INITDN: XOR	A		; A = 0, CF = 0
-   80 0036' 2A 006F'    	LD	HL, (BUFADD)	; HL = buffer address
-   81 0039' D1          	POP	DE		; restore input DE for caller
-   82 003A' C1          	POP	BC		; restore input BC for caller
-   83 003B' C9          	RET
-   84                   
-   85                   ; ---- READ A LOGICAL SECTOR -------------------------------------------
-   86                   
-   87                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
-   88                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
-   89                   ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
-   90                   
-   91 003C' ED 5B 006B' RMSTRD: LD	DE, (INP_DE)	; get input DE data	
-   92 0040' 2A 0071'    	LD	HL, (ROMADD)	; load ROM start address
-   93 0043' 06 07       	LD	B, 7		; counter value
-   94                   
-   95 0045' CB 23       STRDSH:	SLA	E		; shift low byte MSB -> CF
-   96 0047' CB 12       	RL	D		; shift high byte and CF -> LSB
-   97 0049' 38 12       	JR	C, STRDE1	; if CF = 1 then goto STRDE1
-   98 004B' 05          	DEC	B		; decrement counter
-   99 004C' 20 F7       	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
-  100 004E' 19          	ADD	HL, DE		; sector address in HL (= HL + DE)
-  101 004F' 38 11       	JR	C, STRDE2	; if CF = 1 then goto STRDE2
-  102                   
-  103 0051' 01 0080     	LD	BC, SECT	; counter
-  104 0054' ED 5B 006F' 	LD	DE, (BUFADD)	; buffer start address
-  105 0058' ED B0       	LDIR			; 128 x (HL -> DE)
-  106                   
-  107 005A' AF          	XOR	A		; A = 0, CF = 0
-  108 005B' 18 08       	JR	STRDDN		; goto STRDDN
-  109                   
-  110 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
-  111 005F' 37          	SCF			; CF = 1
-  112 0060' 18 03       	JR	STRDDN		; goto STRDDN
-  113                   
-  114 0062' 3E 03       STRDE2:	LD	A, 03h		; A = 3
-  115 0064' 37          	SCF			; CF = 1
-  116                   	
+   59 001A' 0027'       MNJTAB:	DW	RMINIT		; 0: initialize module
+   60 001C' 003C'       	DW	RMSTRD		; 1: read a logical sector and write to buffer
+   61                   
+   62 001E' D1          MNBADF:	POP	DE		; restore input DE for caller
+   63 001F' C1          	POP	BC		; restore input BC for caller
+   64 0020' 3E 01       	LD	A, 01h		; A = 1 (error: bad function)
+   65 0022' 21 0000     	LD	HL, 0000h	; HL = 0
+   66 0025' 37          	SCF			; CF = 1 (return with error)
+   67 0026' C9          	RET
+   68                   
+   69                   ; ---- INITIALIZE MODULE -----------------------------------------------
+   70                   
+   71                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   72                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   73                   ;|rmemlib|00h|       |      |romaddr |bufaddr|RMINIT  |0      |bufaddr |
+   74                   
+   75 0027' 2A 006D'    RMINIT:	LD	HL, (INP_HL)	; get input HL data	
+   76 002A' 22 006F'    	LD	(BUFADD), HL	; store buffer starting address
+   77 002D' ED 5B 006B' 	LD	DE, (INP_DE)	; get input DE data	
+   78 0031' ED 53 0071' 	LD	(ROMADD), DE	; store ROM starting address
+   79                   
+   80 0035' AF          INITDN: XOR	A		; A = 0, CF = 0
+   81 0036' 2A 006F'    	LD	HL, (BUFADD)	; HL = buffer address
+   82 0039' D1          	POP	DE		; restore input DE for caller
+   83 003A' C1          	POP	BC		; restore input BC for caller
+   84 003B' C9          	RET
+   85                   
+   86                   ; ---- READ A LOGICAL SECTOR -------------------------------------------
+   87                   
+   88                   ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+   89                   ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+   90                   ;|rmemlib|01h|       |      |sectnum |       |RMSTRD  |errcode|bufaddr |
+   91                   
+   92 003C' ED 5B 006B' RMSTRD: LD	DE, (INP_DE)	; get input DE data	
+   93 0040' 2A 0071'    	LD	HL, (ROMADD)	; load ROM start address
+   94 0043' 06 07       	LD	B, 7		; counter value
+   95                   
+   96 0045' CB 23       STRDSH:	SLA	E		; shift low byte MSB -> CF
+   97 0047' CB 12       	RL	D		; shift high byte and CF -> LSB
+   98 0049' 38 12       	JR	C, STRDE1	; if CF = 1 then goto STRDE1
+   99 004B' 05          	DEC	B		; decrement counter
+  100 004C' 20 F7       	JR	NZ, STRDSH	; if b > 0 then goto STRDSH
+  101 004E' 19          	ADD	HL, DE		; sector address in HL (= HL + DE)
+  102 004F' 38 11       	JR	C, STRDE2	; if CF = 1 then goto STRDE2
+  103                   
+  104 0051' 01 0080     	LD	BC, SECT	; counter
+  105 0054' ED 5B 006F' 	LD	DE, (BUFADD)	; buffer start address
+  106 0058' ED B0       	LDIR			; 128 x (HL -> DE)
+  107                   
+  108 005A' AF          	XOR	A		; A = 0, CF = 0
+  109 005B' 18 08       	JR	STRDDN		; goto STRDDN
+  110                   
+  111 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
+  112 005F' 37          	SCF			; CF = 1
+  113 0060' 18 03       	JR	STRDDN		; goto STRDDN
+  114                   
+  115 0062' 3E 03       STRDE2:	LD	A, 03h		; A = 3
+  116 0064' 37          	SCF			; CF = 1
 Z80ASM SuperFast Relocating Macro Assembler     	    Z80ASM 1.32 Page   3
 RMEMLIB Z80
 
-  117 0065' 2A 006F'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
-  118 0068' D1          	POP	DE		; restore input DE for caller
-  119 0069' C1          	POP	BC		; restore input BC for caller
-  120 006A' C9          	RET
-  121                   
-  122                   ; -------- DATA AREA --------
-  123 006B' 0000        INP_DE:	DW	0		; input data in DE
-  124 006D' 0000        INP_HL:	DW	0		; input data in HL
-  125 006F' 0000        BUFADD:	DW	0		; buffer start address
-  126 0071' 0000        ROMADD:	DW	0		; ROM start address
-  127                   	END
+  117                   	
+  118 0065' 2A 006F'    STRDDN:	LD	HL, (BUFADD)	; HL = buffer address
+  119 0068' D1          	POP	DE		; restore input DE for caller
+  120 0069' C1          	POP	BC		; restore input BC for caller
+  121 006A' C9          	RET
+  122                   
+  123                   ; **** DATA AREA ****
+  124 006B' 0000        INP_DE:	DW	0		; input data in DE
+  125 006D' 0000        INP_HL:	DW	0		; input data in HL
+  126 006F' 0000        BUFADD:	DW	0		; buffer start address
+  127 0071' 0000        ROMADD:	DW	0		; ROM start address
+  128                   	END
  0 Error(s) Detected. 115 Program Bytes.
  16 Symbols Detected.
-              
-  110 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
-  111 005F' 37          	SCF			; CF = 1
-  112 0060' 18 03 
+   
+  111 005D' 3E 02       STRDE1:	LD	A, 02h		; A = 2
+  112 005F' 37          	SCF			;

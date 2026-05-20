@@ -36,11 +36,11 @@ RNUM	EQU	02h		; number of routines
 REMX:	PUSH	BC		; save input BC for caller
 	PUSH	DE		; save input DE for caller
 
-	LD	(INP_HL), HL	; save input HL for selected routine 
-	LD	(INP_DE), DE	; save input DE for selected routine
+;	LD	(INP_HL), HL	; save input HL for selected routine 
+;	LD	(INP_DE), DE	; save input DE for selected routine
 	LD	C, A
 	LD	A, B
-	LD	(INP_B), A	; save input B for selected routine
+;	LD	(INP_B), A	; save input B for selected routine
 	LD	A, C
 
 	CP	RNUM		; compare A (function code) with max valid index
@@ -87,3 +87,4 @@ RESTRD:	RET
 ; **** DATA AREA ****
 ADDR:	DB	0		; I/O address
 	END
+
