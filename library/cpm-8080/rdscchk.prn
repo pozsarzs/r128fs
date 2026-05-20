@@ -14,67 +14,63 @@
  0100           	ORG	100h
                 	EXTRN	RDSC
                 
-                ; -------- CONSTANTS --------
+                ; **** CONSTANTS ****
  0005 =         BDOS	EQU	05h		; BDOS entry point
- 0000 =         BRESET	EQU	00h		; BDOS system reset function
- 0002 =         BCONOUT	EQU	02h		; BDOS console output function
- 0009 =         BPRINT	EQU	09h		; BDOS print string function
+ 0000 =         BRESET	EQU	00h		; - system reset function
+ 0002 =         BCONOUT	EQU	02h		; - console output function
+ 0009 =         BPRINT	EQU	09h		; - print string function
  0000 =         RDINIT	EQU	00h		; Rdsclib initialize function
  0001 =         RDSTRD	EQU	01h		; Rdsclib sector read function
                 
-                ; -------- CODE AREA --------
-                START:
-                ; initialization and open
- 0100 3E00      	MVI	A, RDINIT
- 0102 216901    	LXI	H, BUFFER
- 0105 CD0000    	CALL	RDSC
- 0108 DA3701    	JC	INITER
+                ; **** CODE AREA ****
+ 0100 3E00      START:	MVI	A, RDINIT	; A = initialization
+ 0102 216901    	LXI	H, BUFFER	; HL = buffer address
+ 0105 CD0000    	CALL	RDSC		; call RDSC
+ 0108 DA3701    	JC	INITER		; detect init error
                 
-                ; read sector
- 010B 3A4A01    	LDA	DISCID
+ 010B 3A4A01    	LDA	DISCID		; A = disc ID
  010E 47        	MOV	B, A
- 010F 3E01      	MVI	A, RDSTRD
- 0111 2A4B01    	LHLD	TRACK
- 0114 EB        	XCHG
- 0115 2A4D01    	LHLD	SECTOR
- 0118 CD0000    	CALL	RDSC
- 011B DA3D01    	JC	READER
+ 010F 3E01      	MVI	A, RDSTRD	; A = read sector
+ 0111 2A4B01    	LHLD	TRACK		; HL = track number
+ 0114 EB        	XCHG			; DE <-> HL
+ 0115 2A4D01    	LHLD	SECTOR		; HL = sector number
+ 0118 CD0000    	CALL	RDSC		; call RDSC
+ 011B DA3D01    	JC	READER		; detect read error
                 
                 ; dump buffer to console
- 011E 216901    	LXI	H, BUFFER
- 0121 0680      	MVI	B, 128
- 0123 5E        PRLOOP:	MOV	E, M
- 0124 0E02      	MVI	C, BCONOUT
+ 011E 216901    	LXI	H, BUFFER	; HL = buffer address
+ 0121 0680      	MVI	B, 128		; counter
+ 0123 5E        PRLOOP:	MOV	E, M		; print buffer to console with loop
+ 0124 0E02      	MVI	C, BCONOUT	; print to console
  0126 C5        	PUSH	B
  0127 D5        	PUSH	D
  0128 E5        	PUSH	H
- 0129 CD0500    	CALL	BDOS
+ 0129 CD0500    	CALL	BDOS		; call BDOS
  012C E1        	POP	H
  012D D1        	POP	D
  012E C1        	POP	B
  012F 23        	INX	H
  0130 05        	DCR	B
- 0131 C22301    	JNZ	PRLOOP
- 0134 C34501    	JMP	EXIT
+ 0131 C22301    	JNZ	PRLOOP
+ 0134 C34501    	JMP	EXIT		; goto EXIT
                 
-                ; handling error
- 0137 114F01    INITER:	LXI	D, MSGINI	; init error
+ 0137 114F01    INITER:	LXI	D, MSGINI	; DE = init error message
  013A C34001    	JMP	PRNER
                 
- 013D 115C01    READER:	LXI	D, MSGRED	; read error
+ 013D 115C01    READER:	LXI	D, MSGRED	; DE = read error message
                 
- 0140 0E09      PRNER:	MVI	C, BPRINT	; print error message
- 0142 CD0500    	CALL	BDOS
+ 0140 0E09      PRNER:	MVI	C, BPRINT	; C = print error message
+ 0142 CD0500    	CALL	BDOS		; call BDOS
                 	
- 0145 0E00      EXIT:	MVI	C, BRESET	; exit to BDOS
- 0147 CD0500    	CALL	BDOS
+ 0145 0E00      EXIT:	MVI	C, BRESET	; C = exit to BDOS
+ 0147 CD0500    	CALL	BDOS		; call BDOS
                 
-                ; -------- DATA AREA --------
- 014A 00        DISCID 	DB	0
- 014B 0100      TRACK 	DW	1
- 014D 0100      SECTOR 	DW	1
- 014F 496E697420MSGINI 	DB	'Init error!$', 0
- 015C 5265616420MSGRED 	DB	'Read error!$', 0
-S0169           BUFFER 	DS	128, 0
+                ; **** DATA AREA ****
+ 014A 00        DISCID:	DB	0
+ 014B 0100      TRACK: 	DW	1
+ 014D 0100      SECTOR:	DW	1
+ 014F 496E697420MSGINI:	DB	'Init error!$', 0
+ 015C 5265616420MSGRED:	DB	'Read error!$', 0
+ 0169           BUFFER:	DS	128
  01E9           	END	START
-
+

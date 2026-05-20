@@ -2,7 +2,7 @@
                 ; | R128 ROM filesystem                                                        |
                 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
                 ; | rmemlib.asm                                                                |
-                ; | Reading a logical sector from memory, 8080, CP/M-80, v0.1                  |
+                ; | Handler routines for in-memory filesystem, 8080, CP/M-80, v0.1             |
                 ; +----------------------------------------------------------------------------+
                 ; This is a free software: you can redistribute it and/or modify it under the
                 ; terms of the MIT License.
@@ -13,11 +13,13 @@
                 
                 PUBLIC	RMEM
                 
-                ; -------- CONSTANTS --------
+                ; **** CONSTANTS ****
  0002 =         RNUM	EQU	02h		; number of routines
  0080 =         SECT	EQU	0080h		; logical sector size
                 
-                ; -------- CODE AREA --------
+                ; **** CODE AREA ****
+                
+                ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
                 
                 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
                 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -33,7 +35,6 @@
                 ; Preserves: BC, DE
                 ; Clobbers:  AF, HL
                 
-                ; ---- ENTRY POINT AND JUMP TABLE ----
  0000 C5        RMEM:	PUSH	B		; save input BC for caller
  0001 D5        	PUSH	D		; save input DE for caller
                 
@@ -53,8 +54,8 @@
                 
  0017 5E        	MOV	E, M		; load low byte of handler address
  0018 23        	INX	H
- 0019 56        	MOV	D, M		; load high byte
- 001A EB        	XCHG			; HL = handler address
+ 0019 56        	MOV	D, M		; load high byte
+ 001A EB        	XCHG			; HL = handler address
  001B E9        	PCHL			; indirect jump to selected routine
                 
  001C 2900      MNJTAB:	DW	RMINIT		; 0: initialize module
@@ -109,8 +110,8 @@
                 
  0052 19        	DAD	D		; sector address in HL (= HL + DE)
  0053 DA7300    	JC	STRDE2		; if CF = 1 then goto STRDE2
-                
- 0056 018000    	LXI	B, SECT		; set counter
+                
+ 0056 018000    	LXI	B, SECT		; set counter
  0059 E5        	PUSH	H		; store sector address
  005A 2A8000        	LHLD	BUFADD		; HL =  buffer address
  005D EB        	XCHG			; DE <-> HL
@@ -139,10 +140,10 @@
  007A C1        	POP	B		; restore input BC for caller
  007B C9        	RET
                 
-                ; -------- DATA AREA --------
+                ; **** DATA AREA ****
  007C 0000      INPRDE:	DW	0		; input data in DE
  007E 0000      INPRHL:	DW	0		; input data in HL
  0080 0000      BUFADD:	DW	0		; buffer start address
  0082 0000      ROMADD:	DW	0		; ROM start address
-                ;	END RMEM
-
+ 0084           	END
+

@@ -1,0 +1,87 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | remxlib.z80                                                                |
+                ; | Handler routines for on-chip filesystem via PEMX device, 8080, CP/M, v0.1  |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+                PUBLIC REMX
+                
+                ; **** CONSTANTS ****
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 0002 =         RNUM	EQU	02h		; number of routines
+                
+                ; **** CODE AREA ****
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+                ;|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
+                ;
+                ; Error codes:
+                ;   00h. no error		CF = 0
+                ;   01h: bad function		CF = 1
+                ;
+                ; Preserves: BC, DE
+                ; Clobbers:  AF, HL
+                
+                ; ---- ENTRY POINT AND JUMP TABLE ----
+ 0000 C5        REMX:	PUSH	B		; save input BC for caller
+ 0001 D5        	PUSH	D		; save input DE for caller
+                
+                ;	SHLD	INPRHL		; save input HL for selected routine 
+ 0002 62        	MOV	H, D
+ 0003 6B        	MOV	L, E
+                ;	SHLD	INPRDE		; save input DE for selected routine
+                
+ 0004 FE02      	CPI	RNUM		; compare A (function code) with max valid index
+ 0006 D21A00    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+                
+ 0009 87        	ADD	A		; A = A * 2 (word index into jump table)
+ 000A 6F        	MOV	L, A
+ 000B 2600      	MVI	H, 0		; HL = zero-extended offset
+ 000D 111600    	LXI	D, MNJTAB	; DE = address of jump table entry
+ 0010 19        	DAD	D		; HL = address of table + offset
+                
+ 0011 5E        	MOV	E, M		; load low byte of handler address
+ 0012 23        	INX	H
+ 0013 56        	MOV	D, M		; load high byte
+ 0014 EB        	XCHG			; HL = handler address
+ 0015 E9        	PCHL			; indirect jump to selected routine
+                
+ 0016 2300      MNJTAB:	DW	REINIT		; 0: initialize module
+ 0018 2400      	DW	RESTRD		; 1: read a logical sector and write to buffer
+                
+ 001A D1        MNBADF:	POP	D		; restore input DE for caller
+ 001B C1        	POP	B		; restore input BC for caller
+ 001C 3E01      	MVI	A, 01h		; A = 1 (error: bad function)
+ 001E 210000    	LXI	H, 0000h	; HL = 0
+ 0021 37        	STC			; CF = 1 (return with error)
+ 0022 C9        	RET
+                
+                ; ---- INITIALIZE MODULE -----------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|remxlib|00h|       |      |pioaddr |bufaddr|REINIT  |0      |bufaddr |
+                
+ 0023 C9        REINIT:	RET
+                
+                ; ---- READ A LOGICAL SECTOR -------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|remxlib|01h|banknum|      |sectnum |       |RESTRD  |errcode|bufaddr |
+                
+ 0024 C9        RESTRD:	RET
+                
+                ; **** DATA AREA ****
+ 0025 00        ADDR:	DB	0		; I/O address
+ 0026           	END
+

@@ -1,0 +1,36 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | remxchk.asm                                                                |
+                ; | Reading a logical sector from PEIX device, 8080, CP/M, v0.1                |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+ 0100           	ORG	100h
+                	EXTRN	REMX
+                
+                ; **** CONSTANTS ****
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 0000 =         REINIT	EQU	00h		; Remxlib initialize function
+ 0001 =         RESTRD	EQU	01h		; Remxlib sector read function
+                
+                ; **** CODE AREA *****
+                START:
+                ; initialization and open
+                
+                ; read record
+                
+                ; dump buffer to console
+                
+                ; handling error
+                
+ 0100 C9        	RET
+                ; **** DATA AREA ****
+ 0101           BUFFER:	DS	128
+ 0181           	END
+

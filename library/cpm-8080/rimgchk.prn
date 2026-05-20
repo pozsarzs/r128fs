@@ -14,69 +14,70 @@
  0100           	ORG	100h
                 	EXTRN	RIMG
                 
-                ; -------- CONSTANTS --------
- 0005 =         BDOS	EQU	0005h		; BDOS entry point
- 0000 =         BRESET	EQU	00h		; BDOS system reset function
- 0002 =         BCONOUT	EQU	02h		; BDOS console output function
- 0009 =         BPRINT	EQU	09h		; BDOS print string function
+                ; **** CONSTANTS ****
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 0000 =         BRESET	EQU	00h		; - system reset function
+ 0002 =         BCNOUT	EQU	02h		; - console output function
+ 0009 =         BPRINT	EQU	09h		; - print string function
  0000 =         RIINIT	EQU	00h		; Rimglib initialize function
  0001 =         RISTRD	EQU	01h		; Rimglib sector read function
  0002 =         RIDONE	EQU	02h		; Rimglib done function
                 
-                ; -------- CODE AREA --------
-                START:
-                ; initialization and open
- 0100 3E00      	MVI	A, RIINIT
- 0102 0600      	MVI	B, 0
- 0104 115A01    	LXI	D, FCB
- 0107 217F01    	LXI	H, BUFFER
- 010A CD0000    	CALL	RIMG
- 010D DA3E01    	JC	ERROR
+                ; **** CODE AREA ****
+ 0100 3E00      START:	MVI	A, RIINIT	; A = initialization and open
+ 0102 0600      	MVI	B, 0		; B = mode
+ 0104 116A01    	LXI	D, FCB		; DE = address of FCB
+ 0107 218F01    	LXI	H, BUFFER	; HL = address of BUFFER
+ 010A CD0000    	CALL	RIMG		; call RIMG
+ 010D DA3C01    	JC	INITER		; detect init error
                 
-                ; read record
- 0110 3E01      	MVI	A, RISTRD
- 0112 2A4C01    	LHLD	RECNUM
- 0115 EB        	XCHG
- 0116 CD0000    	CALL	RIMG
- 0119 DA3E01    	JC	ERROR
+ 0110 3E01      	MVI	A, RISTRD	; A = read a record
+ 0112 2A5001    	LHLD	RECNUM		; HL = record number
+ 0115 EB        	XCHG			; DE <-> HL
+ 0116 CD0000    	CALL	RIMG		; call RIMG
+ 0119 DA4201    	JC	READER		; detect read error
                 
-                ; dump buffer to console
- 011C 217F01    	LXI	H, BUFFER
- 011F 0680      	MVI	B, 128
- 0121 5E        PRLOOP:	MOV	E, M
- 0122 0E02      	MVI	C, BCONOUT
+ 011C 218F01    	LXI	H, BUFFER	; HL = buffer address
+ 011F 0680      	MVI	B, 128		; B = counter
+ 0121 5E        PRLOOP:	MOV	E, M		; print buffer to console with loop
+ 0122 0E02      	MVI	C, BCNOUT	; print to console
  0124 C5        	PUSH	B
  0125 D5        	PUSH	D
  0126 E5        	PUSH	H
- 0127 CD0500    	CALL	BDOS
+ 0127 CD0500    	CALL	BDOS		; call BDOS
  012A E1        	POP	H
  012B D1        	POP	D
  012C C1        	POP	B
  012D 23        	INX	H
  012E 05        	DCR	B
  012F C22101    	JNZ	PRLOOP
-                
-                ; close and cleanup
- 0132 3E02      DONE:	MVI	A, RIDONE
- 0134 0600      	MVI	B, 0
- 0136 CD0000    	CALL	RIMG
- 0139 0E00      	MVI	C, BRESET	; exit to BDOS
- 013B CD0500    	CALL	BDOS
                 
-                ; handling error
- 013E 214E01    ERROR:	LXI	H, ERRMSG
- 0141 0E09      	MVI	C, BPRINT
- 0143 EB        	XCHG
- 0144 CD0500    	CALL	BDOS
- 0147 0E00      	MVI	C, BRESET	; exit to BDOS
- 0149 CD0500    	CALL	BDOS
+ 0132 3E02      DONE:	MVI	A, RIDONE	; A = close and cleanup
+ 0134 0600      	MVI	B, 0		; B = mode
+ 0136 CD0000    	CALL	RIMG		; call RIMG
+ 0139 C34B01    	JMP	EXIT		; goto exit
                 
-                ; -------- DATA AREA --------
- 014C 0100      RECNUM:	DW	0001h		; logical 128-byte record number
- 014E 5265616420ERRMSG:	DB	'Read error!$'
- 015A 00        FCB:	DB	0		; drive
- 015B 5231323845	DB	'R128EXRMIMG'	; 8.3 filename
-S0166           	DS	25, 0
-S017F           BUFFER:	DS	128, 0
- 01FF           	END	START
-
+ 013C 215201    INITER:	LXI	H, MSGINI	; DE = init error message
+ 013F C34501    	JMP	PRNER
+                
+ 0142 215E01    READER:	LXI	H, MSGRED	; DE = read error message
+                
+ 0145 0E09      PRNER:	MVI	C, BPRINT	; C = print error message
+ 0147 EB        	XCHG
+ 0148 CD0500    	CALL	BDOS		; call BDOS
+                
+ 014B 0E00      EXIT:	MVI	C, BRESET	; C = exit to BDOS
+ 014D CD0500    	CALL	BDOS		; call BDOS
+                
+                ; **** DATA AREA ****
+ 0150 0100      RECNUM:	DW	0001h		; logical 128-byte record number
+ 0152 496E697420MSGINI:	DB	'Init error!$'
+ 015E 5265616420MSGRED:	DB	'Read error!$'
+ 016A 00        FCB:	DB	0		; drive
+ 016B 5231323845	DB	'R128EXRMIMG'	; 8.3 filename
+ 0176 0000000000	DB	0,0,0,0,0,0,0,0,0,0
+ 0180 0000000000	DB	0,0,0,0,0,0,0,0,0,0
+ 018A 0000000000	DB	0,0,0,0,0
+S018F           BUFFER:	DS	128, 0
+ 020F           	END	START
+

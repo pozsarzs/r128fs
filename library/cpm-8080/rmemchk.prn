@@ -14,49 +14,45 @@
  0100           	ORG	100h
                 	EXTRN	RMEM
                 
-                ; -------- CONSTANTS --------
+                ; **** CONSTANTS ****
  0005 =         BDOS	EQU	0005h		; BDOS entry point
- 0000 =         BRESET	EQU	00h		; BDOS system reset function
- 0009 =         BPRINT	EQU	09h		; BDOS print string function
+ 0000 =         BRESET	EQU	00h		; - system reset function
+ 0009 =         BPRINT	EQU	09h		; - print string function
  0000 =         RMINIT	EQU	00h		; Rmemlib initialize function
  0001 =         RMSTRD	EQU	01h		; Rmemlib sector read function
                 
-                ; -------- CODE AREA --------
-                ; initialize
- 0100 3E00      START:	MVI	A, RMINIT
- 0102 113701    	LXI	D, ROMIMG
- 0105 216101    	LXI	H, BUFFER
- 0108 CD0000    	CALL	RMEM
- 010B DA2401    	JC	INITER
+                ; **** CODE AREA ****
+ 0100 3E00      START:	MVI	A, RMINIT	; A = initialize
+ 0102 113701    	LXI	D, ROMIMG	; DE = address of ROMIMG
+ 0105 216401    	LXI	H, BUFFER	; HL = address of buffer
+ 0108 CD0000    	CALL	RMEM		; call RMEM
+ 010B DA2401    	JC	INITER		; detect init error
                 
-                ; read sector 0
- 010E 3E01      	MVI	A, RMSTRD
- 0110 110000    	LXI	D, 0000h
- 0113 CD0000    	CALL	RMEM
- 0116 DA2A01    	JC	READER
+ 010E 3E01      	MVI	A, RMSTRD	; A = read a sector
+ 0110 110000    	LXI	D, 0000h	; DE = sector number
+ 0113 CD0000    	CALL	RMEM		; call RMEM
+ 0116 DA2A01    	JC	READER		; detect read error
                 
-                ; print buffer
- 0119 116101    	LXI	D, BUFFER
- 011C 0E09      	MVI	C, BPRINT
- 011E CD0500    	CALL	BDOS
- 0121 C33201    	JMP	EXIT
+ 0119 116401    	LXI	D, BUFFER	; DE = buffer address
+ 011C 0E09      	MVI	C, BPRINT	; C = print buffer
+ 011E CD0500    	CALL	BDOS		; call BDOS
+ 0121 C33201    	JMP	EXIT		; goto exit
                 
-                ; handling error
- 0124 114901    INITER:	LXI	D, MSGINI	; init error
+ 0124 114A01    INITER:	LXI	D, MSGINI	; DE = init error
  0127 C32D01    	JMP	PRNER
                 
- 012A 115501    READER:	LXI	D, MSGRED	; read error
+ 012A 115701    READER:	LXI	D, MSGRED	; DE = read error
                 
- 012D 0E09      PRNER:	MVI	C, BPRINT	; print error message
+ 012D 0E09      PRNER:	MVI	C, BPRINT	; D = print error message
  012F CD0500    	CALL	BDOS
                 
- 0132 0E00      EXIT:	MVI	C, BRESET	; exit to BDOS
- 0134 CD0500    	CALL	BDOS
+ 0132 0E00      EXIT:	MVI	C, BRESET	; C = exit to BDOS
+ 0134 CD0500    	CALL	BDOS		; call BDOS
                 
-                ; -------- DATA AREA --------
- 0137 524D454D4CROMIMG:	DB	'RMEMLIB TEST OK',13,10,'$'
- 0149 494E495420MSGINI:	DB	'INIT ERROR$', 0
- 0155 5245414420MSGRED:	DB	'READ ERROR$', 0
- 0161           BUFFER:	DS	128
- 01E1           	END	START
-
+                ; **** DATA AREA ****
+ 0137 526D656D6CROMIMG:	DB	'Rmemlib test ok.',13,10,'$'
+ 014A 496E697420MSGINI:	DB	'Init error!$', 0
+ 0157 5265616420MSGRED:	DB	'Read error!$', 0
+ 0164           BUFFER:	DS	128
+ 01E4           	END	START
+

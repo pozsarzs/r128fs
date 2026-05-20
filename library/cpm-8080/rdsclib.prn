@@ -2,7 +2,7 @@
                 ; | R128 ROM filesystem                                                        |
                 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
                 ; | rdsclib.asm                                                                |
-                ; | Reading a logical sector from disc, 8080, CP/M, v0.1                       |
+                ; | Handler routines for on-disc filesystem, 8080, CP/M, v0.1                  |
                 ; +----------------------------------------------------------------------------+
                 ; This is a free software: you can redistribute it and/or modify it under the
                 ; terms of the MIT License.
@@ -13,11 +13,13 @@
                 
                 PUBLIC RDSC
                 
-                ; -------- CONSTANTS --------
+                ; **** CONSTANTS --------
  0005 =         BDOS	EQU	05h		; BDOS entry point
  0002 =         RNUM	EQU	02h		; number of routines
                 
-                ; -------- CODE AREA --------
+                ; **** CODE AREA ****
+                
+                ; ---- ENTRY POINT AND JUMP TABLE ----
                 
                 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
                 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
@@ -32,7 +34,6 @@
                 ; Preserves: BC, DE
                 ; Clobbers:  AF, HL
                 
-                ; ---- ENTRY POINT AND JUMP TABLE ----
  0000 C5        RDSC:	PUSH	B		; save input BC for caller
  0001 D5        	PUSH	D		; save input DE for caller
                 
@@ -53,8 +54,8 @@
  0017 2600      	MVI	H, 0		; HL = zero-extended offset
  0019 112200    	LXI	D, MNJTAB	; DE = address of jump table entry
  001C 19        	DAD	D		; HL = address of table + offset
-                
- 001D 5E        	MOV	E, M		; load low byte of handler address
+                
+ 001D 5E        	MOV	E, M		; load low byte of handler address
  001E 23        	INX	H
  001F 56        	MOV	D, M		; load high byte
  0020 EB        	XCHG			; HL = handler address
@@ -90,7 +91,7 @@
  0044 C1        	POP	B		; restore input BC for caller
  0045 C9        	RET
                 
-                ; ---- READ A LOGICAL SECTOR -------------------------------------------
+                ; ---- READ A SECTOR --------------------------------------------------
                 
                 ;|name   |A  |B      |C    |DE      |HL     |function|ret. A |ret. HL |
                 ;|-------|:-:|:-----:|:---:|:------:|:-----:|--------|:-----:|:-------|
@@ -109,8 +110,8 @@
  0058 44        	MOV	B, H
  0059 4D        	MOV	C, L
  005A CD8900    	CALL	BSSECT		; select sector
-                
- 005D 2AA600    	LHLD	BUFADD
+                
+ 005D 2AA600    	LHLD	BUFADD
  0060 44        	MOV	B, H
  0061 4D        	MOV	C, L
  0062 CD9100    	CALL	BSDMA		; set DMA buffer address
@@ -152,11 +153,11 @@
  009F 19        	DAD	D
  00A0 E9        	PCHL			; jump to the BIOS READ routine
                 
-                ; -------- DATA AREA --------
- 00A1 00        INPRB	DB	0		; input data in B
- 00A2 0000      INPRDE	DW	0		; input data in DE
- 00A4 0000      INPRHL	DW	0		; input data in HL
- 00A6 0000      BUFADD	DW	0		; buffer start address
- 00A8 0000      BFJTAB	DW	0		; BIOS functions jump table base address
+                ; **** DATA AREA ****
+ 00A1 00        INPRB:	DB	0		; input data in B
+ 00A2 0000      INPRDE:	DW	0		; input data in DE
+ 00A4 0000      INPRHL:	DW	0		; input data in HL
+ 00A6 0000      BUFADD:	DW	0		; buffer start address
+ 00A8 0000      BFJTAB:	DW	0		; BIOS functions jump table base address
  00AA           	END
-
+

@@ -2,7 +2,7 @@
                 ; | R128 ROM filesystem                                                        |
                 ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
                 ; | rimglib.asm                                                                |
-                ; | Reading a logical sector from disc image, 8080, CP/M-80, v0.1              |
+                ; | Handler routines for in-image filesystem, 8080, CP/M-80, v0.1              |
                 ; +----------------------------------------------------------------------------+
                 ; This is a free software: you can redistribute it and/or modify it under the
                 ; terms of the MIT License.
@@ -13,15 +13,17 @@
                 
                 PUBLIC RIMG
                 
-                ; -------- CONSTANTS --------
- 0005 =         BDOS	EQU	05h			; BDOS entry point
- 001A =         BSETDMA	EQU	1Ah			; BDOS set DMA address function
- 000F =         BOPEN	EQU	0Fh			; BDOS open file function
- 0010 =         BCLOSE	EQU	10h			; BDOS close file function
- 0021 =         BRDRND	EQU	21h			; BDOS read random function
- 0003 =         RNUM	EQU	03h			; Number of routines
+                ; **** CONSTANTS ****
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 001A =         BSTDMA	EQU	1Ah		; - set DMA address function
+ 000F =         BOPEN	EQU	0Fh		; - open file function
+ 0010 =         BCLOSE	EQU	10h		; - close file function
+ 0021 =         BRDRND	EQU	21h		; - read random function
+ 0003 =         RNUM	EQU	03h		; number of routines
                 
-                ; -------- CODE AREA --------
+                ; **** CODE AREA ****
+                
+                ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
                 
                 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
                 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
@@ -39,39 +41,43 @@
                 ; Preserves: BC, DE
                 ; Clobbers:  AF, HL
                 
-                ; ---- ENTRY POINT AND JUMP TABLE ----
  0000 C5        RIMG:	PUSH	B		; save input BC for caller
  0001 D5        	PUSH	D		; save input DE for caller
                 
- 0002 22BB00    	SHLD	INPRHL		; save input HL for selected routine 
+ 0002 22C300    	SHLD	INPRHL		; save input HL for selected routine 
  0005 62        	MOV	H, D
  0006 6B        	MOV	L, E
- 0007 22B900    	SHLD	INPRDE		; save input DE for selected routine
+ 0007 22C100    	SHLD	INPRDE		; save input DE for selected routine
+ 000A 4F        	MOV     C, A		; C = function code
+ 000B 78                MOV     A, B		; A = mode
+ 000C 32C000            STA     INPRB		; save input B for selected routine
+ 000F 79                MOV     A, C		; A = function code
+                	
+ 0010 FE03      	CPI	RNUM		; compare A (function code) with max valid index
+ 0012 D22800    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
                 
- 000A FE03      	CPI	RNUM		; compare A (function code) with max valid index
- 000C D22000    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+ 0015 87        	ADD	A		; A = A * 2 (word index into jump table)
+ 0016 6F        	MOV	L, A
+ 0017 2600      	MVI	H, 0		; HL = zero-extended offset
+ 0019 112200    	LXI	D, MNJTAB	; DE = address of jump table entry
+ 001C 19        	DAD	D		; HL = address of table + offset
                 
- 000F 87        	ADD	A		; A = A * 2 (word index into jump table)
- 0010 6F        	MOV	L, A
- 0011 2600      	MVI	H, 0		; HL = zero-extended offset
- 0013 111C00    	LXI	D, MNJTAB	; DE = address of jump table entry
- 0016 19        	DAD	D		; HL = address of table + offset
+ 001D 5E        	MOV	E, M		; load low byte of handler address
+ 001E 23        	INX	H
+ 001F 56        	MOV	D, M		; load high byte
+ 0020 EB        	XCHG			; HL = handler address
+ 0021 E9        	PCHL			; indirect jump to selected routine
                 
- 0017 5E        	MOV	E, M		; load low byte of handler address
- 0018 23        	INX	H
- 0019 56        	MOV	D, M		; load high byte
- 001A EB        	XCHG			; HL = handler address
- 001B E9        	PCHL			; indirect jump to selected routine
+ 0022 3100      MNJTAB:	DW	RIINIT		; 0: initialize module
+ 0024 6800      	DW	RISTRD		; 1: read a logical sector and write to buffer
+ 0026 9700      	DW	RIDONE		; 2: clean up and/or close image file
                 
- 001C 2900      MNJTAB:	DW	RIINIT		; 0: initialize module
- 001E 6000      	DW	RISTRD		; 1: read a logical sector and write to buffer
-                
- 0020 D1        MNBADF:	POP	D		; restore input DE for caller
- 0021 C1        	POP	B		; restore input BC for caller
- 0022 3E01      	MVI	A, 01h		; A = 1 (error: bad function)
- 0024 210000    	LXI	H, 0000h	; HL = 0
- 0027 37        	STC			; CF = 1 (return with error)
- 0028 C9        	RET
+ 0028 D1        MNBADF:	POP	D		; restore input DE for caller
+ 0029 C1        	POP	B		; restore input BC for caller
+ 002A 3E01      	MVI	A, 01h		; A = 1 (error: bad function)
+ 002C 210000    	LXI	H, 0000h	; HL = 0
+ 002F 37        	STC			; CF = 1 (return with error)
+ 0030 C9        	RET
                 
                 ; ---- INITIALIZE MODULE -----------------------------------------------
                 
@@ -79,79 +85,79 @@
                 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
                 ;|rimglib|00h|onlyfop|      |fcbaddr |bufaddr|RIINIT  |errcode|bufaddr |
                 
- 0029 3AB800    RIINIT: LDA	INPRB		; get input B data	
- 002C B7        	ORA	A
- 002D C24600    	JNZ	INITOP		; if A = 1 then goto INITOP
+ 0031 3AC000    RIINIT: LDA	INPRB		; get input B data	
+ 0034 B7        	ORA	A
+ 0035 C24E00    	JNZ	INITOP		; if A = 1 then goto INITOP
                 
- 0030 2AB900    	LHLD	INPRDE		; get input DE data	
- 0033 22BF00    	SHLD	FCBADD		; store FCB starting address
- 0036 EB        	XCHG
- 0037 2ABB00    	LHLD	INPRHL		; get input HL data	
- 003A 22BD00    	SHLD	BUFADD		; store buffer starting address
+ 0038 2AC100    	LHLD	INPRDE		; get input DE data	
+ 003B 22C700    	SHLD	FCBADD		; store FCB starting address
+ 003E EB        	XCHG
+ 003F 2AC300    	LHLD	INPRHL		; get input HL data	
+ 0042 22C500    	SHLD	BUFADD		; store buffer starting address
                 
- 003D 0E1A      	MVI	C, BSETDMA	; set DMA address
- 003F 2ABD00    	LHLD	BUFADD		; HL = DMA address
- 0042 EB        	XCHG			; DE = DMA address
- 0043 CD0500    	CALL	BDOS		; call BDOS
+ 0045 0E1A      	MVI	C, BSTDMA	; set DMA address
+ 0047 2AC500    	LHLD	BUFADD		; HL = DMA address
+ 004A EB        	XCHG			; DE = DMA address
+ 004B CD0500    	CALL	BDOS		; call BDOS
                 
- 0046 0E0F      INITOP:	MVI	C, BOPEN	; open file
- 0048 2ABF00    	LHLD	FCBADD		; HL = FCB address
- 004B EB        	XCHG			; DE = FCB address
- 004C CD0500    	CALL	BDOS		; call BDOS
- 004F 3C        	INR	A		; check result (at error: FFh -> 00h)
- 0050 CA5A00    	JZ	INITER		; at error go INITER
- 0053 AF        	XRA	A		; A = 0, CF = 0
+ 004E 0E0F      INITOP:	MVI	C, BOPEN	; open file
+ 0050 2AC700    	LHLD	FCBADD		; HL = FCB address
+ 0053 EB        	XCHG			; DE = FCB address
+ 0054 CD0500    	CALL	BDOS		; call BDOS
+ 0057 3C        	INR	A		; check result (at error: FFh -> 00h)
+ 0058 CA6200    	JZ	INITER		; at error go INITER
+ 005B AF        	XRA	A		; A = 0, CF = 0
                 
- 0054 2ABD00    INITDN: LHLD	BUFADD		; HL = buffer address
- 0057 D1        	POP	D		; restore input DE for caller
- 0058 C1        	POP	B		; restore input BC for caller
- 0059 C9        	RET
+ 005C 2AC500    INITDN: LHLD	BUFADD		; HL = buffer address
+ 005F D1        	POP	D		; restore input DE for caller
+ 0060 C1        	POP	B		; restore input BC for caller
+ 0061 C9        	RET
                 
- 005A 3E04      INITER:	MVI	A, 04h		; A = 4, error code
- 005C 37        	STC			; CF = 1
- 005D C35400    	JMP	INITDN		; go INITDN
-                
+ 0062 3E04      INITER:	MVI	A, 04h		; A = 4, error code
+ 0064 37        	STC			; CF = 1
+ 0065 C35C00    	JMP	INITDN		; go INITDN
+                
                 ; ---- READ A LOGICAL SECTOR -------------------------------------------
                 
                 ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
                 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
                 ;|rimglib|01h|       |      |sectnum |       |RISTRD  |errcode|bufaddr |
                 
- 0060 2ABF00    RISTRD:	LHLD	FCBADD		; HL = FCB address
- 0063 EB        	XCHG			; DE = FCB address
- 0064 2AB900    	LHLD	INPRDE		; HL = sector number
- 0067 44        	MOV	B, H		; BC = sector number
- 0068 4D        	MOV	C, L
+ 0068 2AC700    RISTRD:	LHLD	FCBADD		; HL = FCB address
+ 006B EB        	XCHG			; DE = FCB address
+ 006C 2AC100    	LHLD	INPRDE		; HL = sector number
+ 006F 44        	MOV	B, H		; BC = sector number
+ 0070 4D        	MOV	C, L
                 
- 0069 212100    	LXI	H, 33		; HL = offset
- 006C 19        	DAD	D		; HL = FCB address + 33
- 006D 79        	MOV	A, C		; A = low byte of sector number
- 006E 77        	MOV	M, A		; store in FCB
- 006F 23        	INX	H		; HL = FCB address + 34
- 0070 78        	MOV	A, B		; A = high byte of sector number
- 0071 77        	MOV	M, A		; store in FCB
- 0072 23        	INX	H		; HL = FCB address + 35
- 0073 AF        	XRA	A		; A = 0
- 0074 77        	MOV	M, A		; store in FCB
+ 0071 212100    	LXI	H, 33		; HL = offset
+ 0074 19        	DAD	D		; HL = FCB address + 33
+ 0075 79        	MOV	A, C		; A = low byte of sector number
+ 0076 77        	MOV	M, A		; store in FCB
+ 0077 23        	INX	H		; HL = FCB address + 34
+ 0078 78        	MOV	A, B		; A = high byte of sector number
+ 0079 77        	MOV	M, A		; store in FCB
+ 007A 23        	INX	H		; HL = FCB address + 35
+ 007B AF        	XRA	A		; A = 0
+ 007C 77        	MOV	M, A		; store in FCB
                 
- 0075 0E21      	MVI	C, BRDRND	; read random
- 0077 2ABF00    	LHLD	FCBADD		; HL = FCB address
- 007A EB        	XCHG			; DE = FCB address
- 007B CD0500    	CALL	BDOS		; call BDOS
+ 007D 0E21      	MVI	C, BRDRND	; read random
+ 007F 2AC700    	LHLD	FCBADD		; HL = FCB address
+ 0082 EB        	XCHG			; DE = FCB address
+ 0083 CD0500    	CALL	BDOS		; call BDOS
                 
- 007E B7        	ORA	A		; set flags
- 007F C28900    	JNZ	STRDER	; file read error
+ 0086 B7        	ORA	A		; set flags
+ 0087 C29100    	JNZ	STRDER		; file read error
                 
- 0082 AF        	XRA	A		; A = 0, CF = 0
+ 008A AF        	XRA	A		; A = 0, CF = 0
                 
- 0083 2ABD00    STRDDN:	LHLD	BUFADD		; HL = buffer address
- 0086 D1        	POP	D		; restore input DE for caller
- 0087 C1        	POP	B		; restore input BC for caller
- 0088 C9        	RET
+ 008B 2AC500    STRDDN:	LHLD	BUFADD		; HL = buffer address
+ 008E D1        	POP	D		; restore input DE for caller
+ 008F C1        	POP	B		; restore input BC for caller
+ 0090 C9        	RET
                 
- 0089 3E05      STRDER:	MVI	A, 05h		; A = 5, error code
- 008B 37        	STC			; CF = 1
- 008C C38300    	JMP	STRDDN
+ 0091 3E05      STRDER:	MVI	A, 05h		; A = 5, error code
+ 0093 37        	STC			; CF = 1
+ 0094 C38B00    	JMP	STRDDN
                 
                 ; ---- CLEANUP MODULE --------------------------------------------------
                 
@@ -159,36 +165,36 @@
                 ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
                 ;|rimglib|02h|onlyfcl|      |        |       |RIDONE  |       |        |
                 
- 008F 3AB800    RIDONE: LDA	INPRB		; get input B data	
- 0092 B7        	ORA	A
- 0093 C29E00    	JNZ	DONECL		; if A = 1 then goto DONECL
+ 0097 3AC000    RIDONE: LDA	INPRB		; get input B data	
+ 009A B7        	ORA	A
+ 009B C2A600    	JNZ	DONECL		; if A = 1 then goto DONECL
                 
- 0096 0E1A      	MVI	C, BSETDMA	; set DMA address
- 0098 118000    	LXI	D, 0080h	; DE = default DMA address
- 009B CD0500    	CALL	BDOS		; call BDOS
-                
- 009E 0E10      DONECL:	MVI	C, BCLOSE	; close file
- 00A0 2ABF00    	LHLD	FCBADD		; HL = FCB address
- 00A3 EB        	XCHG			; DE = FCB address
- 00A4 CD0500    	CALL	BDOS		; call BDOS
- 00A7 3C        	INR	A		; check result (at error: FFh -> 00h)
- 00A8 CAB200    	JZ	DONEER		; at error go DONEER
- 00AB AF        	XRA	A		; A = 0, CF = 0
+ 009E 0E1A      	MVI	C, BSTDMA	; set DMA address
+ 00A0 118000    	LXI	D, 0080h	; DE = default DMA address
+ 00A3 CD0500    	CALL	BDOS		; call BDOS
                 
- 00AC 2ABD00    DONEDN: LHLD	BUFADD		; HL = buffer address
- 00AF D1        	POP	D		; restore input DE for caller
- 00B0 C1        	POP	B		; restore input BC for caller
- 00B1 C9        	RET
+ 00A6 0E10      DONECL:	MVI	C, BCLOSE	; close file
+ 00A8 2AC700    	LHLD	FCBADD		; HL = FCB address
+ 00AB EB        	XCHG			; DE = FCB address
+ 00AC CD0500    	CALL	BDOS		; call BDOS
+ 00AF 3C        	INR	A		; check result (at error: FFh -> 00h)
+ 00B0 CABA00    	JZ	DONEER		; at error go DONEER
+ 00B3 AF        	XRA	A		; A = 0, CF = 0
                 
- 00B2 3E06      DONEER:	MVI	A, 06h		; A = 6, error code
- 00B4 37        	STC			; CF = 1
- 00B5 C3AC00    	JMP	DONEDN		; go DONEDN
+ 00B4 210000    DONEDN: LXI	H, 0		; HL = 0
+ 00B7 D1        	POP	D		; restore input DE for caller
+ 00B8 C1        	POP	B		; restore input BC for caller
+ 00B9 C9        	RET
                 
-                ; -------- DATA AREA --------
- 00B8 00        INPRB:	DB	0		; input data in B
- 00B9 0000      INPRDE:	DW	0		; input data in DE
- 00BB 0000      INPRHL:	DW	0		; input data in HL
- 00BD 0000      BUFADD:	DW	0		; buffer start address
- 00BF 0000      FCBADD:	DW	0		; FCB start address
- 00C1           	END
-
+ 00BA 3E06      DONEER:	MVI	A, 06h		; A = 6, error code
+ 00BC 37        	STC			; CF = 1
+ 00BD C3B400    	JMP	DONEDN		; go DONEDN
+                
+                ; **** DATA AREA ****
+ 00C0 00        INPRB:	DB	0		; input data in B
+ 00C1 0000      INPRDE:	DW	0		; input data in DE
+ 00C3 0000      INPRHL:	DW	0		; input data in HL
+ 00C5 0000      BUFADD:	DW	0		; buffer start address
+ 00C7 0000      FCBADD:	DW	0		; FCB start address
+ 00C9           	END
+

@@ -154,9 +154,10 @@ BREAD:	LHLD	BFJTAB
 	PCHL			; jump to the BIOS READ routine
 
 ; **** DATA AREA ****
-INPRB	DB	0		; input data in B
-INPRDE	DW	0		; input data in DE
-INPRHL	DW	0		; input data in HL
-BUFADD	DW	0		; buffer start address
-BFJTAB	DW	0		; BIOS functions jump table base address
+INPRB:	DB	0		; input data in B
+INPRDE:	DW	0		; input data in DE
+INPRHL:	DW	0		; input data in HL
+BUFADD:	DW	0		; buffer start address
+BFJTAB:	DW	0		; BIOS functions jump table base address
 	END
+

@@ -55,3 +55,4 @@ MSGINI:	DB	'Init error!$', 0
 MSGRED:	DB	'Read error!$', 0
 BUFFER:	DS	128
 	END	START
+

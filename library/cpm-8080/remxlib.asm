@@ -32,13 +32,13 @@ RNUM	EQU	02h		; number of routines
 ; Clobbers:  AF, HL
 
 ; ---- ENTRY POINT AND JUMP TABLE ----
-RIMG:	PUSH	B		; save input BC for caller
+REMX:	PUSH	B		; save input BC for caller
 	PUSH	D		; save input DE for caller
 
-	SHLD	INPRHL		; save input HL for selected routine 
+;	SHLD	INPRHL		; save input HL for selected routine 
 	MOV	H, D
 	MOV	L, E
-	SHLD	INPRDE		; save input DE for selected routine
+;	SHLD	INPRDE		; save input DE for selected routine
 
 	CPI	RNUM		; compare A (function code) with max valid index
 	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
@@ -85,3 +85,4 @@ RESTRD:	RET
 ADDR:	DB	0		; I/O address
 	END
 
+

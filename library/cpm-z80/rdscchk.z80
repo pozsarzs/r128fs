@@ -22,7 +22,7 @@ BPRINT	EQU	09h		; - print string function
 RDINIT	EQU	00h		; Rdsclib initialize function
 RDSTRD	EQU	01h		; Rdsclib sector read function
 
-; **** CODE AREA --------
+; **** CODE AREA ****
 START:	LD	A, RDINIT	; A = initialization
 	LD	HL, BUFFER	; HL = buffer address
 	CALL	RDSC		; call RDSC
@@ -70,4 +70,3 @@ MSGINI:	DB	'Init error!$', 0
 MSGRED:	DB	'Read error!$', 0
 BUFFER:	DS	128, 0
 	END
-

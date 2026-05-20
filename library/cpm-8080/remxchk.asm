@@ -31,5 +31,6 @@ START:
 
 	RET
 ; **** DATA AREA ****
-BUFFER:	DS	128, 0
+BUFFER:	DS	128
 	END
+

@@ -54,7 +54,6 @@ PRLOOP:	MOV	E, M		; print buffer to console with loop
 	JNZ	PRLOOP
 	JMP	EXIT		; goto EXIT
 
-; handling error
 INITER:	LXI	D, MSGINI	; DE = init error message
 	JMP	PRNER
 
@@ -67,10 +66,11 @@ EXIT:	MVI	C, BRESET	; C = exit to BDOS
 	CALL	BDOS		; call BDOS
 
 ; **** DATA AREA ****
-DISCID 	DB	0
-TRACK 	DW	1
-SECTOR 	DW	1
-MSGINI 	DB	'Init error!$', 0
-MSGRED 	DB	'Read error!$', 0
-BUFFER 	DS	128, 0
+DISCID:	DB	0
+TRACK: 	DW	1
+SECTOR:	DW	1
+MSGINI:	DB	'Init error!$', 0
+MSGRED:	DB	'Read error!$', 0
+BUFFER:	DS	128
 	END	START
+

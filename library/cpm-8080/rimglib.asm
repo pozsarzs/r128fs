@@ -14,12 +14,12 @@
 PUBLIC RIMG
 
 ; **** CONSTANTS ****
-BDOS	EQU	05h			; BDOS entry point
-BSETDMA	EQU	1Ah			; - set DMA address function
-BOPEN	EQU	0Fh			; - open file function
-BCLOSE	EQU	10h			; - close file function
-BRDRND	EQU	21h			; - read random function
-RNUM	EQU	03h			; Number of routines
+BDOS	EQU	05h		; BDOS entry point
+BSTDMA	EQU	1Ah		; - set DMA address function
+BOPEN	EQU	0Fh		; - open file function
+BCLOSE	EQU	10h		; - close file function
+BRDRND	EQU	21h		; - read random function
+RNUM	EQU	03h		; number of routines
 
 ; **** CODE AREA ****
 
@@ -48,7 +48,11 @@ RIMG:	PUSH	B		; save input BC for caller
 	MOV	H, D
 	MOV	L, E
 	SHLD	INPRDE		; save input DE for selected routine
-
+	MOV     C, A		; C = function code
+        MOV     A, B		; A = mode
+        STA     INPRB		; save input B for selected routine
+        MOV     A, C		; A = function code
+	
 	CPI	RNUM		; compare A (function code) with max valid index
 	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
 
@@ -91,7 +95,7 @@ RIINIT: LDA	INPRB		; get input B data
 	LHLD	INPRHL		; get input HL data	
 	SHLD	BUFADD		; store buffer starting address
 
-	MVI	C, BSETDMA	; set DMA address
+	MVI	C, BSTDMA	; set DMA address
 	LHLD	BUFADD		; HL = DMA address
 	XCHG			; DE = DMA address
 	CALL	BDOS		; call BDOS
@@ -165,7 +169,7 @@ RIDONE: LDA	INPRB		; get input B data
 	ORA	A
 	JNZ	DONECL		; if A = 1 then goto DONECL
 
-	MVI	C, BSETDMA	; set DMA address
+	MVI	C, BSTDMA	; set DMA address
 	LXI	D, 0080h	; DE = default DMA address
 	CALL	BDOS		; call BDOS
 
@@ -193,3 +197,4 @@ INPRHL:	DW	0		; input data in HL
 BUFADD:	DW	0		; buffer start address
 FCBADD:	DW	0		; FCB start address
 	END
+

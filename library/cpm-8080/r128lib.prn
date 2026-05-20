@@ -1,0 +1,163 @@
+                ; +----------------------------------------------------------------------------+
+                ; | R128 ROM filesystem                                                        |
+                ; | Copyright (C) 2026 Pozsar Zsolt <pozsarzs@gmail.com>                       |
+                ; | r128lib.asm                                                                |
+                ; | Interface between the app. and hardware-handling modules, 8080, CP/M, v0.1 |
+                ; +----------------------------------------------------------------------------+
+                ; This is a free software: you can redistribute it and/or modify it under the
+                ; terms of the MIT License.
+                ;
+                ; This program is distributed in the hope that it will be useful, but WITHOUT
+                ; ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+                ; FOR A PARTICULAR PURPOSE.
+                
+                PUBLIC	R128
+                EXTRN	RDSC
+                EXTRN	REMX
+                EXTRN	RIMG
+                EXTRN	RMEM
+                
+                ; **** CONSTANTS ****
+ 0005 =         BDOS	EQU	05h		; BDOS entry point
+ 0000 =         RINIT	EQU	00h		; R???lib initialize function
+ 0001 =         RSTRD	EQU	01h		; R???lib sector read function
+ 0002 =         RDONE	EQU	02h		; R???lib done function
+ 0008 =         RNUM	EQU	08h		; number of routines
+                
+                ; **** CODE AREA ****
+                
+                ; ---- ENTRY POINT AND JUMP TABLE --------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+                ;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+                ;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+                ;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+                ;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+                ;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+                ;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+                ;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+                ;
+                ; Error codes:
+                ;   00h. no error		CF = 0
+                ;   01h: bad function		CF = 1
+                ;   02h: shift overflow		CF = 1
+                ;   03h: address overflow	CF = 1
+                ;   04h: file open error	CF = 1
+                ;   05h: file read error	CF = 1
+                ;   06h: file close error	CF = 1
+                ;   07h: sector read error	CF = 1
+                ;
+                ; Preserves: BC, DE
+                ; Clobbers:  AF, HL
+                
+ 0000 C5        R128:	PUSH	B		; save input BC for caller
+ 0001 D5        	PUSH	D		; save input DE for caller
+                
+ 0002 224100    	SHLD	INPRHL		; save input HL for selected routine 
+ 0005 62        	MOV	H, D
+ 0006 6B        	MOV	L, E
+ 0007 223F00    	SHLD	INPRDE		; save input DE for selected routine
+                
+ 000A FE08      	CPI	RNUM		; compare A (function code) with max valid index
+ 000C D22C00    	JNC	MNBADF		; if A >= RNUM: invalid function, jump to MNBADF
+                
+ 000F 87        	ADD	A		; A = A * 2 (word index into jump table)
+ 0010 6F        	MOV	L, A
+ 0011 2600      	MVI	H, 0		; HL = zero-extended offset
+ 0013 111C00    	LXI	D, MNJTAB	; DE = address of jump table entry
+ 0016 19        	DAD	D		; HL = address of table + offset
+                
+ 0017 5E        	MOV	E, M		; load low byte of handler address
+ 0018 23        	INX	H
+ 0019 56        	MOV	D, M		; load high byte
+ 001A EB        	XCHG			; HL = handler address
+ 001B E9        	PCHL			; indirect jump to selected routine
+                
+ 001C 3500      MNJTAB:	DW	R128IN		; 0: initialise module
+ 001E 3600      	DW	R128FF		; 1: find first
+ 0020 3700      	DW	R128FN		; 2: find next
+ 0022 3800      	DW	R128OP		; 3: open file
+ 0024 3900      	DW	R128RD		; 4: read file
+ 0026 3A00      	DW	R128SK		; 5: seek in file
+ 0028 3B00      	DW	R128CL		; 6: close file
+ 002A 3C00      	DW	R128NF		; 7: read media or file information
+                
+ 002C D1        MNBADF:	POP	D		; restore input DE for caller
+ 002D C1        	POP	B		; restore input BC for caller
+ 002E 3E01      	MVI	A, 01h		; A = 1 (error: bad function)
+ 0030 210000    	LXI	H, 0000h	; HL = 0
+ 0033 37        	STC			; CF = 1 (return with error)
+ 0034 C9        	RET
+                
+                ; ---- INITIALIZE MODULE -----------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|00h|discid |      |        |bufaddr|R128IN  |errcode|bufaddr |
+                
+ 0035 C9        R128IN:	RET
+                
+                ; ---- FIND FIRST ------------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|01h|       |      |maskaddr|       |R128FF  |errcode|entryptr|
+                
+ 0036 C9        R128FF:	RET
+                
+                ; ---- FIND NEXT -------------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|02h|       |      |        |       |R128FN  |errcode|entryptr|
+                
+ 0037 C9        R128FN:	RET
+                
+                ; ---- OPEN FILE -------------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|03h|       |      |nameaddr|       |R128OP  |errcode|        |
+                
+ 0038 C9        R128OP:	RET
+                
+                ; ---- READ FILE -------------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|04h|       |      |count   |bufaddr|R128RD  |errcode|bytesrd |
+                
+ 0039 C9        R128RD:	RET
+                
+                ; ---- SEEK IN FILE ----------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|05h|       |      |pos     |       |R128SK  |errcode|        |
+                
+ 003A C9        R128SK:	RET
+                
+                ; ---- CLOSE FILE ------------------------------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|06h|       |      |        |       |R128CL  |errcode|        |
+                
+ 003B C9        R128CL:	RET
+                
+                ; ---- READ MEDIA OR FILE INFORMATION ----------------------------------
+                
+                ;|name   |A  |B      |C     |DE      |HL     |function|ret. A |ret. HL |
+                ;|-------|:-:|:-----:|:----:|:------:|:-----:|--------|:-----:|:-------|
+                ;|r128lib|07h|       |      |        |       |R128NF  |errcode|infoptr |
+                
+ 003C C9        R128NF:	RET
+                
+                ; **** DATA AREA ****
+ 003D 00        INPRB:	DB	0		; input data in B
+ 003E 00        INPRC:	DB	0		; input data in C
+ 003F 0000      INPRDE:	DW	0		; input data in DE
+ 0041 0000      INPRHL:	DW	0		; input data in HL
+ 0043           	END

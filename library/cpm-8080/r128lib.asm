@@ -75,9 +75,14 @@ R128:	PUSH	B		; save input BC for caller
 	XCHG			; HL = handler address
 	PCHL			; indirect jump to selected routine
 
-MNJTAB:	DW	RIINIT		; 0: initialize module
-	DW	RISTRD		; 1: read a logical sector and write to buffer
-	DW	RIDONE		; 2: clean up and/or close image file
+MNJTAB:	DW	R128IN		; 0: initialise module
+	DW	R128FF		; 1: find first
+	DW	R128FN		; 2: find next
+	DW	R128OP		; 3: open file
+	DW	R128RD		; 4: read file
+	DW	R128SK		; 5: seek in file
+	DW	R128CL		; 6: close file
+	DW	R128NF		; 7: read media or file information
 
 MNBADF:	POP	D		; restore input DE for caller
 	POP	B		; restore input BC for caller
@@ -151,8 +156,9 @@ R128CL:	RET
 R128NF:	RET
 
 ; **** DATA AREA ****
-INP_B:	DB	0		; input data in B
-INP_C:	DB	0		; input data in C
-INP_DE:	DW	0		; input data in DE
-INP_HL:	DW	0		; input data in HL
+INPRB:	DB	0		; input data in B
+INPRC:	DB	0		; input data in C
+INPRDE:	DW	0		; input data in DE
+INPRHL:	DW	0		; input data in HL
 	END
+

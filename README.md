@@ -173,6 +173,7 @@ accessing the R128 file system.
 
 ![R128 Data Flow Diagram on CP/M](picture/r128-cpm.png)
 
+- `library/cpm*/r128.lib` – all modules in one library file
 - `library/cpm*/r128lib.*` – the R128 filesystem core module
 - `library/cpm*/rdsclib.*` – disc-based block device driver
 - `library/cpm*/rimglib.*` – image file–based block device driver
@@ -197,10 +198,9 @@ accessing the R128 file system.
 - `library/dos-8088/rdsclib.*` – disc-based block device driver
 - `library/dos-8088/rimglib.*` – image file–based block device driver
 - `library/dos-8088/rmemlib.*` – memory–based block device driver
-- `library/cpm*/rdscchk.*` – disc-based block device driver tester
-- `library/cpm*/rimgchk.*` – image file–based block device driver tester
-- `library/cpm*/rmemchk.*` – memory–based block device driver tester
-- `library/cpm*/remxchk.*` – block device driver for PEMX tester
+- `library/dos-8088/rdscchk.*` – disc-based block device driver tester
+- `library/dos-8088/rimgchk.*` – image file–based block device driver tester
+- `library/dos-8088/rmemchk.*` – memory–based block device driver tester
 
 - `utility/dos-8088/rcopy.*` – copies a file from the R128 to the host filesystem
 - `utility/dos-8088/rdir.*`  – lists files in the R128 filesystem
